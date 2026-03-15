@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Frieren MMORPG API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: character
+    description: Character management
+  - name: battle
+    description: Battle system
+  - name: quests
+    description: Quest system
+  - name: inventory
+    description: Inventory management
+  - name: shop
+    description: Shop system
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,329 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /characters:
+    post:
+      operationId: createCharacter
+      tags: [character]
+      summary: Create a new character
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateCharacterRequest"
+      responses:
+        "201":
+          description: Character created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Character"
+
+  /characters/current:
+    get:
+      operationId: getCurrentCharacter
+      tags: [character]
+      summary: Get the current character (most recent)
+      responses:
+        "200":
+          description: Character found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Character"
+        "404":
+          description: No character found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /characters/{id}:
+    get:
+      operationId: getCharacter
+      tags: [character]
+      summary: Get a character by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Character found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Character"
+        "404":
+          description: Character not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /quests:
+    get:
+      operationId: listQuests
+      tags: [quests]
+      summary: List all available quests
+      responses:
+        "200":
+          description: Quests list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Quest"
+
+  /quests/character/{characterId}:
+    get:
+      operationId: getCharacterQuests
+      tags: [quests]
+      summary: Get quests for a character
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Character quests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CharacterQuest"
+
+  /quests/{questId}/start:
+    post:
+      operationId: startQuest
+      tags: [quests]
+      summary: Start a quest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CharacterIdRequest"
+      responses:
+        "200":
+          description: Quest started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CharacterQuest"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /quests/{questId}/complete:
+    post:
+      operationId: completeQuest
+      tags: [quests]
+      summary: Complete a quest
+      parameters:
+        - name: questId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CharacterIdRequest"
+      responses:
+        "200":
+          description: Quest completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuestCompleteResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /battles:
+    post:
+      operationId: startBattle
+      tags: [battle]
+      summary: Start a new battle
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/StartBattleRequest"
+      responses:
+        "201":
+          description: Battle started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Battle"
+
+  /battles/{id}:
+    get:
+      operationId: getBattle
+      tags: [battle]
+      summary: Get a battle by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Battle found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Battle"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /battles/{id}/action:
+    post:
+      operationId: battleAction
+      tags: [battle]
+      summary: Perform a battle action
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BattleActionRequest"
+      responses:
+        "200":
+          description: Action result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BattleActionResult"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /inventory/{characterId}:
+    get:
+      operationId: getInventory
+      tags: [inventory]
+      summary: Get character inventory
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Inventory
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/InventoryItem"
+
+  /inventory/{characterId}/equip:
+    post:
+      operationId: equipItem
+      tags: [inventory]
+      summary: Equip or unequip an item
+      parameters:
+        - name: characterId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EquipItemRequest"
+      responses:
+        "200":
+          description: Item equipped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InventoryItem"
+
+  /shop:
+    get:
+      operationId: getShopItems
+      tags: [shop]
+      summary: Get all shop items
+      responses:
+        "200":
+          description: Shop items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Item"
+
+  /shop/buy:
+    post:
+      operationId: buyItem
+      tags: [shop]
+      summary: Buy an item from the shop
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BuyItemRequest"
+      responses:
+        "200":
+          description: Item purchased
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BuyItemResult"
+        "400":
+          description: Not enough gold or bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +365,386 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    CharacterClass:
+      type: string
+      enum: [mage, warrior, priest]
+
+    Character:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        class:
+          $ref: "#/components/schemas/CharacterClass"
+        level:
+          type: integer
+        xp:
+          type: integer
+        xpToNext:
+          type: integer
+        hp:
+          type: integer
+        maxHp:
+          type: integer
+        mp:
+          type: integer
+        maxMp:
+          type: integer
+        attack:
+          type: integer
+        defense:
+          type: integer
+        magicPower:
+          type: integer
+        gold:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - class
+        - level
+        - xp
+        - xpToNext
+        - hp
+        - maxHp
+        - mp
+        - maxMp
+        - attack
+        - defense
+        - magicPower
+        - gold
+        - createdAt
+
+    CreateCharacterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        class:
+          $ref: "#/components/schemas/CharacterClass"
+      required:
+        - name
+        - class
+
+    Quest:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        lore:
+          type: string
+        difficulty:
+          type: string
+          enum: [easy, medium, hard, legendary]
+        xpReward:
+          type: integer
+        goldReward:
+          type: integer
+        enemyName:
+          type: string
+        region:
+          type: string
+        requiredLevel:
+          type: integer
+      required:
+        - id
+        - name
+        - description
+        - lore
+        - difficulty
+        - xpReward
+        - goldReward
+        - enemyName
+        - region
+        - requiredLevel
+
+    CharacterQuest:
+      type: object
+      properties:
+        id:
+          type: integer
+        characterId:
+          type: integer
+        questId:
+          type: integer
+        quest:
+          $ref: "#/components/schemas/Quest"
+        status:
+          type: string
+          enum: [active, completed]
+        completedAt:
+          type: string
+          format: date-time
+          nullable: true
+      required:
+        - id
+        - characterId
+        - questId
+        - quest
+        - status
+
+    QuestCompleteResult:
+      type: object
+      properties:
+        characterQuest:
+          $ref: "#/components/schemas/CharacterQuest"
+        character:
+          $ref: "#/components/schemas/Character"
+        leveledUp:
+          type: boolean
+        xpGained:
+          type: integer
+        goldGained:
+          type: integer
+      required:
+        - characterQuest
+        - character
+        - leveledUp
+        - xpGained
+        - goldGained
+
+    CharacterIdRequest:
+      type: object
+      properties:
+        characterId:
+          type: integer
+      required:
+        - characterId
+
+    Enemy:
+      type: object
+      properties:
+        name:
+          type: string
+        hp:
+          type: integer
+        maxHp:
+          type: integer
+        attack:
+          type: integer
+        defense:
+          type: integer
+        description:
+          type: string
+        type:
+          type: string
+      required:
+        - name
+        - hp
+        - maxHp
+        - attack
+        - defense
+        - description
+        - type
+
+    BattleLog:
+      type: object
+      properties:
+        round:
+          type: integer
+        actor:
+          type: string
+        action:
+          type: string
+        damage:
+          type: integer
+          nullable: true
+        heal:
+          type: integer
+          nullable: true
+        message:
+          type: string
+      required:
+        - round
+        - actor
+        - action
+        - message
+
+    Battle:
+      type: object
+      properties:
+        id:
+          type: integer
+        characterId:
+          type: integer
+        characterHp:
+          type: integer
+        characterMp:
+          type: integer
+        enemy:
+          $ref: "#/components/schemas/Enemy"
+        status:
+          type: string
+          enum: [ongoing, victory, defeat]
+        round:
+          type: integer
+        logs:
+          type: array
+          items:
+            $ref: "#/components/schemas/BattleLog"
+        xpReward:
+          type: integer
+          nullable: true
+        goldReward:
+          type: integer
+          nullable: true
+      required:
+        - id
+        - characterId
+        - characterHp
+        - characterMp
+        - enemy
+        - status
+        - round
+        - logs
+
+    StartBattleRequest:
+      type: object
+      properties:
+        characterId:
+          type: integer
+        enemyName:
+          type: string
+      required:
+        - characterId
+        - enemyName
+
+    BattleAction:
+      type: string
+      enum: [attack, spell, defend, item, flee]
+
+    BattleActionRequest:
+      type: object
+      properties:
+        action:
+          $ref: "#/components/schemas/BattleAction"
+        spellName:
+          type: string
+          nullable: true
+      required:
+        - action
+
+    BattleActionResult:
+      type: object
+      properties:
+        battle:
+          $ref: "#/components/schemas/Battle"
+        character:
+          $ref: "#/components/schemas/Character"
+        newLogs:
+          type: array
+          items:
+            $ref: "#/components/schemas/BattleLog"
+        leveledUp:
+          type: boolean
+      required:
+        - battle
+        - character
+        - newLogs
+        - leveledUp
+
+    Item:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [weapon, armor, accessory, consumable]
+        attackBonus:
+          type: integer
+        defenseBonus:
+          type: integer
+        hpBonus:
+          type: integer
+        mpBonus:
+          type: integer
+        magicPowerBonus:
+          type: integer
+        cost:
+          type: integer
+        classRestriction:
+          type: string
+          nullable: true
+      required:
+        - id
+        - name
+        - description
+        - type
+        - attackBonus
+        - defenseBonus
+        - hpBonus
+        - mpBonus
+        - magicPowerBonus
+        - cost
+
+    InventoryItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        characterId:
+          type: integer
+        item:
+          $ref: "#/components/schemas/Item"
+        equipped:
+          type: boolean
+      required:
+        - id
+        - characterId
+        - item
+        - equipped
+
+    EquipItemRequest:
+      type: object
+      properties:
+        inventoryItemId:
+          type: integer
+        equip:
+          type: boolean
+      required:
+        - inventoryItemId
+        - equip
+
+    BuyItemRequest:
+      type: object
+      properties:
+        characterId:
+          type: integer
+        itemId:
+          type: integer
+      required:
+        - characterId
+        - itemId
+
+    BuyItemResult:
+      type: object
+      properties:
+        inventoryItem:
+          $ref: "#/components/schemas/InventoryItem"
+        character:
+          $ref: "#/components/schemas/Character"
+      required:
+        - inventoryItem
+        - character
