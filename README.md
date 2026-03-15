@@ -62,11 +62,11 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 
 | Layer | Technology |
 |---|---|
-| Mobile app | Expo (React Native) + Expo Router |
+| Frontend web | Vite + React + Tailwind |
 | Backend API | Express 5 + TypeScript |
-| Database | PostgreSQL + Drizzle ORM |
+| Database | SQLite/Drizzle ORM |
 | API contract | OpenAPI 3.1 + Orval codegen |
-| Monorepo | pnpm workspaces |
+| Monorepo | npm workspaces |
 
 ---
 
@@ -74,16 +74,16 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 
 ```
 ├── artifacts/
-│   ├── mobile/          # Expo mobile app
+│   ├── mockup-sandbox/  # Browser web app (Vite + React)
 │   └── api-server/      # Express REST API
 ├── lib/
-│   ├── api-spec/        # OpenAPI spec + Orval codegen config
+│   ├── api-spec/         # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/ # Generated React Query hooks
-│   ├── api-zod/         # Generated Zod validation schemas
-│   └── db/              # Drizzle ORM schema + DB connection
+│   ├── api-zod/          # Generated Zod validation schemas
+│   └── db/               # Drizzle ORM schema + DB connection
 └── .github/
     └── workflows/
-        └── build-apk.yml # Android APK build via EAS
+        └── build-apk.yml # (legacy Expo APK pipeline, no long used)
 ```
 
 ---
@@ -93,65 +93,70 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 10+
-- PostgreSQL database (set `DATABASE_URL` env var)
-- Expo Go app on your phone (for mobile testing)
+- npm 10+
+- SQLite (no server install required)
+
+This project is configured for SQLite in local mode.
+`start-viberpg.sh` uses `DATABASE_URL=file:./dev.db` by default.
+
+If you want to explicitly set it:
+
+```bash
+export DATABASE_URL="file:./dev.db"
+```
+
+If you get `better-sqlite3` binding errors, run (npm workspaces handles rebuild automatically):
+
+```bash
+npm install
+npm --workspace @workspace/db run push
+```
 
 ### Setup
 
 ```bash
 # Install dependencies
-pnpm install
+npm install
 
 # Push database schema
-pnpm --filter @workspace/db run push
+npm --workspace @workspace/db run push
 
 # Start the API server
-pnpm --filter @workspace/api-server run dev
+npm --workspace @workspace/api-server run dev
 
 # In a separate terminal, seed game data (quests & items)
 curl -X POST http://localhost:8080/api/seed
 
-# Start the Expo dev server
-pnpm --filter @workspace/mobile run dev
+# Start browser web client (Vite)
+npm --workspace @workspace/mockup-sandbox run dev
 ```
 
-Scan the QR code shown in your terminal with the Expo Go app to run on your phone.
+### Quick start script (new)
+
+A helper script is available: `start-viberpg.sh` in the repo root.
+
+```bash
+chmod +x start-viberpg.sh
+./start-viberpg.sh
+```
+
+This runs:
+- `npm install`
+- `npm --workspace @workspace/db run push`
+- `npm --workspace @workspace/api-server run dev`
+- `npm --workspace @workspace/mockup-sandbox run dev`
 
 ---
 
-## Building the Android APK
+## Legacy mobile pipeline
 
-### Automated (GitHub Actions)
+The earlier Expo mobile app and APK workflow are now deprecated for this browser-first version.
 
-The repository includes a workflow at `.github/workflows/build-apk.yml` that builds an APK automatically on every push to `main` that touches the `artifacts/mobile/` folder.
+The repo has been retooled around:
+- `artifacts/api-server`  (Node.js Express API)
+- `artifacts/mockup-sandbox` (Vite React browser UI)
 
-You can also trigger it manually from the **Actions** tab in your GitHub repo and choose between `preview` and `production` profiles.
-
-**Required setup:**
-1. Create an account at [expo.dev](https://expo.dev)
-2. Run `eas init` inside `artifacts/mobile/` to link the EAS project
-3. Add your `EXPO_TOKEN` to GitHub repo secrets (Settings → Secrets → Actions)
-
-### Manual Build
-
-```bash
-# Install EAS CLI
-npm install -g eas-cli
-
-# Log in to Expo
-eas login
-
-cd artifacts/mobile
-
-# Build a preview APK
-eas build --platform android --profile preview
-
-# Build a production APK
-eas build --platform android --profile production
-```
-
-The resulting `.apk` file can be downloaded from your [Expo dashboard](https://expo.dev) or directly from the GitHub Actions artifacts.
+Mobile-specific folders and examples are deleted.
 
 ---
 

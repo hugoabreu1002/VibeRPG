@@ -1,0 +1,33 @@
+{
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
+  "scripts": {
+    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in npm/*) ;; *) echo \"Use npm instead\" >&2; exit 1 ;; esac'",
+    "build": "npm run typecheck && npm run build:workspace",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "npm run typecheck:libs && npm --workspace @workspace/api-server run typecheck && npm --workspace @workspace/mockup-sandbox run typecheck",
+    "build:workspace": "npm --workspace @workspace/api-server run build && npm --workspace @workspace/mockup-sandbox run build"
+  },
+  "workspaces": [
+    "artifacts/api-server",
+    "artifacts/mockup-sandbox",
+    "lib/*",
+    "lib/integrations/*",
+    "scripts"
+  ],
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.90.21",
+    "@types/node": "^25.5.0",
+    "better-sqlite3": "^12.8.0",
+    "drizzle-orm": "^0.45.1",
+    "drizzle-zod": "^0.8.3",
+    "pg": "^8.20.0",
+    "zod": "^4.3.6"
+  }
+}
