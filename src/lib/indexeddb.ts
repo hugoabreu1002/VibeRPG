@@ -7,6 +7,7 @@ export interface Character {
   class: CharacterClass;
   level: number;
   xp: number;
+  xpToNext: number;
   gold: number;
   hp: number;
   maxHp: number;

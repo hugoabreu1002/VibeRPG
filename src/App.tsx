@@ -1,14 +1,8 @@
-import { useMemo, useState, type FormEvent } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  useHealthCheck,
-  useGetCurrentCharacter,
-  useCreateCharacter,
-  useStartBattle,
-  useBattleAction,
-  CharacterClass,
-  BattleAction,
-} from "@workspace/api-client-react";
+import { useMemo, useState, useEffect, type FormEvent } from "react";
+import { getCurrentCharacter, createCharacter as dbCreateCharacter, updateCharacter, type CharacterClass } from "./lib/indexeddb";
+import { motion, AnimatePresence } from "framer-motion";
+import { BattleScene } from "./components/game";
+import type { BattleAnimationType } from "./components/game/animations/types";
 
 const ENEMIES = [
   "Flamme's Construct",
@@ -21,11 +15,44 @@ const ENEMIES = [
   "Berserk Mana Elemental",
 ];
 
+type BattleAction = "attack" | "spell" | "defend" | "flee";
 const ACTIONS: BattleAction[] = ["attack", "spell", "defend", "flee"];
 
 const CHARACTER_CLASSES: CharacterClass[] = ["mage", "warrior", "priest"];
 
 type Tab = "Overview" | "Battle" | "Inventory" | "Shop" | "Quests";
+
+interface BattleLog {
+  actor: string;
+  message: string;
+}
+
+interface Enemy {
+  name: string;
+  hp: number;
+  maxHp: number;
+  attack: number;
+}
+
+function getInitialEnemy(name: string): Enemy {
+  return {
+    name,
+    hp: 50,
+    maxHp: 50,
+    attack: 10,
+  };
+}
+
+function getInitialCharacterStats(charClass: CharacterClass) {
+  switch (charClass) {
+    case "mage":
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20 };
+    case "warrior":
+      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5 };
+    case "priest":
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15 };
+  }
+}
 
 function statusBar(label: string, value: number, max: number) {
   const progress = max > 0 ? Math.min(100, Math.floor((value / max) * 100)) : 0;
@@ -42,80 +69,182 @@ function statusBar(label: string, value: number, max: number) {
   );
 }
 
-function isNotFound(error: unknown): boolean {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "status" in error &&
-    (error as any).status === 404
-  );
+interface Character {
+  id: number;
+  createdAt: number;
+  name: string;
+  class: CharacterClass;
+  level: number;
+  xp: number;
+  gold: number;
+  hp: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
+  attack: number;
+  defense: number;
+  magicPower: number;
+  xpToNext: number;
 }
 
 function App() {
-  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<Tab>("Overview");
   const [enemy, setEnemy] = useState<string>(ENEMIES[0]);
   const [spell, setSpell] = useState<string>("Zoltraak");
   const [createName, setCreateName] = useState("");
   const [createClass, setCreateClass] = useState<CharacterClass>("mage");
+  const [character, setCharacter] = useState<Character | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [battleEnemy, setBattleEnemy] = useState<Enemy | null>(null);
+  const [battleStatus, setBattleStatus] = useState<string>("");
+  const [battleRound, setBattleRound] = useState(0);
+  const [battleLogs, setBattleLogs] = useState<BattleLog[]>([]);
+  const [lastAction, setLastAction] = useState<BattleAnimationType | null>(null);
 
-  const healthQuery = useHealthCheck();
-  const currentCharacterQuery = useGetCurrentCharacter();
-  const character = currentCharacterQuery.data;
+  useEffect(() => {
+    getCurrentCharacter().then((char) => {
+      setCharacter(char);
+      setIsLoading(false);
+    });
+  }, []);
 
-
-  const startBattle = useStartBattle({
-    mutation: {
-      onSuccess: (battle: any) => {
-        setBattle(battle);
-        queryClient.invalidateQueries({ queryKey: ["/api/characters/current"] });
-      },
-    },
-  });
-
-  const battleAction = useBattleAction({
-    mutation: {
-      onSuccess: (result: any) => {
-        setBattle(result.battle);
-        queryClient.invalidateQueries({ queryKey: ["/api/characters/current"] });
-      },
-    },
-  });
-
-  const [battle, setBattle] = useState<null | any>(null);
-
-  const isWaitingForCharacter = currentCharacterQuery.isLoading;
-  const missingCharacter = currentCharacterQuery.isError && isNotFound(currentCharacterQuery.error);
-
-  const battleLog = useMemo(
-    () => (battle?.logs || []).slice(-6),
-    [battle],
-  );
-
-  const createCharacterMutation = useCreateCharacter({
-    mutation: {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/characters/current"] }),
-    },
-  });
-
-  const submitCreate = (e: FormEvent<HTMLFormElement>) => {
+  const submitCreate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!createName.trim()) return;
 
-    createCharacterMutation.mutate({ data: { name: createName.trim(), class: createClass } });
+    const stats = getInitialCharacterStats(createClass);
+    const newCharacter: Omit<Character, "id" | "createdAt"> = {
+      name: createName.trim(),
+      class: createClass,
+      level: 1,
+      xp: 0,
+      gold: 100,
+      xpToNext: 100,
+      ...stats,
+    };
+
+    const created = await dbCreateCharacter(newCharacter);
+    setCharacter(created);
   };
 
   const startNewBattle = () => {
     if (!character) return;
-    startBattle.mutate({ data: { characterId: character.id, enemyName: enemy } });
+    setBattleEnemy(getInitialEnemy(enemy));
+    setBattleStatus("active");
+    setBattleRound(1);
+    setBattleLogs([{ actor: "System", message: `Battle started against ${enemy}!` }]);
     setActiveTab("Battle");
   };
 
   const doBattleAction = (action: BattleAction) => {
-    if (!battle) return;
-    const spellName = action === "spell" ? spell : undefined;
-    battleAction.mutate({ id: battle.id, data: { action, spellName: spellName ?? null } });
+    if (!character || !battleEnemy) return;
+
+    let newLogs = [...battleLogs];
+    let newCharHp = character.hp;
+    let newEnemyHp = battleEnemy.hp;
+    let xpGain = 0;
+    let goldGain = 0;
+    let message = "";
+
+    // Player action
+    switch (action) {
+      case "attack":
+        const damage = Math.max(1, character.attack - Math.floor(battleEnemy.attack / 3));
+        newEnemyHp -= damage;
+        message = `${character.name} attacks for ${damage} damage!`;
+        setLastAction("attack");
+        break;
+      case "spell":
+        if (character.class === "mage") {
+          if (spell === "Zoltraak") {
+            const spellDamage = character.magicPower + 10;
+            newEnemyHp -= spellDamage;
+            message = `${character.name} casts Zoltraak for ${spellDamage} damage!`;
+          } else if (spell === "Jetzt") {
+            const heal = Math.floor(character.maxMp * 0.3);
+            newCharHp = Math.min(character.maxHp, character.hp + heal);
+            message = `${character.name} casts Jetzt and heals ${heal} HP!`;
+          } else {
+            message = `${character.name} casts Sense Magic! (No effect in battle)`;
+          }
+          setLastAction("spell");
+        }
+        break;
+      case "defend":
+        message = `${character.name} takes a defensive stance!`;
+        setLastAction("defend");
+        break;
+      case "flee":
+        setBattleStatus("fled");
+        newLogs.push({ actor: character.name, message: "You fled from battle!" });
+        setBattleLogs(newLogs);
+        return;
+    }
+
+    newLogs.push({ actor: character.name, message });
+
+    // Enemy counter-attack (only if enemy still alive)
+    if (newEnemyHp > 0) {
+      const enemyDamage = Math.max(1, battleEnemy.attack - Math.floor(character.defense / 2));
+      if (action !== "defend") {
+        newCharHp -= enemyDamage;
+        newLogs.push({ actor: battleEnemy.name, message: `${battleEnemy.name} attacks for ${enemyDamage} damage!` });
+      } else {
+        const reducedDamage = Math.floor(enemyDamage / 2);
+        newCharHp -= reducedDamage;
+        newLogs.push({ actor: battleEnemy.name, message: `${battleEnemy.name} attacks! Blocked for ${reducedDamage} damage!` });
+      }
+    }
+
+    // Determine if battle ended
+    const battleEnded = newEnemyHp <= 0 || newCharHp <= 0;
+    const newBattleStatus = newEnemyHp <= 0 ? "won" : (newCharHp <= 0 ? "lost" : "active");
+    
+    // Update battle status
+    if (newBattleStatus !== "active") {
+      setBattleStatus(newBattleStatus);
+    }
+
+    // Update state
+    setBattleEnemy({ ...battleEnemy, hp: Math.max(0, newEnemyHp) });
+    setBattleRound(battleRound + 1);
+    setBattleLogs(newLogs.slice(-6));
+
+    // Update character
+    const updatedChar = {
+      ...character,
+      hp: Math.max(0, newCharHp),
+      xp: character.xp + xpGain,
+      gold: character.gold + goldGain,
+    };
+    
+    // Level up check
+    if (updatedChar.xp >= updatedChar.xpToNext) {
+      updatedChar.level += 1;
+      updatedChar.xp -= updatedChar.xpToNext;
+      updatedChar.xpToNext = Math.floor(updatedChar.xpToNext * 1.5);
+      updatedChar.maxHp += 10;
+      updatedChar.hp = updatedChar.maxHp;
+      updatedChar.maxMp += 5;
+      updatedChar.mp = updatedChar.maxMp;
+      updatedChar.attack += 2;
+      updatedChar.defense += 1;
+      newLogs.push({ actor: "System", message: `Level up! Now level ${updatedChar.level}!` });
+      setBattleLogs(newLogs.slice(-6));
+    }
+    
+    setCharacter(updatedChar);
+    
+    // Save to IndexedDB when battle ends
+    if (battleEnded) {
+      updateCharacter(updatedChar);
+    }
   };
+
+  const battleLog = useMemo(
+    () => battleLogs.slice(-6),
+    [battleLogs],
+  );
 
   return (
     <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
@@ -123,11 +252,11 @@ function App() {
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold">VibeRPG Web</h1>
-            <p className="text-sm text-slate-500">Browser first, mobile responsive, same game API</p>
+            <p className="text-sm text-slate-500">Play in your browser or on mobile — same world, same adventures</p>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="rounded-full bg-green-100 text-green-800 px-2 py-1">
-              API: {healthQuery.data?.status ?? (healthQuery.isLoading ? "loading" : "offline")}
+              Ready to play!
             </span>
             <span className="rounded-full bg-blue-100 text-blue-800 px-2 py-1">
               {character ? `Player: ${character.name}` : "No character loaded"}
@@ -136,9 +265,9 @@ function App() {
         </div>
       </header>
 
-      {isWaitingForCharacter ? (
+      {isLoading ? (
         <div className="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow-sm">Loading character...</div>
-      ) : missingCharacter ? (
+      ) : !character ? (
         <main className="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow-sm">
           <h2 className="mb-4 text-xl font-semibold">Create your first character</h2>
           <form className="space-y-4" onSubmit={submitCreate}>
@@ -160,17 +289,11 @@ function App() {
             <button
               type="submit"
               className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
-              disabled={createCharacterMutation.status === "pending"}
             >
               Create Character
             </button>
-            {createCharacterMutation.isError && (
-              <p className="text-sm text-red-600">Error: {(createCharacterMutation.error as any)?.message || "Request failed"}</p>
-            )}
           </form>
         </main>
-      ) : !character ? (
-        <div className="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow-sm">No character available.</div>
       ) : (
         <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-12">
           <aside className="lg:col-span-3 rounded-xl bg-white p-4 shadow-sm">
@@ -213,6 +336,31 @@ function App() {
               <div className="rounded-xl bg-white p-4 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Battle</h2>
 
+                {/* Animated Battle Scene */}
+                {battleEnemy && character && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                    className="mb-4"
+                  >
+                    <BattleScene
+                      character={{
+                        name: character.name,
+                        class: character.class,
+                        hp: character.hp,
+                        maxHp: character.maxHp,
+                        mp: character.mp,
+                        maxMp: character.maxMp,
+                      }}
+                      enemy={battleEnemy}
+                      battleStatus={battleStatus}
+                      lastAction={lastAction || undefined}
+                      onAnimationComplete={() => setLastAction(null)}
+                    />
+                  </motion.div>
+                )}
+
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium">Enemy</label>
@@ -220,34 +368,40 @@ function App() {
                       value={enemy}
                       onChange={(e) => setEnemy(e.target.value)}
                       className="w-full rounded border p-2"
+                      disabled={battleStatus === "active"}
                     >
                       {ENEMIES.map((e) => (<option key={e} value={e}>{e}</option>))}
                     </select>
                     <button
                       onClick={startNewBattle}
                       className="rounded bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
-                      disabled={startBattle.status === "pending"}
+                      disabled={battleStatus === "active"}
                     >
-                      {startBattle.status === "pending" ? "Starting..." : "Start Battle"}
+                      {battleStatus === "active" ? "In Battle..." : "Start Battle"}
                     </button>
-                    {startBattle.isError && <p className="text-xs text-red-600">Error: {(startBattle.error as any)?.message || "Unable to start battle"}</p>}
                   </div>
 
-                  {battle ? (
+                  {battleEnemy ? (
                     <div className="rounded-lg border border-slate-200 p-3">
                       <div className="mb-3">
-                        <strong>{battle.enemy.name}</strong> ({battle.status})
-                        <p className="text-xs text-slate-500">Round {battle.round}</p>
+                        <strong>{battleEnemy.name}</strong> ({battleStatus})
+                        <p className="text-xs text-slate-500">Round {battleRound}</p>
+                        <div className="text-xs mt-1">
+                          HP: {battleEnemy.hp}/{battleEnemy.maxHp}
+                        </div>
                       </div>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {ACTIONS.filter((a) => a !== "spell" || character.class === "mage").map((action) => (
-                          <button
+                          <motion.button
                             key={action}
                             onClick={() => doBattleAction(action)}
-                            className="rounded bg-slate-700 px-2 py-1 text-white hover:bg-slate-800"
+                            className="rounded bg-slate-700 px-2 py-1 text-white hover:bg-slate-800 disabled:opacity-50"
+                            disabled={battleStatus !== "active" || !!lastAction}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
                           >
                             {action === "spell" ? "Cast Spell" : action.charAt(0).toUpperCase() + action.slice(1)}
-                          </button>
+                          </motion.button>
                         ))}
                       </div>
                       {character.class === "mage" && (
@@ -257,9 +411,10 @@ function App() {
                             value={spell}
                             onChange={(e) => setSpell(e.target.value)}
                             className="w-full rounded border border-slate-300 px-2 py-1"
+                            disabled={battleStatus !== "active"}
                           >
-                            <option value="Zoltraak">Zoltraak</option>
-                            <option value="Jetzt">Jetzt</option>
+                            <option value="Zoltraak">Zoltraak (Attack)</option>
+                            <option value="Jetzt">Jetzt (Heal)</option>
                             <option value="Sense Magic">Sense Magic</option>
                           </select>
                         </div>
@@ -267,10 +422,16 @@ function App() {
                       <div className="mt-3">
                         <h4 className="mb-1 text-sm font-semibold">Battle Log</h4>
                         <ul className="max-h-48 overflow-y-auto space-y-1 text-xs">
-                          {battleLog.map((log: any, idx: number) => (
-                            <li key={`${log.actor}-${idx}`} className="rounded border border-slate-200 p-2 bg-slate-50">
+                          {battleLog.map((log, idx) => (
+                            <motion.li 
+                              key={`${log.actor}-${idx}`} 
+                              className="rounded border border-slate-200 p-2 bg-slate-50"
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.2 }}
+                            >
                               <span className="font-bold">[{log.actor}]</span> {log.message}
-                            </li>
+                            </motion.li>
                           ))}
                         </ul>
                       </div>
@@ -285,21 +446,21 @@ function App() {
             {activeTab === "Inventory" && (
               <div className="rounded-xl bg-white p-4 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Inventory</h2>
-                <p className="text-sm text-slate-600">Inventory is under construction for the browser UI. Keep playing with battles and create characters first.</p>
+                <p className="text-sm text-slate-600">Inventory is under construction. Keep battling to earn rewards!</p>
               </div>
             )}
 
             {activeTab === "Shop" && (
               <div className="rounded-xl bg-white p-4 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Shop</h2>
-                <p className="text-sm text-slate-600">The shop module will populate from API items later. For now, battle and level up to get rewards.</p>
+                <p className="text-sm text-slate-600">The shop is coming soon! Keep battling to earn gold.</p>
               </div>
             )}
 
             {activeTab === "Quests" && (
               <div className="rounded-xl bg-white p-4 shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Quests</h2>
-                <p className="text-sm text-slate-600">Quest UI is planned in the next iteration. Check API and backend quest support already in place.</p>
+                <p className="text-sm text-slate-600">Quests are coming in a future update!</p>
               </div>
             )}
           </section>
