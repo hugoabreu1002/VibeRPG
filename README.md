@@ -1,6 +1,6 @@
 # VibeRPG: FOSS vibe coded world for people that want to vibecode something but don't know exactly what
 
-A classic turn-based MMORPG mobile game set in the a vibe coded world. Built with Expo (React Native) and an Express backend.
+A classic turn-based MMORPG mobile game set in the a vibe coded world. Built with Vite + React and an Express backend.
 
 ---
 
@@ -62,28 +62,37 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 
 | Layer | Technology |
 |---|---|
-| Mobile app | Expo (React Native) + Expo Router |
+| Frontend web | Vite + React + Tailwind |
 | Backend API | Express 5 + TypeScript |
-| Database | PostgreSQL + Drizzle ORM |
+| Database | SQLite/Drizzle ORM |
 | API contract | OpenAPI 3.1 + Orval codegen |
-| Monorepo | pnpm workspaces |
 
 ---
 
 ## Project Structure
 
 ```
-├── artifacts/
-│   ├── mobile/          # Expo mobile app
-│   └── api-server/      # Express REST API
-├── lib/
-│   ├── api-spec/        # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/ # Generated React Query hooks
-│   ├── api-zod/         # Generated Zod validation schemas
-│   └── db/              # Drizzle ORM schema + DB connection
-└── .github/
-    └── workflows/
-        └── build-apk.yml # Android APK build via EAS
+VibeRPG/
+├── src/
+│   ├── apps/
+│   │   └── web/              # Browser web app (Vite + React)
+│   │       ├── src/
+│   │       │   ├── components/ui/   # shadcn/ui components
+│   │       │   ├── hooks/
+│   │       │   ├── lib/
+│   │       │   ├── App.tsx
+│   │       │   └── main.tsx
+│   │       ├── vite.config.ts
+│   │       └── index.html
+│   ├── lib/
+│   │   ├── api-spec/         # OpenAPI spec + Orval codegen config
+│   │   ├── api-client-react/  # Generated React Query hooks
+│   │   ├── api-zod/           # Generated Zod validation schemas
+│   │   └── db/                # Drizzle ORM schema + DB connection
+│   └── types/
+├── package.json               # Single package.json
+├── tsconfig.json              # TypeScript config
+└── start-viberpg.sh          # Start script
 ```
 
 ---
@@ -93,65 +102,33 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 10+
-- PostgreSQL database (set `DATABASE_URL` env var)
-- Expo Go app on your phone (for mobile testing)
+- npm 10+
 
-### Setup
+This project uses SQLite in local mode.
+`start-viberpg.sh` uses `DATABASE_URL=file:./dev.db` by default.
+
+### Quick Start
 
 ```bash
 # Install dependencies
-pnpm install
+npm install
 
-# Push database schema
-pnpm --filter @workspace/db run push
-
-# Start the API server
-pnpm --filter @workspace/api-server run dev
-
-# In a separate terminal, seed game data (quests & items)
-curl -X POST http://localhost:8080/api/seed
-
-# Start the Expo dev server
-pnpm --filter @workspace/mobile run dev
+# Start the app (runs DB push, API server, and web dev server)
+./start-viberpg.sh
 ```
 
-Scan the QR code shown in your terminal with the Expo Go app to run on your phone.
-
----
-
-## Building the Android APK
-
-### Automated (GitHub Actions)
-
-The repository includes a workflow at `.github/workflows/build-apk.yml` that builds an APK automatically on every push to `main` that touches the `artifacts/mobile/` folder.
-
-You can also trigger it manually from the **Actions** tab in your GitHub repo and choose between `preview` and `production` profiles.
-
-**Required setup:**
-1. Create an account at [expo.dev](https://expo.dev)
-2. Run `eas init` inside `artifacts/mobile/` to link the EAS project
-3. Add your `EXPO_TOKEN` to GitHub repo secrets (Settings → Secrets → Actions)
-
-### Manual Build
+Or step by step:
 
 ```bash
-# Install EAS CLI
-npm install -g eas-cli
+# Install dependencies
+npm install
 
-# Log in to Expo
-eas login
+# Push database schema
+npm run db:push
 
-cd artifacts/mobile
-
-# Build a preview APK
-eas build --platform android --profile preview
-
-# Build a production APK
-eas build --platform android --profile production
+# Start web dev server
+npm run dev
 ```
-
-The resulting `.apk` file can be downloaded from your [Expo dashboard](https://expo.dev) or directly from the GitHub Actions artifacts.
 
 ---
 
@@ -174,4 +151,4 @@ The REST API runs at `/api`. Key endpoints:
 | `POST` | `/api/shop/buy` | Purchase an item |
 | `POST` | `/api/seed` | Seed quests and items (run once on setup) |
 
-Full OpenAPI spec: `lib/api-spec/openapi.yaml`
+Full OpenAPI spec: `src/lib/api-spec/openapi.yaml`
