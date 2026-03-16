@@ -56,16 +56,29 @@ async function withStore<T>(mode: IDBTransactionMode, callback: (store: IDBObjec
   });
 }
 
-export async function getCurrentCharacter(): Promise<Character | null> {
+export async function getAllCharacters(): Promise<Character[]> {
   return withStore("readonly", (store) => {
     return new Promise((resolve, reject) => {
-      const idx = store.index("createdAt");
-      const request = idx.openCursor(null, "prev");
+      const request = store.getAll();
       request.onsuccess = () => {
-        const cursor = request.result;
-        resolve(cursor ? (cursor.value as Character) : null);
+        resolve((request.result as Character[]).sort((a, b) => b.createdAt - a.createdAt));
       };
       request.onerror = () => reject(request.error);
+    });
+  });
+}
+
+export async function getCurrentCharacter(): Promise<Character | null> {
+  const chars = await getAllCharacters();
+  return chars.length > 0 ? chars[0] : null;
+}
+
+export async function deleteCharacter(id: number): Promise<void> {
+  return withStore("readwrite", (store) => {
+    return new Promise((resolve, reject) => {
+      const req = store.delete(id);
+      req.onsuccess = () => resolve();
+      req.onerror = () => reject(req.error);
     });
   });
 }
