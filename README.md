@@ -1,6 +1,6 @@
 # VibeRPG: FOSS vibe coded world for people that want to vibecode something but don't know exactly what
 
-A classic turn-based MMORPG mobile game set in the a vibe coded world. Built with Expo (React Native) and an Express backend.
+A classic turn-based MMORPG mobile game set in the a vibe coded world. Built with Vite + React and an Express backend.
 
 ---
 
@@ -66,24 +66,33 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 | Backend API | Express 5 + TypeScript |
 | Database | SQLite/Drizzle ORM |
 | API contract | OpenAPI 3.1 + Orval codegen |
-| Monorepo | npm workspaces |
 
 ---
 
 ## Project Structure
 
 ```
-├── artifacts/
-│   ├── mockup-sandbox/  # Browser web app (Vite + React)
-│   └── api-server/      # Express REST API
-├── lib/
-│   ├── api-spec/         # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/ # Generated React Query hooks
-│   ├── api-zod/          # Generated Zod validation schemas
-│   └── db/               # Drizzle ORM schema + DB connection
-└── .github/
-    └── workflows/
-        └── build-apk.yml # (legacy Expo APK pipeline, no long used)
+VibeRPG/
+├── src/
+│   ├── apps/
+│   │   └── web/              # Browser web app (Vite + React)
+│   │       ├── src/
+│   │       │   ├── components/ui/   # shadcn/ui components
+│   │       │   ├── hooks/
+│   │       │   ├── lib/
+│   │       │   ├── App.tsx
+│   │       │   └── main.tsx
+│   │       ├── vite.config.ts
+│   │       └── index.html
+│   ├── lib/
+│   │   ├── api-spec/         # OpenAPI spec + Orval codegen config
+│   │   ├── api-client-react/  # Generated React Query hooks
+│   │   ├── api-zod/           # Generated Zod validation schemas
+│   │   └── db/                # Drizzle ORM schema + DB connection
+│   └── types/
+├── package.json               # Single package.json
+├── tsconfig.json              # TypeScript config
+└── start-viberpg.sh          # Start script
 ```
 
 ---
@@ -94,69 +103,32 @@ On first launch you'll be taken to the character creation screen. Enter a name a
 
 - Node.js 20+
 - npm 10+
-- SQLite (no server install required)
 
-This project is configured for SQLite in local mode.
+This project uses SQLite in local mode.
 `start-viberpg.sh` uses `DATABASE_URL=file:./dev.db` by default.
 
-If you want to explicitly set it:
+### Quick Start
 
 ```bash
-export DATABASE_URL="file:./dev.db"
-```
-
-If you get `better-sqlite3` binding errors, run (npm workspaces handles rebuild automatically):
-
-```bash
+# Install dependencies
 npm install
-npm --workspace @workspace/db run push
+
+# Start the app (runs DB push, API server, and web dev server)
+./start-viberpg.sh
 ```
 
-### Setup
+Or step by step:
 
 ```bash
 # Install dependencies
 npm install
 
 # Push database schema
-npm --workspace @workspace/db run push
+npm run db:push
 
-# Start the API server
-npm --workspace @workspace/api-server run dev
-
-# In a separate terminal, seed game data (quests & items)
-curl -X POST http://localhost:8080/api/seed
-
-# Start browser web client (Vite)
-npm --workspace @workspace/mockup-sandbox run dev
+# Start web dev server
+npm run dev
 ```
-
-### Quick start script (new)
-
-A helper script is available: `start-viberpg.sh` in the repo root.
-
-```bash
-chmod +x start-viberpg.sh
-./start-viberpg.sh
-```
-
-This runs:
-- `npm install`
-- `npm --workspace @workspace/db run push`
-- `npm --workspace @workspace/api-server run dev`
-- `npm --workspace @workspace/mockup-sandbox run dev`
-
----
-
-## Legacy mobile pipeline
-
-The earlier Expo mobile app and APK workflow are now deprecated for this browser-first version.
-
-The repo has been retooled around:
-- `artifacts/api-server`  (Node.js Express API)
-- `artifacts/mockup-sandbox` (Vite React browser UI)
-
-Mobile-specific folders and examples are deleted.
 
 ---
 
@@ -179,4 +151,4 @@ The REST API runs at `/api`. Key endpoints:
 | `POST` | `/api/shop/buy` | Purchase an item |
 | `POST` | `/api/seed` | Seed quests and items (run once on setup) |
 
-Full OpenAPI spec: `lib/api-spec/openapi.yaml`
+Full OpenAPI spec: `src/lib/api-spec/openapi.yaml`
