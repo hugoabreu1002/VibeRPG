@@ -56,6 +56,7 @@ const getEnemyColors = (enemyName: string) => {
 interface SpriteProps {
   characterClass?: CharacterClass;
   enemyName?: string;
+  playerName?: string;
   animationType?: BattleAnimationType;
   isPlayer?: boolean;
   hp?: number;
@@ -65,6 +66,7 @@ interface SpriteProps {
 export function Sprite({
   characterClass,
   enemyName,
+  playerName,
   animationType = 'idle',
   isPlayer = true,
   hp,
@@ -102,7 +104,7 @@ export function Sprite({
   const attackVariants = {
     initial: { x: 0 },
     animate: { 
-      x: [0, 40, 0, -20, 0],
+      x: isPlayer ? [0, 40, 0, -20, 0] : [0, -40, 0, 20, 0],
       transition: { duration: 0.5 }
     }
   };
@@ -110,7 +112,7 @@ export function Sprite({
   const hitVariants = {
     initial: { x: 0 },
     animate: { 
-      x: [0, -10, 10, -10, 5, 0],
+      x: isPlayer ? [0, -10, 10, -10, 5, 0] : [0, 10, -10, 10, -5, 0],
       transition: { duration: 0.3 }
     }
   };
@@ -155,7 +157,7 @@ export function Sprite({
 
   const bobOffset = animationType === 'idle' ? Math.sin(frame * 0.3) * 2 : 0;
   const name = isPlayer 
-    ? (characterClass ? characterClass.charAt(0).toUpperCase() + characterClass.slice(1) : 'Hero')
+    ? (playerName || (characterClass ? characterClass.charAt(0).toUpperCase() + characterClass.slice(1) : 'Hero'))
     : enemyName || 'Enemy';
 
   return (
