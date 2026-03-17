@@ -12,6 +12,25 @@ VibeRPG is structured as a single-page application (SPA). The architecture focus
 
 *Note: This architecture is deliberately high-level and modular. As the game scales, the data layer can easily be abstracted to connect to a remote backend server and database.*
 
+## Screenshots
+
+<div align="center">
+  <h3>Character Creation</h3>
+  <img src="demo/landing.png" width="400" alt="Character Creation" />
+  <br/>
+  <h3>Gameplay & Inventory</h3>
+  <img src="demo/gameplay.png" width="400" alt="Gameplay Overview" />
+  <br/>
+  <h3>Quest System</h3>
+  <img src="demo/quests.png" width="400" alt="Quests Menu" />
+  <br/>
+  <h3>Turn-Based Combat</h3>
+  <img src="demo/combat.png" width="400" alt="Combat Interface" />
+  <br/>
+  <h3>Shop System</h3>
+  <img src="demo/ui.png" width="400" alt="Shop Menu" />
+</div>
+
 ## About the Game
 
 Step into the Northern Lands as a Mage, Warrior, or Priest. Accept quests, battle monsters, and collect legendary equipment!
