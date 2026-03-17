@@ -27,9 +27,18 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           description: "Simple robes worn by magic apprentices."
         },
         {
+          id: "apprentice-hat",
+          name: "Apprentice Hat",
+          type: "hat",
+          rarity: "common",
+          stats: { magicPower: 2 },
+          equipped: true,
+          description: "A simple pointed hat for magic apprentices."
+        },
+        {
           id: "leather-shoes",
           name: "Traveler's Boots",
-          type: "accessory",
+          type: "boot",
           rarity: "common",
           stats: { hp: 5 },
           equipped: true,
@@ -57,9 +66,18 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           description: "Basic leather armor for beginners."
         },
         {
+          id: "warrior-helmet",
+          name: "Warrior Helmet",
+          type: "hat",
+          rarity: "common",
+          stats: { defense: 3 },
+          equipped: true,
+          description: "A sturdy helmet for protecting warriors in battle."
+        },
+        {
           id: "leather-boots",
           name: "Combat Boots",
-          type: "accessory",
+          type: "boot",
           rarity: "common",
           stats: { hp: 5, defense: 2 },
           equipped: true,
@@ -87,9 +105,18 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           description: "Holy robes blessed with divine magic."
         },
         {
+          id: "priest-hat",
+          name: "Priest's Hat",
+          type: "hat",
+          rarity: "common",
+          stats: { magicPower: 3, hp: 5 },
+          equipped: true,
+          description: "A holy hat blessed with divine energy."
+        },
+        {
           id: "holy-pendant",
           name: "Holy Pendant",
-          type: "accessory",
+          type: "boot",
           rarity: "common",
           stats: { hp: 10, magicPower: 3 },
           equipped: true,

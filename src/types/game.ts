@@ -41,7 +41,7 @@ export interface Quest {
 export interface InventoryItem {
   id: string;
   name: string;
-  type: "weapon" | "armor" | "accessory";
+  type: "weapon" | "armor" | "boot" | "hat";
   rarity: "common" | "rare" | "epic" | "legendary";
   stats: {
     attack?: number;

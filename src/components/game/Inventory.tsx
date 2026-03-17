@@ -1,8 +1,12 @@
 import { motion, AnimatePresence } from "framer-motion";
 import type { InventoryItem } from "../../types/game";
 import type { CharacterClass } from "../../lib/indexeddb";
-import { EquipmentSlot, WeaponIcon } from "./EquipmentSlot";
-import { ItemDetailModal } from "./ItemDetailModal";
+import { EquipmentSlot } from "./EquipmentSlot";
+import { ItemDetailModal } from "./items/ItemDetailModal";
+import { WeaponIcon } from "./items/WeaponIcon";
+import { ArmorIcon } from "./items/ArmorIcon";
+import { HatIcon } from "./items/HatIcon";
+import { BootIcon } from "./items/BootIcon";
 import { Sprite } from "./Sprite";
 
 const getRarityColor = (rarity: InventoryItem["rarity"]) => {
@@ -34,7 +38,8 @@ interface InventoryProps {
 export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, characterClass }: InventoryProps) {
   const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
-  const equippedAccessory = inventory.find(i => i.type === "accessory" && i.equipped);
+  const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
+  const equippedHat = inventory.find(i => i.type === "hat" && i.equipped);
 
   return (
     <motion.div
@@ -43,37 +48,62 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
       className="rounded-xl bg-white p-4 shadow-sm"
     >
       <h2 className="text-xl font-semibold mb-4">Inventory</h2>
-      
+
       {/* Equipment Slots */}
       <div className="mb-6">
         <h3 className="text-sm font-semibold mb-3 text-slate-500 uppercase tracking-wide">Currently Equipped</h3>
-        <div className="flex gap-8 items-center justify-center bg-slate-50 p-8 rounded-xl border border-slate-100">
-          <div className="flex flex-col gap-4">
-            <EquipmentSlot 
-              type="weapon" 
+        <div className="grid grid-cols-3 grid-rows-3 gap-6 sm:gap-8 max-w-md mx-auto items-center justify-items-center bg-slate-50 p-6 sm:p-8 rounded-xl border border-slate-100">
+          {/* Top: Hat */}
+          <div className="col-start-2 row-start-1 flex justify-center">
+            <EquipmentSlot
+              type="hat"
+              item={equippedHat}
+              items={inventory.filter(i => i.type === "hat")}
+              onSelect={(item) => onSelectItem(item)}
+            />
+          </div>
+
+          {/* Left: Weapon */}
+          <div className="col-start-1 row-start-2 flex justify-center">
+            <EquipmentSlot
+              type="weapon"
               item={equippedWeapon}
               items={inventory.filter(i => i.type === "weapon")}
               onSelect={(item) => onSelectItem(item)}
             />
           </div>
-          
-          {characterClass && (
-            <div className="transform scale-150 mx-4 flex flex-col items-center">
-              <Sprite characterClass={characterClass} isPlayer={true} animationType="idle" />
-            </div>
-          )}
 
-          <div className="flex flex-col gap-4">
-            <EquipmentSlot 
-              type="armor" 
+          {/* Center: Character */}
+          <div className="col-start-2 row-start-2 flex justify-center min-w-[64px] min-h-[64px]">
+            {characterClass && (
+              <Sprite
+                characterClass={characterClass}
+                isPlayer={true}
+                animationType="idle"
+                equippedWeapon={equippedWeapon}
+                equippedArmor={equippedArmor}
+                equippedBoot={equippedBoot}
+                equippedHat={equippedHat}
+              />
+            )}
+          </div>
+
+          {/* Right: Armor */}
+          <div className="col-start-3 row-start-2 flex justify-center">
+            <EquipmentSlot
+              type="armor"
               item={equippedArmor}
               items={inventory.filter(i => i.type === "armor")}
               onSelect={(item) => onSelectItem(item)}
             />
-            <EquipmentSlot 
-              type="accessory" 
-              item={equippedAccessory}
-              items={inventory.filter(i => i.type === "accessory")}
+          </div>
+
+          {/* Bottom: Boots */}
+          <div className="col-start-2 row-start-3 flex justify-center">
+            <EquipmentSlot
+              type="boot"
+              item={equippedBoot}
+              items={inventory.filter(i => i.type === "boot")}
               onSelect={(item) => onSelectItem(item)}
             />
           </div>
@@ -93,28 +123,19 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                 transition={{ delay: index * 0.1 }}
                 whileHover={{ scale: 1.02, y: -2 }}
                 onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
-                className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                  selectedItem?.id === item.id
+                className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${selectedItem?.id === item.id
                     ? "border-indigo-500 bg-indigo-50"
                     : item.equipped
                       ? "border-green-400 bg-green-50"
                       : `${getRarityColor(item.rarity)}/20 ${getRarityBg(item.rarity)}`
-                }`}
+                  }`}
               >
                 <div className="flex items-center gap-2 mb-2">
                   <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center">
                     {item.type === "weapon" && <WeaponIcon weaponId={item.id} size="w-6 h-6" />}
-                    {item.type === "armor" && (
-                      <svg viewBox="0 0 16 16" className="w-6 h-6">
-                        <path d="M5 4 L8 2 L11 4 L11 13 L5 13 Z" fill="#9370DB"/>
-                      </svg>
-                    )}
-                    {item.type === "accessory" && (
-                      <svg viewBox="0 0 16 16" className="w-6 h-6">
-                        <rect x="4" y="9" width="3" height="5" fill="#8B4513" rx="1"/>
-                        <rect x="9" y="9" width="3" height="5" fill="#8B4513" rx="1"/>
-                      </svg>
-                    )}
+                    {item.type === "armor" && <ArmorIcon armorId={item.id} size="w-6 h-6" />}
+                    {item.type === "hat" && <HatIcon hatId={item.id} size="w-6 h-6" />}
+                    {item.type === "boot" && <BootIcon bootId={item.id} size="w-6 h-6" />}
                   </div>
                   <div className="flex-1">
                     <span className="font-semibold text-sm">{item.name}</span>
@@ -146,7 +167,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
       {/* Item Detail Modal */}
       <AnimatePresence>
         {selectedItem && (
-          <ItemDetailModal 
+          <ItemDetailModal
             item={selectedItem}
             onClose={() => onSelectItem(null)}
             onToggleEquip={() => onToggleEquip(selectedItem)}

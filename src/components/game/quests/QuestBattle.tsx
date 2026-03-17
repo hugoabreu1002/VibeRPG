@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Character, Enemy } from "../../types/game";
+import type { Character, Enemy } from "../../../types/game";
 import type { CharacterClass } from "../animations/types";
-import { Sprite } from "./Sprite";
+import { Sprite } from "../Sprite";
 
 interface QuestBattleProps {
   character: Character;
@@ -80,12 +80,12 @@ export function QuestBattle({
 
   const playerAttack = () => {
     if (phase !== "player-turn") return;
-    
+
     // Calculate damage with some randomness
     const baseDamage = character.attack;
     const variance = Math.floor(Math.random() * 6) - 3; // -3 to +3
     const damage = Math.max(1, baseDamage + variance - Math.floor(enemy.defense / 3));
-    
+
     // Animation
     setPlayerAnimation("attack");
     setTimeout(() => setEnemyAnimation("hit"), 200);
@@ -97,13 +97,13 @@ export function QuestBattle({
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
     addLog(`⚔️ You attack for ${damage} damage!`, "player");
-    
+
     setPhase("enemy-turn");
   };
 
   const playerSpell = () => {
     if (phase !== "player-turn") return;
-    
+
     const spellCost = 10;
     if (playerMp < spellCost) {
       addLog("❌ Not enough MP to cast spell!", "system");
@@ -111,12 +111,12 @@ export function QuestBattle({
     }
 
     setPlayerMp((prev) => prev - spellCost);
-    
+
     // Calculate magic damage
     const baseDamage = character.magicPower;
     const variance = Math.floor(Math.random() * 8) - 4;
     const damage = Math.max(1, baseDamage + variance - Math.floor(enemy.defense / 5));
-    
+
     // Animation
     setPlayerAnimation("spell");
     setTimeout(() => setEnemyAnimation("hit"), 300);
@@ -128,24 +128,24 @@ export function QuestBattle({
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
     addLog(`✨ You cast a spell for ${damage} magic damage!`, "player");
-    
+
     setPhase("enemy-turn");
   };
 
   const playerDefend = () => {
     if (phase !== "player-turn") return;
-    
+
     setPlayerAnimation("defend");
     setIsDefending(true);
     setTimeout(() => setPlayerAnimation("idle"), 500);
-    
+
     addLog("🛡️ You take a defensive stance!", "player");
     setPhase("enemy-turn");
   };
 
   const playerFlee = () => {
     if (phase !== "player-turn") return;
-    
+
     // 50% chance to flee
     if (Math.random() > 0.5) {
       addLog("🏃 You successfully fled from battle!", "player");
@@ -160,9 +160,9 @@ export function QuestBattle({
     // Enemy chooses action
     const actions: Array<"attack" | "spell"> = enemy.magicPower > 10 ? ["attack", "attack", "spell"] : ["attack", "attack", "attack"];
     const action = actions[Math.floor(Math.random() * actions.length)];
-    
+
     let damage: number;
-    
+
     if (action === "spell") {
       const baseDamage = enemy.magicPower;
       const variance = Math.floor(Math.random() * 4) - 2;
@@ -193,10 +193,10 @@ export function QuestBattle({
 
     // Apply damage
     setPlayerHp((prev) => Math.max(0, prev - damage));
-    
+
     // Reset defense
     setIsDefending(false);
-    
+
     // Check if player died before returning to player turn
     if (playerHp - damage > 0) {
       setPhase("player-turn");
@@ -220,14 +220,14 @@ export function QuestBattle({
         {/* Player */}
         <div className="absolute left-8 bottom-8 flex flex-col items-center">
           <div className="transform scale-150 mb-6 mt-4">
-            <Sprite 
-              characterClass={character.class} 
+            <Sprite
+              characterClass={character.class}
               playerName={character.name}
-              isPlayer={true} 
+              isPlayer={true}
               animationType={playerAnimation}
             />
           </div>
-          
+
           {/* Player HP Bar */}
           <div className="w-24 mt-4">
             <div className="flex justify-between text-xs text-white mb-1">
@@ -242,7 +242,7 @@ export function QuestBattle({
               />
             </div>
           </div>
-          
+
           {/* Player MP Bar */}
           <div className="w-24 mt-1">
             <div className="flex justify-between text-xs text-slate-400 mb-1">
@@ -267,13 +267,13 @@ export function QuestBattle({
         {/* Enemy */}
         <div className="absolute right-8 bottom-8 flex flex-col items-center">
           <div className="transform scale-150 mb-6 mt-4">
-            <Sprite 
-              enemyName={enemy.name} 
-              isPlayer={false} 
+            <Sprite
+              enemyName={enemy.name}
+              isPlayer={false}
               animationType={enemyAnimation}
             />
           </div>
-          
+
           {/* Enemy HP Bar */}
           <div className="w-24 mt-4">
             <div className="flex justify-between text-xs text-white mb-1">
@@ -298,11 +298,9 @@ export function QuestBattle({
               animate={{ opacity: 0, y: -50, scale: 1.5 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.5 }}
-              className={`absolute text-3xl font-bold z-10 ${
-                showDamage.target === "enemy" ? "right-32" : "left-32"
-              } bottom-32 ${
-                showDamage.target === "enemy" ? "text-red-400" : "text-orange-400"
-              }`}
+              className={`absolute text-3xl font-bold z-10 ${showDamage.target === "enemy" ? "right-32" : "left-32"
+                } bottom-32 ${showDamage.target === "enemy" ? "text-red-400" : "text-orange-400"
+                }`}
             >
               -{showDamage.value}
             </motion.div>
@@ -316,13 +314,12 @@ export function QuestBattle({
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`text-sm ${
-                log.type === "player"
+              className={`text-sm ${log.type === "player"
                   ? "text-green-400"
                   : log.type === "enemy"
-                  ? "text-red-400"
-                  : "text-slate-400"
-              }`}
+                    ? "text-red-400"
+                    : "text-slate-400"
+                }`}
             >
               {log.message}
             </div>
@@ -342,23 +339,22 @@ export function QuestBattle({
             <span className="text-xl mb-1">⚔️</span>
             <span className="text-sm">Attack</span>
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={playerSpell}
             disabled={playerMp < 10}
-            className={`py-3 px-4 rounded-lg font-semibold flex flex-col items-center ${
-              playerMp >= 10
+            className={`py-3 px-4 rounded-lg font-semibold flex flex-col items-center ${playerMp >= 10
                 ? "bg-blue-600 hover:bg-blue-700 text-white"
                 : "bg-slate-600 text-slate-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             <span className="text-xl mb-1">✨</span>
             <span className="text-sm">Spell</span>
             <span className="text-xs opacity-75">10 MP</span>
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -368,7 +364,7 @@ export function QuestBattle({
             <span className="text-xl mb-1">🛡️</span>
             <span className="text-sm">Defend</span>
           </motion.button>
-          
+
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
