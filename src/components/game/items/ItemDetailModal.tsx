@@ -4,6 +4,7 @@ import { WeaponIcon } from "./WeaponIcon";
 import { ArmorIcon } from "./ArmorIcon";
 import { HatIcon } from "./HatIcon";
 import { BootIcon } from "./BootIcon";
+import { FoodIcon } from "./FoodIcon";
 
 const getRarityColor = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -27,9 +28,10 @@ interface ItemDetailModalProps {
   item: InventoryItem;
   onClose: () => void;
   onToggleEquip: () => void;
+  onConsumeFood?: () => void;
 }
 
-export function ItemDetailModal({ item, onClose, onToggleEquip }: ItemDetailModalProps) {
+export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood }: ItemDetailModalProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -45,16 +47,17 @@ export function ItemDetailModal({ item, onClose, onToggleEquip }: ItemDetailModa
         className="bg-white rounded-xl p-6 max-w-sm w-full"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Large Item Display */}
         <div className={`w-full h-32 rounded-lg mb-4 flex items-center justify-center bg-gradient-to-br ${item.type === "weapon" ? "from-amber-900/30 to-slate-800" :
             item.type === "armor" ? "from-blue-900/30 to-slate-800" :
               item.type === "boot" ? "from-purple-900/30 to-slate-800" :
-                "from-indigo-900/30 to-slate-800"
+                item.type === "food" ? "from-green-900/30 to-slate-800" :
+                  "from-indigo-900/30 to-slate-800"
           }`}>
           {item.type === "weapon" && <WeaponIcon weaponId={item.id} large={true} />}
           {item.type === "armor" && <ArmorIcon armorId={item.id} large={true} />}
           {item.type === "hat" && <HatIcon hatId={item.id} large={true} />}
           {item.type === "boot" && <BootIcon bootId={item.id} large={true} />}
+          {item.type === "food" && <FoodIcon foodId={item.id} size="w-16 h-16" />}
         </div>
 
         <div className="flex items-center justify-between mb-2">
@@ -76,26 +79,43 @@ export function ItemDetailModal({ item, onClose, onToggleEquip }: ItemDetailModa
         <p className="text-sm text-slate-600 mb-4">{item.description}</p>
 
         <div className="space-y-2 mb-4 bg-slate-50 p-3 rounded-lg">
-          <h4 className="text-xs font-semibold text-slate-500 uppercase">Stats</h4>
-          {Object.entries(item.stats).map(([stat, value]) => (
+          <h4 className="text-xs font-semibold text-slate-500 uppercase">{item.type === "food" ? "Effects" : "Stats"}</h4>
+          {Object.entries(item.stats).map(([stat, value]) => value ? (
             <div key={stat} className="flex justify-between text-sm">
               <span className="text-slate-600 capitalize">{stat === 'magicPower' ? 'Magic Power' : stat}</span>
               <span className="font-bold text-green-600">+{value}</span>
             </div>
-          ))}
+          ) : null)}
+          {item.restores && Object.entries(item.restores).map(([stat, value]) => value ? (
+            <div key={`restores-${stat}`} className="flex justify-between text-sm">
+              <span className="text-slate-600 capitalize">Restores {stat.toUpperCase()}</span>
+              <span className="font-bold text-green-600">{value}</span>
+            </div>
+          ) : null)}
         </div>
 
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={onToggleEquip}
-          className={`w-full py-3 rounded-lg font-bold ${item.equipped
-              ? "bg-red-100 text-red-700 hover:bg-red-200"
-              : "bg-green-100 text-green-700 hover:bg-green-200"
-            }`}
-        >
-          {item.equipped ? "UNEQUIP" : "EQUIP"}
-        </motion.button>
+        {item.type === "food" ? (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onConsumeFood}
+            className="w-full py-3 rounded-lg font-bold bg-green-100 text-green-700 hover:bg-green-200"
+          >
+            CONSUME
+          </motion.button>
+        ) : (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onToggleEquip}
+            className={`w-full py-3 rounded-lg font-bold ${item.equipped
+                ? "bg-red-100 text-red-700 hover:bg-red-200"
+                : "bg-green-100 text-green-700 hover:bg-green-200"
+              }`}
+          >
+            {item.equipped ? "UNEQUIP" : "EQUIP"}
+          </motion.button>
+        )}
       </motion.div>
     </motion.div>
   );

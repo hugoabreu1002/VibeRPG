@@ -1,9 +1,9 @@
 import { motion } from "framer-motion";
-import type { InventoryItem } from "../../types/game";
-import { WeaponIcon } from "./items/WeaponIcon";
-import { ArmorIcon } from "./items/ArmorIcon";
-import { HatIcon } from "./items/HatIcon";
-import { BootIcon } from "./items/BootIcon";
+import type { InventoryItem } from "../../../types/game";
+import { WeaponIcon } from "../items/WeaponIcon";
+import { ArmorIcon } from "../items/ArmorIcon";
+import { HatIcon } from "../items/HatIcon";
+import { BootIcon } from "../items/BootIcon";
 
 interface EquipmentSlotProps { 
   type: "weapon" | "armor" | "boot" | "hat"; 
