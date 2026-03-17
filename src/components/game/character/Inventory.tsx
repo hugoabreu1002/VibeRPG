@@ -1,13 +1,15 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { InventoryItem } from "../../types/game";
-import type { CharacterClass } from "../../lib/indexeddb";
+import type { InventoryItem } from "../../../types/game";
+import type { CharacterClass } from "../../../lib/indexeddb";
 import { EquipmentSlot } from "./EquipmentSlot";
-import { ItemDetailModal } from "./items/ItemDetailModal";
-import { WeaponIcon } from "./items/WeaponIcon";
-import { ArmorIcon } from "./items/ArmorIcon";
-import { HatIcon } from "./items/HatIcon";
-import { BootIcon } from "./items/BootIcon";
-import { Sprite } from "./Sprite";
+import { ItemDetailModal } from "../items/ItemDetailModal";
+import { WeaponIcon } from "../items/WeaponIcon";
+import { ArmorIcon } from "../items/ArmorIcon";
+import { HatIcon } from "../items/HatIcon";
+import { BootIcon } from "../items/BootIcon";
+import { FoodIcon } from "../items/FoodIcon";
+import { InventorySprite } from "./InventorySprite";
 
 const getRarityColor = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -32,14 +34,28 @@ interface InventoryProps {
   selectedItem: InventoryItem | null;
   onSelectItem: (item: InventoryItem | null) => void;
   onToggleEquip: (item: InventoryItem) => void;
+  onConsumeFood?: (item: InventoryItem) => void;
   characterClass?: CharacterClass;
 }
 
-export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, characterClass }: InventoryProps) {
+export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, characterClass }: InventoryProps) {
   const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
   const equippedHat = inventory.find(i => i.type === "hat" && i.equipped);
+
+  const equipments = inventory.filter(i => i.type !== "food");
+  const bagItems = inventory.filter(i => i.type === "food");
+
+  const [spriteAnimation, setSpriteAnimation] = useState<"idle" | "spell">("idle");
+
+  const handleConsume = (item: InventoryItem) => {
+    if (onConsumeFood) {
+      onConsumeFood(item);
+      setSpriteAnimation("spell");
+      setTimeout(() => setSpriteAnimation("idle"), 600);
+    }
+  };
 
   return (
     <motion.div
@@ -76,10 +92,9 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
           {/* Center: Character */}
           <div className="col-start-2 row-start-2 flex justify-center min-w-[64px] min-h-[64px]">
             {characterClass && (
-              <Sprite
+              <InventorySprite
                 characterClass={characterClass}
-                isPlayer={true}
-                animationType="idle"
+                animationType={spriteAnimation as any}
                 equippedWeapon={equippedWeapon}
                 equippedArmor={equippedArmor}
                 equippedBoot={equippedBoot}
@@ -110,24 +125,24 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
         </div>
       </div>
 
-      {/* Inventory Grid */}
-      <div>
-        <h3 className="text-sm font-semibold mb-3 text-slate-500 uppercase tracking-wide">All Items ({inventory.length})</h3>
+      {/* Equipments Grid */}
+      <div className="mb-6">
+        <h3 className="text-sm font-semibold mb-3 text-slate-500 uppercase tracking-wide">Equipments ({equipments.length})</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
-            {inventory.map((item, index) => (
+            {equipments.map((item, index) => (
               <motion.div
-                key={item.id}
+                key={`${item.id}-${index}`}
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, y: -2 }}
                 onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
                 className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${selectedItem?.id === item.id
-                    ? "border-indigo-500 bg-indigo-50"
-                    : item.equipped
-                      ? "border-green-400 bg-green-50"
-                      : `${getRarityColor(item.rarity)}/20 ${getRarityBg(item.rarity)}`
+                  ? "border-indigo-500 bg-indigo-50"
+                  : item.equipped
+                    ? "border-green-400 bg-green-50"
+                    : `${getRarityColor(item.rarity)}/20 ${getRarityBg(item.rarity)}`
                   }`}
               >
                 <div className="flex items-center gap-2 mb-2">
@@ -164,6 +179,50 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
         </div>
       </div>
 
+      {/* Bag / Food Grid */}
+      <div>
+        <h3 className="text-sm font-semibold mb-3 text-slate-500 uppercase tracking-wide">Bag ({bagItems.length})</h3>
+        {bagItems.length === 0 ? (
+          <p className="text-sm text-slate-500 italic">Your bag is empty.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <AnimatePresence>
+              {bagItems.map((item, index) => (
+                <motion.div
+                  key={`${item.id}-${index}`}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: index * 0.05 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
+                  className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${selectedItem?.id === item.id
+                    ? "border-indigo-500 bg-indigo-50"
+                    : `${getRarityColor(item.rarity)}/20 ${getRarityBg(item.rarity)}`
+                    }`}
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-8 h-8 rounded bg-slate-800 flex items-center justify-center">
+                      <FoodIcon foodId={item.id} size="w-6 h-6" />
+                    </div>
+                    <div className="flex-1">
+                      <span className="font-semibold text-sm">{item.name}</span>
+                    </div>
+                  </div>
+                  <div className="text-xs text-slate-500 capitalize mb-1">{item.type}</div>
+                  <div className="flex gap-1 flex-wrap">
+                    {item.restores && Object.entries(item.restores).map(([stat, value]) => (
+                      <span key={`restores-${stat}`} className="text-xs bg-green-100 text-green-700 font-medium px-1.5 py-0.5 rounded">
+                        Restores {stat.toUpperCase()}: {value}
+                      </span>
+                    ))}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+      </div>
+
       {/* Item Detail Modal */}
       <AnimatePresence>
         {selectedItem && (
@@ -171,6 +230,10 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
             item={selectedItem}
             onClose={() => onSelectItem(null)}
             onToggleEquip={() => onToggleEquip(selectedItem)}
+            onConsumeFood={onConsumeFood ? () => {
+              handleConsume(selectedItem);
+              onSelectItem(null);
+            } : undefined}
           />
         )}
       </AnimatePresence>

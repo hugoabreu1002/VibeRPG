@@ -13,6 +13,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Apprentice Staff",
           type: "weapon",
           rarity: "common",
+          price: 15,
           stats: { attack: 3, magicPower: 5 },
           equipped: true,
           description: "A basic staff for aspiring mages."
@@ -22,6 +23,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Novice Robe",
           type: "armor",
           rarity: "common",
+          price: 20,
           stats: { defense: 2, hp: 10 },
           equipped: true,
           description: "Simple robes worn by magic apprentices."
@@ -31,6 +33,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Apprentice Hat",
           type: "hat",
           rarity: "common",
+          price: 10,
           stats: { magicPower: 2 },
           equipped: true,
           description: "A simple pointed hat for magic apprentices."
@@ -40,6 +43,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Traveler's Boots",
           type: "boot",
           rarity: "common",
+          price: 12,
           stats: { hp: 5 },
           equipped: true,
           description: "Comfortable boots for long journeys."
@@ -52,6 +56,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Iron Sword",
           type: "weapon",
           rarity: "common",
+          price: 20,
           stats: { attack: 8, defense: 2 },
           equipped: true,
           description: "A sturdy iron sword for warriors."
@@ -61,6 +66,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Leather Armor",
           type: "armor",
           rarity: "common",
+          price: 25,
           stats: { defense: 5, hp: 15 },
           equipped: true,
           description: "Basic leather armor for beginners."
@@ -70,6 +76,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Warrior Helmet",
           type: "hat",
           rarity: "common",
+          price: 15,
           stats: { defense: 3 },
           equipped: true,
           description: "A sturdy helmet for protecting warriors in battle."
@@ -79,6 +86,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Combat Boots",
           type: "boot",
           rarity: "common",
+          price: 15,
           stats: { hp: 5, defense: 2 },
           equipped: true,
           description: "Durable boots for battle."
@@ -91,6 +99,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Holy Mace",
           type: "weapon",
           rarity: "common",
+          price: 18,
           stats: { attack: 5, magicPower: 3 },
           equipped: true,
           description: "A blessed mace for priests."
@@ -100,6 +109,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Priest's Robes",
           type: "armor",
           rarity: "common",
+          price: 22,
           stats: { defense: 3, magicPower: 5, hp: 10 },
           equipped: true,
           description: "Holy robes blessed with divine magic."
@@ -109,6 +119,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Priest's Hat",
           type: "hat",
           rarity: "common",
+          price: 12,
           stats: { magicPower: 3, hp: 5 },
           equipped: true,
           description: "A holy hat blessed with divine energy."
@@ -118,6 +129,7 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           name: "Holy Pendant",
           type: "boot",
           rarity: "common",
+          price: 15,
           stats: { hp: 10, magicPower: 3 },
           equipped: true,
           description: "A pendant imbued with holy energy."
@@ -136,6 +148,53 @@ export function getInitialCharacterStats(charClass: CharacterClass) {
       return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15 };
   }
 }
+
+export const SHOP_ITEMS: InventoryItem[] = [
+  {
+    id: "food-bread",
+    name: "Stale Bread",
+    type: "food",
+    rarity: "common",
+    price: 5,
+    stats: {},
+    restores: { hp: 15 },
+    equipped: false,
+    description: "Tough to chew, but it fills the stomach."
+  },
+  {
+    id: "food-milk",
+    name: "Fresh Milk",
+    type: "food",
+    rarity: "common",
+    price: 8,
+    stats: {},
+    restores: { mp: 20 },
+    equipped: false,
+    description: "A refreshing drink that restores magical energy."
+  },
+  {
+    id: "food-meat",
+    name: "Roasted Meat",
+    type: "food",
+    rarity: "common",
+    price: 15,
+    stats: {},
+    restores: { hp: 40 },
+    equipped: false,
+    description: "A hearty piece of meat that satisfies hunger."
+  },
+  {
+    id: "food-beer",
+    name: "Dwarven Beer",
+    type: "food",
+    rarity: "common",
+    price: 20,
+    stats: {},
+    restores: { hp: 20, mp: 20 },
+    equipped: false,
+    description: "A strong ale that vitalizes both body and mind."
+  }
+];
 
 // Quests data
 export const QUESTS: Quest[] = [

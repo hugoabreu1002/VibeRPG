@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, Enemy } from "../../../types/game";
 import type { CharacterClass } from "../animations/types";
-import { Sprite } from "../Sprite";
+import { BattleSprite } from "../battle/BattleSprite";
 
 interface QuestBattleProps {
   character: Character;
@@ -220,7 +220,7 @@ export function QuestBattle({
         {/* Player */}
         <div className="absolute left-8 bottom-8 flex flex-col items-center">
           <div className="transform scale-150 mb-6 mt-4">
-            <Sprite
+            <BattleSprite
               characterClass={character.class}
               playerName={character.name}
               isPlayer={true}
@@ -267,7 +267,7 @@ export function QuestBattle({
         {/* Enemy */}
         <div className="absolute right-8 bottom-8 flex flex-col items-center">
           <div className="transform scale-150 mb-6 mt-4">
-            <Sprite
+            <BattleSprite
               enemyName={enemy.name}
               isPlayer={false}
               animationType={enemyAnimation}

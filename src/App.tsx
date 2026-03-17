@@ -1,9 +1,9 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, type CharacterClass } from "./lib/indexeddb";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS } from "./lib/game-data";
+import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy } from "./types/game";
-import { Inventory, Quests, QuestBattle } from "./components/game";
+import { Inventory, Quests, QuestBattle, Shop } from "./components/game";
 import { getQuestEnemy } from "./lib/game-data";
 
 function statusBar(label: string, value: number, max: number) {
@@ -240,6 +240,46 @@ function App() {
           ? { ...i, equipped: false }
           : i
     ));
+  };
+
+  const handleConsumeFood = (item: InventoryItem) => {
+    if (!character || item.type !== "food" || !item.restores) return;
+    
+    // Remove one instance of this food from inventory
+    const newInventory = [...inventory];
+    const index = newInventory.findIndex(i => i.id === item.id);
+    if (index !== -1) {
+      newInventory.splice(index, 1);
+      setInventory(newInventory);
+    }
+    
+    // Apply stats
+    const restoreHp = item.restores.hp || 0;
+    const restoreMp = item.restores.mp || 0;
+    
+    setCharacter({
+      ...character,
+      hp: Math.min(character.maxHp, character.hp + restoreHp),
+      mp: Math.min(character.maxMp, character.mp + restoreMp)
+    });
+  };
+
+  const handleBuyItem = (item: InventoryItem) => {
+    if (!character || character.gold < item.price) return;
+    
+    // Deduct gold
+    setCharacter({
+      ...character,
+      gold: character.gold - item.price
+    });
+    
+    // Add item to inventory with a unique ID
+    const newItem = {
+      ...item,
+      id: `${item.id}-${Date.now()}`
+    };
+    
+    setInventory([...inventory, newItem]);
   };
 
   const submitCreate = async (e: FormEvent<HTMLFormElement>) => {
@@ -511,16 +551,18 @@ function App() {
                   selectedItem={selectedItem}
                   onSelectItem={setSelectedItem}
                   onToggleEquip={handleToggleEquip}
+                  onConsumeFood={handleConsumeFood}
                   characterClass={character.class}
                 />
               </div>
             )}
 
-            {activeTab === "Shop" && (
-              <div className="rounded-xl bg-white p-4 shadow-sm">
-                <h2 className="text-xl font-semibold mb-4">Shop</h2>
-                <p className="text-sm text-slate-600">The shop is coming soon! Keep completing quests to earn gold.</p>
-              </div>
+            {activeTab === "Shop" && character && (
+              <Shop 
+                gold={character.gold}
+                shopItems={SHOP_ITEMS}
+                onBuyItem={handleBuyItem}
+              />
             )}
 
             {activeTab === "Quests" && character && (

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sprite } from './Sprite';
-import type { CharacterClass, BattleAnimationType } from './animations/types';
+import { BattleSprite } from './BattleSprite';
+import type { CharacterClass, BattleAnimationType } from '../animations/types';
 
 interface Character {
   name: string;
@@ -109,7 +109,7 @@ export function BattleScene({
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Sprite
+        <BattleSprite
           characterClass={character.class}
           animationType={playerAnimation}
           isPlayer={true}
@@ -125,7 +125,7 @@ export function BattleScene({
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.5 }}
       >
-        <Sprite
+        <BattleSprite
           enemyName={enemy.name}
           animationType={enemyAnimation}
           isPlayer={false}
