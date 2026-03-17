@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import type { Character, Quest, QuestChoice, QuestState, QuestResult } from "../../types/game";
+import type { Character, Quest, QuestChoice, QuestState, QuestResult } from "../../../types/game";
 
 interface QuestsProps {
   character: Character;
@@ -13,16 +13,16 @@ interface QuestsProps {
   onResetQuest: () => void;
 }
 
-export function Quests({ 
-  character, 
-  quests, 
-  questState, 
-  activeQuest, 
-  questResult, 
+export function Quests({
+  character,
+  quests,
+  questState,
+  activeQuest,
+  questResult,
   completedQuests,
-  onStartQuest, 
-  onAttemptChoice, 
-  onResetQuest 
+  onStartQuest,
+  onAttemptChoice,
+  onResetQuest
 }: QuestsProps) {
   const availableQuests = quests.filter(
     q => q.class === character.class && q.minLevel <= character.level && !completedQuests.includes(q.id)
@@ -101,13 +101,13 @@ export function Quests({
           >
             ← Back to Quest List
           </motion.button>
-          
+
           <div className="border border-indigo-200 bg-indigo-50 rounded-lg p-4">
             <h3 className="font-semibold text-lg mb-2">{activeQuest.title}</h3>
             <p className="text-sm text-slate-600 mb-4">{activeQuest.description}</p>
-            
+
             <p className="text-sm font-medium mb-3">How will you approach this?</p>
-            
+
             <div className="space-y-2">
               {activeQuest.choices.map((choice, idx) => (
                 <motion.button
@@ -143,11 +143,10 @@ export function Quests({
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className={`rounded-lg p-6 text-center ${
-              questResult.success 
-                ? "bg-green-50 border border-green-200" 
+            className={`rounded-lg p-6 text-center ${questResult.success
+                ? "bg-green-50 border border-green-200"
                 : "bg-red-50 border border-red-200"
-            }`}
+              }`}
           >
             <motion.div
               initial={{ scale: 0 }}
@@ -157,15 +156,14 @@ export function Quests({
             >
               {questResult.success ? '🎉' : '😔'}
             </motion.div>
-            
-            <h3 className={`text-lg font-bold mb-2 ${
-              questResult.success ? "text-green-700" : "text-red-700"
-            }`}>
+
+            <h3 className={`text-lg font-bold mb-2 ${questResult.success ? "text-green-700" : "text-red-700"
+              }`}>
               {questResult.success ? "Quest Complete!" : "Quest Failed"}
             </h3>
-            
+
             <p className="text-sm text-slate-600 mb-4">{questResult.message}</p>
-            
+
             {questResult.success && (
               <div className="flex justify-center gap-4">
                 <motion.span
@@ -186,7 +184,7 @@ export function Quests({
               </div>
             )}
           </motion.div>
-          
+
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

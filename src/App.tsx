@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, type CharacterClass } from "./lib/indexeddb";
+import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, type CharacterClass } from "./lib/indexeddb";
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy } from "./types/game";
@@ -39,6 +39,7 @@ function App() {
   const [showCharacterSelect, setShowCharacterSelect] = useState(false);
   const [allCharacters, setAllCharacters] = useState<Character[]>([]);
   const [selectedChoice, setSelectedChoice] = useState<QuestChoice | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
   // Load all characters
   useEffect(() => {
@@ -46,6 +47,29 @@ function App() {
       setAllCharacters(chars);
     });
   }, []);
+
+  const handleDeleteCharacter = async (characterId: number) => {
+    if (!character) return;
+    
+    await deleteCharacter(characterId);
+    
+    // If we deleted the current character, switch to another one or clear state
+    if (character.id === characterId) {
+      const remainingChars = allCharacters.filter(c => c.id !== characterId);
+      if (remainingChars.length > 0) {
+        const newChar = remainingChars[0];
+        setCharacter(newChar);
+        setInventory(getStarterItems(newChar.class));
+      } else {
+        setCharacter(null);
+        setInventory(getStarterItems("mage"));
+      }
+    }
+    
+    // Update the list
+    setAllCharacters(allCharacters.filter(c => c.id !== characterId));
+    setShowDeleteConfirm(null);
+  };
 
   const startQuest = (quest: Quest) => {
     setActiveQuest(quest);
@@ -292,17 +316,19 @@ function App() {
                   <motion.div
                     key={char.id}
                     whileHover={{ scale: 1.02 }}
-                    className={`p-3 rounded-lg border-2 cursor-pointer ${
+                    className={`p-3 rounded-lg border-2 ${
                       character?.id === char.id ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-indigo-300"
                     }`}
-                    onClick={() => {
-                      setCharacter(char);
-                      setInventory(getStarterItems(char.class));
-                      setShowCharacterSelect(false);
-                    }}
                   >
                     <div className="flex items-center justify-between">
-                      <div>
+                      <div 
+                        className="flex-1 cursor-pointer"
+                        onClick={() => {
+                          setCharacter(char);
+                          setInventory(getStarterItems(char.class));
+                          setShowCharacterSelect(false);
+                        }}
+                      >
                         <span className="font-semibold">{char.name}</span>
                         <span className="text-xs text-slate-500 ml-2">
                           {char.class === 'mage' && '🔮'}
@@ -310,8 +336,16 @@ function App() {
                           {char.class === 'priest' && '⛑️'}
                           {char.class.toUpperCase()}
                         </span>
+                        <div className="text-xs text-slate-500 mt-1">Lv. {char.level}</div>
                       </div>
-                      <div className="text-xs text-slate-500">Lv. {char.level}</div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setShowDeleteConfirm(char.id)}
+                          className="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-2 py-1 rounded hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     </div>
                   </motion.div>
                 ))}
@@ -362,6 +396,49 @@ function App() {
                   </div>
                 </form>
               </div>
+
+              {/* Delete Confirmation Dialog */}
+              {showDeleteConfirm !== null && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                  onClick={() => setShowDeleteConfirm(null)}
+                >
+                  <motion.div
+                    initial={{ scale: 0.9, y: 20 }}
+                    animate={{ scale: 1, y: 0 }}
+                    exit={{ scale: 0.9, y: 20 }}
+                    className="bg-white rounded-xl p-6 max-w-md w-full"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h2 className="text-xl font-bold">Delete Character</h2>
+                      <button onClick={() => setShowDeleteConfirm(null)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                    </div>
+                    
+                    <p className="text-sm text-slate-600 mb-4">
+                      Are you sure you want to delete this character? This action cannot be undone.
+                    </p>
+                    
+                    <div className="flex gap-2 justify-end">
+                      <button
+                        onClick={() => setShowDeleteConfirm(null)}
+                        className="px-4 py-2 text-slate-600 border border-slate-300 rounded hover:bg-slate-50"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCharacter(showDeleteConfirm)}
+                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                      >
+                        Delete Character
+                      </button>
+                    </div>
+                  </motion.div>
+                </motion.div>
+              )}
             </motion.div>
           </motion.div>
         )}
