@@ -5,6 +5,7 @@ import { ArmorIcon } from "./ArmorIcon";
 import { HatIcon } from "./HatIcon";
 import { BootIcon } from "./BootIcon";
 import { FoodIcon } from "./FoodIcon";
+import { audioManager } from "../../../lib/audio";
 
 const getRarityColor = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -99,7 +100,10 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onConsumeFood}
+            onClick={() => {
+              onConsumeFood?.();
+              audioManager.playSfx("spell");
+            }}
             className="w-full py-3 rounded-lg font-bold bg-emerald-800 text-emerald-100 hover:bg-emerald-700 border border-emerald-700 transition-colors"
           >
             CONSUME
@@ -108,7 +112,10 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onToggleEquip}
+            onClick={() => {
+              onToggleEquip();
+              audioManager.playSfx("click");
+            }}
             className={`w-full py-3 rounded-lg font-bold transition-colors mb-3 ${item.equipped
                 ? "bg-red-900/60 text-red-300 hover:bg-red-800/60 border border-red-700/40"
                 : "btn-fantasy"
@@ -122,7 +129,10 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onSell}
+            onClick={() => {
+              onSell?.();
+              audioManager.playSfx("click");
+            }}
             className="w-full py-2.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition-colors flex items-center justify-center gap-2"
           >
             <span>SELL ITEM</span>
