@@ -7,29 +7,30 @@ A classic turn-based RPG set in a vibe coded world. Built with React and designe
 VibeRPG is structured as a single-page application (SPA). The architecture focuses on a fast, client-side first experience where most of the logic lives in the frontend:
 
 - **Frontend UI**: Built with React and Vite. Tailwind CSS handles the styling, while Framer Motion is used for smooth UI transitions and micro-animations.
-- **State & Data Persistence**: Active game state is heavily managed via React hooks. Character progression, inventory, and unlocked quests are persisted locally using **IndexedDB**.
+- **State & Data Persistence**: Active game state is persisted locally using **localStorage**, enabling seamless automatic synchronization and backups through the CrazyGames APS system.
 - **Game Engine**: Turn-based combat, quest progression, and shop systems are driven by client-side data modules. 
 
 *Note: This architecture is deliberately high-level and modular. As the game scales, the data layer can easily be abstracted to connect to a remote backend server and database.*
 
-## Screenshots
+## Visual Preview
 
 <div align="center">
-  <h3>Character Creation</h3>
-  <img src="demo/landing.png" width="400" alt="Character Creation" />
-  <br/>
-  <h3>Gameplay & Inventory</h3>
-  <img src="demo/gameplay.png" width="400" alt="Gameplay Overview" />
-  <br/>
-  <h3>Quest System</h3>
-  <img src="demo/quests.png" width="400" alt="Quests Menu" />
-  <br/>
-  <h3>Turn-Based Combat</h3>
-  <img src="demo/combat.png" width="400" alt="Combat Interface" />
-  <br/>
-  <h3>Shop System</h3>
-  <img src="demo/ui.png" width="400" alt="Shop Menu" />
+  <img src="demo/cover_landscape.png" width="800" alt="VibeRPG Landscape Cover" />
+  <div style="display: flex; gap: 10px; justify-content: center; margin-top: 10px;">
+    <img src="demo/cover_portrait.png" width="395" alt="VibeRPG Portrait" />
+    <img src="demo/cover_square.png" width="395" alt="VibeRPG Square" />
+  </div>
 </div>
+
+### Character Creation & Arrival
+
+<div align="center">
+  <img src="demo/gameplay_landing.png" width="800" alt="Character Creation Interface" />
+  <p><i>Start your journey by choosing your class and naming your hero.</i></p>
+</div>
+
+### Gameplay In Action
+[View Gameplay Demo Video (MP4)](demo/demo.mp4)
 
 ## About the Game
 

@@ -24,6 +24,7 @@ class AudioManager {
   private currentBgm: HTMLAudioElement | null = null;
   private bgmVolume: number = 0.5;
   private sfxVolume: number = 0.5;
+  private isMuted: boolean = false;
   private musicTracks: Record<MusicTrack, string> = {
     main: "https://www.soundjay.com/nature/sounds/river-1.mp3", // Temporary placeholder — ideally some actual BGM loop
     battle: "https://www.soundjay.com/nature/sounds/rain-01.mp3", // Placeholder
@@ -47,7 +48,7 @@ class AudioManager {
     if (!this.audioCtx) {
       this.audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
     }
-    if (this.audioCtx.state === 'suspended') {
+    if (this.audioCtx.state === 'suspended' && !this.isMuted) {
       this.audioCtx.resume();
     }
   }
@@ -68,7 +69,7 @@ class AudioManager {
 
     this.currentBgm = new Audio(this.realMusicTracks[track]);
     this.currentBgm.loop = true;
-    this.currentBgm.volume = this.bgmVolume;
+    this.updateBgmVolume();
     
     this.currentBgm.play().catch(e => console.warn("BGM Play failed:", e));
   }
@@ -82,8 +83,13 @@ class AudioManager {
 
   setBgmVolume(v: number) {
     this.bgmVolume = v;
+    this.updateBgmVolume();
+  }
+
+  private updateBgmVolume() {
     if (this.currentBgm) {
-      this.currentBgm.volume = v;
+      this.currentBgm.volume = this.isMuted ? 0 : this.bgmVolume;
+      this.currentBgm.muted = this.isMuted;
     }
   }
 
@@ -91,8 +97,22 @@ class AudioManager {
     this.sfxVolume = v;
   }
 
+  setMasterMute(muted: boolean) {
+    this.isMuted = muted;
+    this.updateBgmVolume();
+    
+    if (this.audioCtx) {
+      if (muted) {
+        this.audioCtx.suspend();
+      } else {
+        this.audioCtx.resume();
+      }
+    }
+  }
+
   // Synthesized Sound Effects (No assets needed!)
   playSfx(type: SoundEffect) {
+    if (this.isMuted) return;
     this.initContext();
     if (!this.audioCtx) return;
 

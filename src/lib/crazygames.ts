@@ -1,9 +1,3 @@
-/**
- * CrazyGames SDK Utility Service
- * Provides a clean interface for interacting with the CrazyGames SDK.
- * Docs: https://developer.crazygames.com/docs/sdk/v2/
- */
-
 export interface CrazyGamesSDK {
   ad: {
     requestAd: (type: 'midroll' | 'rewarded', callbacks: {
@@ -57,11 +51,9 @@ export const requestAd = (type: 'midroll' | 'rewarded', onStart?: () => void, on
 
   sdk.ad.requestAd(type, {
     adStarted: () => {
-      console.log('Ad started');
       onStart?.();
     },
     adFinished: () => {
-      console.log('Ad finished');
       onFinish?.();
     },
     adError: (error) => {

@@ -1,4 +1,4 @@
-import type { CharacterClass } from "./indexeddb";
+import type { CharacterClass } from "./storage";
 import type { InventoryItem, Quest, Enemy } from "../types/game";
 
 export const CHARACTER_CLASSES: CharacterClass[] = ["mage", "warrior", "priest"];

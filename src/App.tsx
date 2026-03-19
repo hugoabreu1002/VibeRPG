@@ -1,5 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/indexeddb";
+import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
@@ -84,10 +84,16 @@ function App() {
 
   // Audio initialization and BGM control
   useEffect(() => {
+    // Synchronize master mute with our local state
+    audioManager.setMasterMute(!isMusicEnabled);
+    
     if (isMusicEnabled) {
       audioManager.start();
       if (activeTab === "World Map" || activeTab === "Inventory" || activeTab === "Shop") {
         audioManager.playBgm("main");
+      } else if (activeTab === "Quests") {
+        // Handle battle bgm if quest is active? 
+        // For now just keep same logic
       }
     } else {
       audioManager.stopBgm();
@@ -95,11 +101,17 @@ function App() {
   }, [isMusicEnabled, activeTab]);
 
   const toggleMusic = () => {
-    if (!isMusicEnabled) {
+    const nextState = !isMusicEnabled;
+    setIsMusicEnabled(nextState);
+    
+    if (nextState) {
       audioManager.start();
+      audioManager.setMasterMute(false);
       audioManager.playSfx("click");
+    } else {
+      audioManager.setMasterMute(true);
+      audioManager.stopBgm();
     }
-    setIsMusicEnabled(!isMusicEnabled);
   };
   // Auto-save character
   useEffect(() => {
@@ -455,20 +467,36 @@ function App() {
           </motion.div>
 
           {/* Audio Controls */}
-          <div className="flex items-center gap-2 mr-auto ml-6">
+          <div className="flex items-center gap-3 mr-auto ml-6">
             <motion.button
-              whileHover={{ scale: 1.1 }}
+              whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleMusic}
-              className={`w-10 h-10 rounded-full flex items-center justify-center border ${
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${
                 isMusicEnabled 
-                  ? "bg-amber-500/20 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
-                  : "bg-slate-800/40 border-slate-700/50 text-slate-500"
-              } transition-all duration-300`}
-              title={isMusicEnabled ? "Disable Music" : "Enable Music"}
+                  ? "bg-gradient-to-br from-amber-400/30 to-amber-600/40 border-amber-400/60 text-amber-100 shadow-amber-500/30 animate-pulse-slow" 
+                  : "bg-slate-900/60 border-slate-700/50 text-slate-500 grayscale opacity-70"
+              }`}
+              title={isMusicEnabled ? "Mute All Sounds" : "Unmute All Sounds"}
             >
-              {isMusicEnabled ? "🔊" : "🔇"}
+              <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]">
+                {isMusicEnabled ? "🔊" : "🔇"}
+              </span>
+              
+              {isMusicEnabled && (
+                <motion.div 
+                  layoutId="sound-glow"
+                  className="absolute inset-0 rounded-2xl bg-amber-400/10 blur-md -z-10"
+                  animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
             </motion.button>
+            <span className={`text-[10px] font-black uppercase tracking-tighter hidden md:block transition-colors duration-500 ${
+              isMusicEnabled ? "text-amber-400" : "text-slate-600"
+            }`}>
+              {isMusicEnabled ? "Audio ON" : "Audio OFF"}
+            </span>
           </div>
 
           {character && (

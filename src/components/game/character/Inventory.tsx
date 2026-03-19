@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import type { InventoryItem } from "../../../types/game";
-import type { CharacterClass } from "../../../lib/indexeddb";
+import type { CharacterClass } from "../../../lib/storage";
 import { EquipmentSlot } from "./EquipmentSlot";
 import { ItemDetailModal } from "../items/ItemDetailModal";
 import { WeaponIcon } from "../items/WeaponIcon";

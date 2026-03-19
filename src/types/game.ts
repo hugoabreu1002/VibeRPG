@@ -1,4 +1,4 @@
-import type { CharacterClass } from "../lib/indexeddb";
+import type { CharacterClass } from "../lib/storage";
 export type { CharacterClass };
 
 export type Tab = "Inventory" | "World Map" | "Quests" | "Shop";
