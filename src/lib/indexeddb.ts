@@ -1,4 +1,6 @@
-export type CharacterClass = "mage" | "warrior" | "priest";
+import type { InventoryItem } from "../types/game";
+
+export type CharacterClass = "mage" | "warrior" | "priest" | "rogue";
 
 export interface Character {
   id: number;
@@ -16,6 +18,8 @@ export interface Character {
   attack: number;
   defense: number;
   magicPower: number;
+  skills: string[];
+  inventory: InventoryItem[];
 }
 
 const DB_NAME = "viberpg-indexeddb";

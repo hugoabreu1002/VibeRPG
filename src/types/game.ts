@@ -1,4 +1,5 @@
 import type { CharacterClass } from "../lib/indexeddb";
+export type { CharacterClass };
 
 export type Tab = "Inventory" | "World Map" | "Quests" | "Shop";
 
@@ -46,6 +47,8 @@ export interface QuestChoice {
   failureMessage: string;
   xpReward: number;
   goldReward: number;
+  rewardItemId?: string;
+  rewardSkill?: string;
 }
 
 export interface Quest {
@@ -69,6 +72,7 @@ export interface InventoryItem {
     defense?: number;
     magicPower?: number;
     hp?: number;
+    mp?: number;
   };
   restores?: {
     hp?: number;
@@ -94,6 +98,8 @@ export interface Character {
   defense: number;
   magicPower: number;
   xpToNext: number;
+  skills: string[];
+  inventory: InventoryItem[];
 }
 
 export interface QuestResult {
@@ -101,4 +107,6 @@ export interface QuestResult {
   message: string;
   xp: number;
   gold: number;
+  rewardItem?: InventoryItem;
+  rewardSkill?: string;
 }

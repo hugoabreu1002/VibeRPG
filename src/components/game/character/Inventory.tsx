@@ -44,10 +44,11 @@ interface InventoryProps {
   onSelectItem: (item: InventoryItem | null) => void;
   onToggleEquip: (item: InventoryItem) => void;
   onConsumeFood?: (item: InventoryItem) => void;
+  onSellItem?: (item: InventoryItem) => void;
   characterClass?: CharacterClass;
 }
 
-export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, characterClass }: InventoryProps) {
+export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, onSellItem, characterClass }: InventoryProps) {
   const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
@@ -241,6 +242,10 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
             onToggleEquip={() => onToggleEquip(selectedItem)}
             onConsumeFood={onConsumeFood ? () => {
               handleConsume(selectedItem);
+              onSelectItem(null);
+            } : undefined}
+            onSell={onSellItem ? () => {
+              onSellItem(selectedItem);
               onSelectItem(null);
             } : undefined}
           />

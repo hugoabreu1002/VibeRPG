@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Quest, QuestMapData, NPC, TileType } from "../../../types/game";
+import type { Quest, QuestMapData, NPC, TileType, InventoryItem, CharacterClass } from "../../../types/game";
+import { NPCSprite } from "../world/NPCSprites";
+import { InventorySprite } from "../character/InventorySprite";
 
-const TILE_SIZE = 32;
+const TILE_SIZE = 64;
 
 const TILE_COLORS: Record<TileType, { bg: string; border: string; icon?: string }> = {
   grass:    { bg: "#2D5016", border: "#1A3409", icon: undefined },
@@ -15,30 +17,88 @@ const TILE_COLORS: Record<TileType, { bg: string; border: string; icon?: string 
   lava:     { bg: "#9A1B0A", border: "#7C1508", icon: "🔥" },
 };
 
-const NPC_SPRITES: Record<string, { emoji: string; color: string }> = {
-  elder:    { emoji: "👴", color: "#F59E0B" },
-  villager: { emoji: "👤", color: "#6B7280" },
-  guard:    { emoji: "💂", color: "#3B82F6" },
-  merchant: { emoji: "🧑‍🌾", color: "#22C55E" },
-  wizard:   { emoji: "🧙", color: "#8B5CF6" },
-  knight:   { emoji: "🛡️", color: "#EF4444" },
-  priest:   { emoji: "⛪", color: "#F5F5F5" },
-  monster:  { emoji: "👹", color: "#DC2626" },
-  fairy:    { emoji: "🧚", color: "#EC4899" },
-  questgiver: { emoji: "❗", color: "#F59E0B" },
-};
-
 interface QuestMapProps {
   quest?: Quest;
   mapData: QuestMapData;
+  playerClass?: CharacterClass;
+  inventory?: InventoryItem[];
   onNPCInteract: (npc: NPC) => void;
   onBack: () => void;
 }
 
-export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProps) {
+export function QuestMap({ quest, mapData, playerClass = "warrior", inventory = [], onNPCInteract, onBack }: QuestMapProps) {
   const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
   const [dialogIndex, setDialogIndex] = useState(0);
   const [playerPos, setPlayerPos] = useState(mapData.playerStart);
+
+  const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
+  const equippedHat = inventory.find(i => i.type === "hat" && i.equipped);
+  const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
+  const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
+
+  const handleDialogAdvance = useCallback(() => {
+    if (!selectedNPC) return;
+    if (dialogIndex < selectedNPC.dialog.length - 1) {
+      setDialogIndex(dialogIndex + 1);
+    } else {
+      // Last dialog line — trigger quest interaction
+      onNPCInteract(selectedNPC);
+      setSelectedNPC(null);
+      setDialogIndex(0);
+    }
+  }, [selectedNPC, dialogIndex, onNPCInteract]);
+
+  const mapWidth = mapData.width * TILE_SIZE;
+  const mapHeight = mapData.height * TILE_SIZE;
+
+  // Keyboard movement and dialog interaction
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // If a dialog is open, 'Enter' advances it
+      if (selectedNPC) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          handleDialogAdvance();
+        }
+        return;
+      }
+
+      let nextX = playerPos.x;
+      let nextY = playerPos.y;
+
+      if (e.key === "ArrowUp") nextY--;
+      else if (e.key === "ArrowDown") nextY++;
+      else if (e.key === "ArrowLeft") nextX--;
+      else if (e.key === "ArrowRight") nextX++;
+      else if (e.key === "Enter") {
+        return;
+      } else return;
+
+      // Prevent scrolling the page
+      e.preventDefault();
+
+      // Check boundaries
+      if (nextX >= 0 && nextX < mapData.width && nextY >= 0 && nextY < mapData.height) {
+        const tile = mapData.tiles[nextY]?.[nextX];
+        
+        // Check for NPC at the new position
+        const npc = mapData.npcs.find(n => n.position.x === nextX && n.position.y === nextY);
+        if (npc) {
+          setSelectedNPC(npc);
+          setDialogIndex(0);
+          return;
+        }
+
+        // Collision check for terrain
+        if (tile && tile !== "water" && tile !== "mountain" && tile !== "lava") {
+          setPlayerPos({ x: nextX, y: nextY });
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [playerPos, selectedNPC, mapData, handleDialogAdvance]);
 
   const handleTileClick = (x: number, y: number) => {
     // Check if NPC is at this position
@@ -49,7 +109,7 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
       return;
     }
 
-    // Move player to adjacent tile if valid (path, grass, town)
+    // Move player to adjacent tile if valid
     const dx = Math.abs(x - playerPos.x);
     const dy = Math.abs(y - playerPos.y);
     if (dx + dy <= 2) {
@@ -60,53 +120,16 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
     }
   };
 
-  const handleDialogAdvance = () => {
-    if (!selectedNPC) return;
-    if (dialogIndex < selectedNPC.dialog.length - 1) {
-      setDialogIndex(dialogIndex + 1);
-    } else {
-      // Last dialog line — trigger quest interaction
-      onNPCInteract(selectedNPC);
-      setSelectedNPC(null);
-      setDialogIndex(0);
-    }
-  };
-
-  const mapWidth = mapData.width * TILE_SIZE;
-  const mapHeight = mapData.height * TILE_SIZE;
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="fantasy-card rounded-xl p-5"
     >
-      {/* Map Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>
-            🗺️ {mapData.name}
-          </h2>
-          {quest && <p className="text-xs text-slate-400 mt-1">📌 {quest.title}</p>}
-        </div>
-        {!mapData.name.includes("Hub") && (
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={onBack}
-            className="text-sm text-slate-400 hover:text-amber-300 transition-colors px-3 py-1.5 border border-slate-700/30 rounded-lg"
-          >
-            ← Back
-          </motion.button>
-        )}
-      </div>
-
-      <p className="text-sm text-slate-300 mb-4">{quest ? quest.description : "Explore the world and talk to NPCs to find new adventures."}</p>
-
       {/* Map Grid */}
-      <div className="flex justify-center mb-4">
+      <div className="flex justify-center mb-6">
         <div
-          className="relative rounded-xl overflow-hidden border-2 border-slate-700/50 shadow-xl"
+          className="relative rounded-xl overflow-hidden border-2 border-slate-700/50 shadow-xl shrink-0"
           style={{ width: mapWidth, height: mapHeight }}
         >
           {/* Render tiles */}
@@ -152,45 +175,42 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
           )}
 
           {/* Render NPCs */}
-          {mapData.npcs.map((npc) => {
-            const spriteInfo = NPC_SPRITES[npc.sprite] || NPC_SPRITES.villager;
-            return (
-              <motion.div
-                key={npc.id}
-                animate={{ y: [0, -2, 0] }}
-                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-                onClick={() => { setSelectedNPC(npc); setDialogIndex(0); }}
-                className="absolute cursor-pointer z-10 flex items-center justify-center"
-                style={{
-                  left: npc.position.x * TILE_SIZE,
-                  top: npc.position.y * TILE_SIZE,
-                  width: TILE_SIZE,
-                  height: TILE_SIZE,
-                }}
-                title={npc.name}
-              >
-                <div
-                  className="w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-lg border relative"
-                  style={{
-                    backgroundColor: `${spriteInfo.color}22`,
-                    borderColor: `${spriteInfo.color}66`,
-                    boxShadow: `0 0 8px ${spriteInfo.color}44`,
-                  }}
+          {mapData.npcs.map((npc) => (
+            <motion.div
+              key={npc.id}
+              onClick={() => { setSelectedNPC(npc); setDialogIndex(0); }}
+              className="absolute cursor-pointer z-10 flex items-center justify-center p-2"
+              style={{
+                left: npc.position.x * TILE_SIZE,
+                top: npc.position.y * TILE_SIZE,
+                width: TILE_SIZE,
+                height: TILE_SIZE,
+              }}
+              title={npc.name}
+            >
+              <div className="relative group flex flex-col items-center">
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-10 h-3 bg-black/40 rounded-[50%] blur-[3px] scale-x-150 transition-transform group-hover:scale-x-175" />
+                
+                <motion.div
+                  animate={{ y: [0, -8, 0] }}
+                  transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
+                  className="relative flex items-center justify-center w-full h-full filter drop-shadow-[0_8px_8px_rgba(0,0,0,0.6)]"
                 >
-                  {spriteInfo.emoji}
+                  <NPCSprite type={npc.sprite} className="w-12 h-12" />
+                  
                   {npc.questId && (
                     <motion.div
-                      animate={{ y: [0, -4, 0] }}
+                      animate={{ y: [-6, 6, -6] }}
                       transition={{ repeat: Infinity, duration: 1.5 }}
-                      className="absolute -top-4 text-xs font-bold text-amber-400 drop-shadow-[0_0_5px_rgba(245,158,11,0.8)]"
+                      className="absolute -top-10 text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-b from-amber-200 to-yellow-600 drop-shadow-[0_0_10px_#F59E0B]"
                     >
                       !
                     </motion.div>
                   )}
-                </div>
-              </motion.div>
-            );
-          })}
+                </motion.div>
+              </div>
+            </motion.div>
+          ))}
 
           {/* Player marker */}
           <motion.div
@@ -199,42 +219,35 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
               top: playerPos.y * TILE_SIZE,
             }}
             transition={{ type: "spring", stiffness: 200, damping: 20 }}
-            className="absolute z-20 flex items-center justify-center"
+            className="absolute z-20 flex items-center justify-center p-2"
             style={{ width: TILE_SIZE, height: TILE_SIZE }}
           >
-            <div className="w-6 h-6 rounded-full bg-amber-500 border-2 border-amber-300 flex items-center justify-center text-xs shadow-lg shadow-amber-500/40">
-              🧑
+            <div className="relative group flex flex-col items-center">
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-10 h-3 bg-amber-500/40 rounded-[50%] blur-[4px] scale-x-150 animate-pulse" />
+              
+              <motion.div
+                animate={{ y: [0, -4, 0] }}
+                transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+                className="relative flex items-center justify-center w-full h-full filter drop-shadow-[0_0_15px_rgba(245,158,11,0.5)]"
+              >
+                <div className="relative pt-6">
+                   <InventorySprite
+                     characterClass={playerClass}
+                     equippedWeapon={equippedWeapon}
+                     equippedHat={equippedHat}
+                     equippedArmor={equippedArmor}
+                     equippedBoot={equippedBoot}
+                   />
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         </div>
       </div>
 
-      {/* NPC Legend */}
-      <div className="flex flex-wrap gap-2 mb-4">
-        {mapData.npcs.map((npc) => {
-          const spriteInfo = NPC_SPRITES[npc.sprite] || NPC_SPRITES.villager;
-          return (
-            <motion.button
-              key={npc.id}
-              whileHover={{ scale: 1.05 }}
-              onClick={() => { setSelectedNPC(npc); setDialogIndex(0); }}
-              className="text-xs px-2 py-1 rounded-lg border transition-colors flex items-center gap-1"
-              style={{
-                borderColor: `${spriteInfo.color}44`,
-                backgroundColor: `${spriteInfo.color}11`,
-                color: spriteInfo.color,
-              }}
-            >
-              <span>{spriteInfo.emoji}</span>
-              <span>{npc.name}</span>
-            </motion.button>
-          );
-        })}
-      </div>
-
       {/* Hint */}
-      <p className="text-xs text-slate-500 text-center">
-        Click on NPCs to interact. Tap tiles to move your character.
+      <p className="text-xs text-slate-500 text-center mb-4">
+        Click or walk into NPCs to interact. Arrows to move, Enter to advance.
       </p>
 
       {/* NPC Dialog Overlay */}
@@ -255,25 +268,18 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
               onClick={(e) => e.stopPropagation()}
             >
               <div className="fantasy-card rounded-xl p-5">
-                {/* NPC Header */}
                 <div className="flex items-center gap-3 mb-3">
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center text-xl border-2"
-                    style={{
-                      borderColor: (NPC_SPRITES[selectedNPC.sprite] || NPC_SPRITES.villager).color,
-                      backgroundColor: `${(NPC_SPRITES[selectedNPC.sprite] || NPC_SPRITES.villager).color}22`,
-                    }}
-                  >
-                    {(NPC_SPRITES[selectedNPC.sprite] || NPC_SPRITES.villager).emoji}
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800/50 border border-slate-700/50 shadow-inner overflow-hidden uppercase">
+                    <NPCSprite type={selectedNPC.sprite} className="w-10 h-10" />
                   </div>
                   <div>
                     <h3 className="font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>
                       {selectedNPC.name}
                     </h3>
+                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest font-bold">NPC ({selectedNPC.sprite})</p>
                   </div>
                 </div>
 
-                {/* Dialog Text */}
                 <motion.p
                   key={dialogIndex}
                   initial={{ opacity: 0, x: 10 }}
@@ -283,7 +289,6 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
                   {selectedNPC.dialog[dialogIndex]}
                 </motion.p>
 
-                {/* Action */}
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">
                     {dialogIndex + 1} / {selectedNPC.dialog.length}
@@ -298,7 +303,7 @@ export function QuestMap({ quest, mapData, onNPCInteract, onBack }: QuestMapProp
                         : "btn-fantasy"
                     }`}
                   >
-                    {dialogIndex < selectedNPC.dialog.length - 1 ? "Continue ▶" : "Accept Quest ⚔️"}
+                    {dialogIndex < selectedNPC.dialog.length - 1 ? "Continue (Enter) ▶" : "Accept Quest (Enter) ⚔️"}
                   </motion.button>
                 </div>
               </div>

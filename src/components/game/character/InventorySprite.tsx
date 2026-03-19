@@ -1,37 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import type { CharacterClass } from '../../../lib/indexeddb';
-import type { InventoryItem } from '../../../types/game';
-
-// Generate pixel art colors based on class
-const getCharacterColors = (characterClass: CharacterClass) => {
-  switch (characterClass) {
-    case 'mage':
-      return {
-        primary: '#4B0082',
-        secondary: '#9370DB',
-        accent: '#00CED1',
-        skin: '#FFDDC1',
-        hair: '#2F1B0C',
-      };
-    case 'warrior':
-      return {
-        primary: '#8B0000',
-        secondary: '#CD5C5C',
-        accent: '#FFD700',
-        skin: '#DEB887',
-        hair: '#8B4513',
-      };
-    case 'priest':
-      return {
-        primary: '#FFFFFF',
-        secondary: '#F5F5F5',
-        accent: '#FFD700',
-        skin: '#FFE4C4',
-        hair: '#F5DEB3',
-      };
-  }
-};
+import type { CharacterClass, InventoryItem } from '../../../types/game';
+import { getCharacterColors } from '../../../lib/character-utils';
 
 interface InventorySpriteProps {
   characterClass: CharacterClass;

@@ -29,9 +29,10 @@ interface ItemDetailModalProps {
   onClose: () => void;
   onToggleEquip: () => void;
   onConsumeFood?: () => void;
+  onSell?: () => void;
 }
 
-export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood }: ItemDetailModalProps) {
+export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, onSell }: ItemDetailModalProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -94,7 +95,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood }:
           ) : null)}
         </div>
 
-        {item.type === "food" ? (
+        {(item.type === "food" ? (
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -108,14 +109,29 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood }:
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={onToggleEquip}
-            className={`w-full py-3 rounded-lg font-bold transition-colors ${item.equipped
+            className={`w-full py-3 rounded-lg font-bold transition-colors mb-3 ${item.equipped
                 ? "bg-red-900/60 text-red-300 hover:bg-red-800/60 border border-red-700/40"
                 : "btn-fantasy"
               }`}
           >
             {item.equipped ? "UNEQUIP" : "EQUIP"}
           </motion.button>
+        ))}
+
+        {onSell && (
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onSell}
+            className="w-full py-2.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition-colors flex items-center justify-center gap-2"
+          >
+            <span>SELL ITEM</span>
+            <span className="text-amber-500 font-mono text-sm leading-none bg-amber-950/40 px-2 py-1 rounded border border-amber-900/30">
+              💰 {Math.floor((item.price || 10) / 2)}
+            </span>
+          </motion.button>
         )}
+
       </motion.div>
     </motion.div>
   );

@@ -141,11 +141,11 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
 export function getInitialCharacterStats(charClass: CharacterClass) {
   switch (charClass) {
     case "mage":
-      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20 };
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, skills: ["bolt", "defend", "flee"] };
     case "warrior":
-      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5 };
+      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, skills: ["slash", "defend", "flee"] };
     case "priest":
-      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15 };
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, skills: ["smite", "defend", "flee"] };
   }
 }
 
@@ -195,6 +195,82 @@ export const SHOP_ITEMS: InventoryItem[] = [
     description: "A strong ale that vitalizes both body and mind."
   }
 ];
+
+export const REWARD_ITEMS: InventoryItem[] = [
+  {
+    id: "mystic-ring",
+    name: "Amulet of Eternity",
+    type: "hat",
+    rarity: "epic",
+    price: 350,
+    stats: { magicPower: 22, mp: 60, defense: 5 },
+    equipped: false,
+    description: "An ancient jewelry piece that pulses with the heartbeat of the cosmos."
+  },
+  {
+    id: "steel-buckler",
+    name: "Aegis of the Vanguard",
+    type: "armor",
+    rarity: "epic",
+    price: 480,
+    stats: { defense: 35, hp: 120 },
+    equipped: false,
+    description: "A shield forged from the scales of a celestial dragon."
+  },
+  {
+    id: "silver-dagger",
+    name: "Blade of Whispers",
+    type: "weapon",
+    rarity: "epic",
+    price: 450,
+    stats: { attack: 42, magicPower: 10 },
+    equipped: false,
+    description: "A silent, ethereal blade that seems to phase through armor."
+  },
+  {
+    id: "holy-relic",
+    name: "Sunlord's Halo",
+    type: "hat",
+    rarity: "epic",
+    price: 400,
+    stats: { magicPower: 28, hp: 80, defense: 12 },
+    equipped: false,
+    description: "A crown of pure sunlight that blinds those who would strike you."
+  },
+  {
+    id: "fire-staff",
+    name: "Pheonix's Core",
+    type: "weapon",
+    rarity: "legendary",
+    price: 1200,
+    stats: { magicPower: 65, attack: 15, mp: 150 },
+    equipped: false,
+    description: "The heat radiating from this staff can ignite the very air."
+  },
+  {
+    id: "knight-armor",
+    name: "Dreadnought Plate",
+    type: "armor",
+    rarity: "legendary",
+    price: 1500,
+    stats: { defense: 75, hp: 250, attack: 10 },
+    equipped: false,
+    description: "A colossal set of armor that makes you feel like an immovable object."
+  },
+  {
+    id: "divine-robes",
+    name: "Ether-Woven Regalia",
+    type: "armor",
+    rarity: "legendary",
+    price: 1400,
+    stats: { defense: 35, magicPower: 70, hp: 180, mp: 100 },
+    equipped: false,
+    description: "Robes that bleed between realities, granting near-infinite magical flow."
+  }
+];
+
+
+export const ALL_ITEMS = [...SHOP_ITEMS, ...REWARD_ITEMS];
 
 // ============================================================
 // ENEMIES - 30+ unique enemies organized by category
@@ -481,7 +557,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Your dispel magic works! The barrier shatters and the librarian is freed.",
         failureMessage: "Your magic fizzles against the barrier. The wild magic is too strong!",
         xpReward: 50,
-        goldReward: 25
+        goldReward: 25,
+        rewardItemId: "mystic-ring"
       },
       {
         text: "Use Sense Magic to find the source",
@@ -518,7 +595,8 @@ export const QUESTS: Quest[] = [
         successMessage: "You sense the apprentice's magical aura nearby! They're trapped in a magical bramble.",
         failureMessage: "The forest's natural magic interferes with your senses. You find nothing.",
         xpReward: 40,
-        goldReward: 20
+        goldReward: 20,
+        rewardSkill: "fireball"
       },
       {
         text: "Cast an illusion to lure them out",
@@ -611,7 +689,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Your superior magical knowledge wins the duel! The dark mage surrenders!",
         failureMessage: "The dark mage's forbidden spells prove too powerful!",
         xpReward: 120,
-        goldReward: 70
+        goldReward: 70,
+        rewardItemId: "fire-staff"
       },
       {
         text: "Dismantle the tower's magical defenses",
@@ -640,7 +719,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Your fierce fighting scares off the bandits! The village is safe.",
         failureMessage: "There are too many bandits! You hold them off but they pillage some houses.",
         xpReward: 50,
-        goldReward: 25
+        goldReward: 25,
+        rewardItemId: "silver-dagger"
       },
       {
         text: "Lead a charge to scatter them",
@@ -668,7 +748,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Your powerful strikes overwhelm the knight! You win the duel!",
         failureMessage: "The knight is more skilled than expected. You lose the duel.",
         xpReward: 70,
-        goldReward: 40
+        goldReward: 40,
+        rewardSkill: "strike"
       },
       {
         text: "Use tactical defense and counter-attacks",
@@ -752,7 +833,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Your blade finds the gap in the wyvern's scales! It falls defeated!",
         failureMessage: "The wyvern's flames nearly incinerate you! You retreat badly burned!",
         xpReward: 130,
-        goldReward: 75
+        goldReward: 75,
+        rewardItemId: "knight-armor"
       },
       {
         text: "Use the terrain to your advantage",
@@ -781,7 +863,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Your holy magic cures the villagers! They recover quickly.",
         failureMessage: "The plague is stronger than your magic. More people fall ill!",
         xpReward: 50,
-        goldReward: 25
+        goldReward: 25,
+        rewardItemId: "holy-relic"
       },
       {
         text: "Search for medicinal herbs in the forest",
@@ -827,7 +910,8 @@ export const QUESTS: Quest[] = [
         successMessage: "Through compassionate listening, you learn of its unfinished business. You help complete it.",
         failureMessage: "The spirit cannot communicate. It remains restless!",
         xpReward: 40,
-        goldReward: 20
+        goldReward: 20,
+        rewardSkill: "holy"
       }
     ]
   },
@@ -902,7 +986,8 @@ export const QUESTS: Quest[] = [
         successMessage: "With an explosion of holy light, you seal the portal forever!",
         failureMessage: "The demonic energy is overwhelming! The portal resists!",
         xpReward: 130,
-        goldReward: 70
+        goldReward: 70,
+        rewardItemId: "divine-robes"
       },
       {
         text: "Confront the demon gatekeeper",

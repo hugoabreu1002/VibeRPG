@@ -1,37 +1,9 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { CharacterClass, BattleAnimationType } from '../animations/types';
+import type { InventoryItem } from '../../../types/game';
 import { EnemySpriteBody } from './EnemySprites';
-
-// Generate pixel art colors based on class
-const getCharacterColors = (characterClass: CharacterClass) => {
-  switch (characterClass) {
-    case 'mage':
-      return {
-        primary: '#4B0082',
-        secondary: '#9370DB',
-        accent: '#00CED1',
-        skin: '#FFDDC1',
-        hair: '#2F1B0C',
-      };
-    case 'warrior':
-      return {
-        primary: '#8B0000',
-        secondary: '#CD5C5C',
-        accent: '#FFD700',
-        skin: '#DEB887',
-        hair: '#8B4513',
-      };
-    case 'priest':
-      return {
-        primary: '#FFFFFF',
-        secondary: '#F5F5F5',
-        accent: '#FFD700',
-        skin: '#FFE4C4',
-        hair: '#F5DEB3',
-      };
-  }
-};
+import { InventorySprite } from '../character/InventorySprite';
 
 interface BattleSpriteProps {
   characterClass?: CharacterClass;
@@ -42,6 +14,7 @@ interface BattleSpriteProps {
   isPlayer?: boolean;
   hp?: number;
   maxHp?: number;
+  inventory?: InventoryItem[];
 }
 
 export function BattleSprite({
@@ -53,6 +26,7 @@ export function BattleSprite({
   isPlayer = true,
   hp,
   maxHp,
+  inventory,
 }: BattleSpriteProps) {
   const [frame, setFrame] = useState(0);
 
@@ -65,8 +39,7 @@ export function BattleSprite({
     return () => clearInterval(interval);
   }, [animationType]);
 
-  const playerColors = characterClass ? getCharacterColors(characterClass) : null;
-  const isPlayerCharacter = isPlayer && characterClass;
+  const isPlayerCharacter = isPlayer && !!characterClass;
 
   // Animation variants
   const idleVariants = {
@@ -144,39 +117,32 @@ export function BattleSprite({
       className="relative flex flex-col items-center"
     >
       {/* Name label */}
-      <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-mono font-bold text-amber-200 drop-shadow-md">
+      <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-black tracking-widest uppercase text-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] bg-black/20 px-2 py-0.5 rounded-full border border-amber-500/10">
         {displayName}
       </div>
 
       {/* Character SVG */}
-      <svg
-        width="64"
-        height="64"
-        viewBox="-24 -24 48 48"
-        className="overflow-visible"
-        style={{ transform: `translateY(${bobOffset}px)` }}
-      >
-        {isPlayerCharacter && playerColors ? (
-          <g>
-            {/* Body/Robe */}
-            <rect x="-12" y="0" width="24" height="32" fill={playerColors.primary} />
-            {/* Secondary */}
-            <rect x="-10" y="2" width="20" height="28" fill={playerColors.secondary} />
-            {/* Accent */}
-            <rect x="-8" y="4" width="16" height="2" fill={playerColors.accent} />
-            <rect x="-6" y="20" width="12" height="2" fill={playerColors.accent} />
-            {/* Head */}
-            <rect x="-8" y="-16" width="16" height="16" fill={playerColors.skin} />
-            {/* Hair */}
-            <rect x="-10" y="-20" width="20" height="6" fill={playerColors.hair} />
-            {/* Eyes */}
-            <rect x="-5" y="-12" width="3" height="3" fill="#000" />
-            <rect x="2" y="-12" width="3" height="3" fill="#000" />
-          </g>
+      <div className="relative pt-8">
+        {isPlayerCharacter ? (
+          <InventorySprite
+            characterClass={characterClass}
+            animationType={animationType === 'spell' ? 'spell' : 'idle'}
+            equippedWeapon={inventory?.find(i => i.type === 'weapon' && i.equipped)}
+            equippedHat={inventory?.find(i => i.type === 'hat' && i.equipped)}
+            equippedArmor={inventory?.find(i => i.type === 'armor' && i.equipped)}
+          />
         ) : (
-          <EnemySpriteBody sprite={enemySprite || 'default'} />
+          <svg
+            width="64"
+            height="64"
+            viewBox="-24 -24 48 48"
+            className="overflow-visible"
+            style={{ transform: `translateY(${bobOffset}px)` }}
+          >
+            <EnemySpriteBody sprite={enemySprite || 'default'} />
+          </svg>
         )}
-      </svg>
+      </div>
 
       {/* Health bar */}
       {hp !== undefined && maxHp !== undefined && (

@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
-import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, type CharacterClass } from "./lib/indexeddb";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS } from "./lib/game-data";
+import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/indexeddb";
+import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
@@ -11,6 +11,7 @@ const CLASS_ICONS: Record<CharacterClass, string> = {
   mage: "🔮",
   warrior: "⚔️",
   priest: "✝️",
+  rogue: "🗡️",
 };
 
 function statusBar(label: string, value: number, max: number, type: "hp" | "mp" | "xp" | "attack" = "hp") {
@@ -40,7 +41,7 @@ function statusBar(label: string, value: number, max: number, type: "hp" | "mp" 
         <span className="text-amber-200/80">{labelIcons[type]} {label}</span>
         <span className="text-slate-300 font-mono">{value}/{max}</span>
       </div>
-      <div className={`h-2.5 rounded-full ${bgColors[type]} overflow-hidden border border-white/5`}>
+      <div className={`h-6 rounded-full ${bgColors[type]} overflow-hidden border border-white/5 shadow-inner shadow-black/30`}>
         <motion.div
           className={`h-full rounded-full bg-gradient-to-r ${gradients[type]}`}
           initial={{ width: 0 }}
@@ -58,7 +59,7 @@ function App() {
   const [createClass, setCreateClass] = useState<CharacterClass>("mage");
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [inventory, setInventory] = useState<InventoryItem[]>(getStarterItems("mage"));
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   
   // Quest state
@@ -78,6 +79,16 @@ function App() {
       setAllCharacters(chars);
     });
   }, []);
+  
+  // Auto-save character
+  useEffect(() => {
+    if (character) {
+      dbUpdateCharacter({
+        ...character,
+        inventory: inventory // Ensure inventory state is saved with character
+      });
+    }
+  }, [character, inventory]);
 
   const handleDeleteCharacter = async (characterId: number) => {
     if (!character) return;
@@ -136,10 +147,28 @@ function App() {
       const newXp = character.xp + choice.xpReward;
       const newGold = character.gold + choice.goldReward;
       
+      // Handle item reward
+      let rewardedItem: InventoryItem | undefined;
+      if (choice.rewardItemId) {
+        const itemTemplate = ALL_ITEMS.find(i => i.id === choice.rewardItemId);
+        if (itemTemplate) {
+          rewardedItem = { ...itemTemplate, id: `${itemTemplate.id}-${Date.now()}` };
+          setInventory(prev => [...prev, rewardedItem!]);
+        }
+      }
+
+      // Handle skill reward
+      const newSkills = [...character.skills];
+      if (choice.rewardSkill && !newSkills.includes(choice.rewardSkill)) {
+        newSkills.push(choice.rewardSkill);
+      }
+
       setCharacter({
         ...character,
         xp: newXp,
         gold: newGold,
+        skills: newSkills,
+        inventory: rewardedItem ? [...inventory, rewardedItem] : inventory,
         ...(newXp >= character.xpToNext ? {
           level: character.level + 1,
           xp: newXp - character.xpToNext,
@@ -157,7 +186,9 @@ function App() {
         success: true,
         message,
         xp: choice.xpReward,
-        gold: choice.goldReward
+        gold: choice.goldReward,
+        rewardItem: rewardedItem,
+        rewardSkill: choice.rewardSkill
       });
     } else {
       message += choice.failureMessage;
@@ -183,10 +214,28 @@ function App() {
     const newXp = character.xp + xp + selectedChoice.xpReward;
     const newGold = character.gold + gold + selectedChoice.goldReward;
     
+    // Handle item reward
+    let rewardedItem: InventoryItem | undefined;
+    if (selectedChoice.rewardItemId) {
+      const itemTemplate = ALL_ITEMS.find(i => i.id === selectedChoice.rewardItemId);
+      if (itemTemplate) {
+        rewardedItem = { ...itemTemplate, id: `${itemTemplate.id}-${Date.now()}` };
+        setInventory(prev => [...prev, rewardedItem!]);
+      }
+    }
+
+    // Handle skill reward
+    const newSkills = [...character.skills];
+    if (selectedChoice.rewardSkill && !newSkills.includes(selectedChoice.rewardSkill)) {
+      newSkills.push(selectedChoice.rewardSkill);
+    }
+
     setCharacter({
       ...character,
       xp: newXp,
       gold: newGold,
+      skills: newSkills,
+      inventory: rewardedItem ? [...inventory, rewardedItem] : inventory,
       ...(newXp >= character.xpToNext ? {
         level: character.level + 1,
         xp: newXp - character.xpToNext,
@@ -204,7 +253,9 @@ function App() {
       success: true,
       message: `🎉 Victory! ${selectedChoice.successMessage}\n\n+${xp + selectedChoice.xpReward} XP • +${gold + selectedChoice.goldReward} Gold`,
       xp: xp + selectedChoice.xpReward,
-      gold: gold + selectedChoice.goldReward
+      gold: gold + selectedChoice.goldReward,
+      rewardItem: rewardedItem,
+      rewardSkill: selectedChoice.rewardSkill
     });
     
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
@@ -256,9 +307,14 @@ function App() {
 
   useEffect(() => {
     getCurrentCharacter().then((char) => {
-      setCharacter(char);
       if (char) {
-        setInventory(getStarterItems(char.class));
+        const enrichedChar = {
+          ...char,
+          skills: char.skills || getInitialCharacterStats(char.class).skills,
+          inventory: char.inventory || getStarterItems(char.class)
+        };
+        setCharacter(enrichedChar);
+        setInventory(enrichedChar.inventory);
       }
       setIsLoading(false);
     });
@@ -314,6 +370,24 @@ function App() {
     setInventory([...inventory, newItem]);
   };
 
+  const handleSellItem = (item: InventoryItem) => {
+    if (!character) return;
+    
+    // Calculate sell price (50% of original price)
+    const sellPrice = Math.floor((item.price || 10) / 2);
+    
+    // Add gold
+    const newGold = character.gold + sellPrice;
+    setCharacter({
+      ...character,
+      gold: newGold,
+      inventory: inventory.filter(i => i.id !== item.id) // Also update character.inventory
+    });
+    
+    // Remove from inventory state
+    setInventory(prev => prev.filter(i => i.id !== item.id));
+  };
+
   const submitCreate = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!createName.trim()) return;
@@ -326,6 +400,8 @@ function App() {
       xp: 0,
       gold: 100,
       xpToNext: 100,
+      inventory: getStarterItems(createClass),
+      skills: getInitialCharacterStats(createClass).skills,
       ...stats,
     };
 
@@ -344,7 +420,7 @@ function App() {
     <div className="min-h-screen bg-background text-foreground ambient-particles">
       {/* Fantasy Header */}
       <header className="fantasy-header px-4 md:px-8 py-3 mb-6 relative">
-        <div className="mx-auto max-w-6xl flex items-center justify-between">
+        <div className="mx-auto max-w-7xl flex items-center justify-between">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -483,6 +559,8 @@ function App() {
                     xp: 0,
                     gold: 100,
                     xpToNext: 100,
+                    inventory: getStarterItems(createClass),
+                    skills: getInitialCharacterStats(createClass).skills,
                     ...stats,
                   };
                   const created = await dbCreateCharacter(newCharacter);
@@ -630,9 +708,9 @@ function App() {
             </motion.div>
           </main>
         ) : (
-          <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-12">
+          <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-12">
             {/* Sidebar */}
-            <aside className="lg:col-span-3 space-y-4">
+            <aside className="lg:col-span-2 space-y-4">
               {/* Navigation */}
               <div className="fantasy-card rounded-xl p-4">
                 <h2 className="text-sm font-bold text-amber-200/70 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Navigation</h2>
@@ -670,7 +748,7 @@ function App() {
             </aside>
 
             {/* Main Content */}
-            <section className="lg:col-span-9 space-y-4">
+            <section className="lg:col-span-10 space-y-4">
               {activeTab === "Inventory" && (
                 <div className="space-y-4">
                   <Inventory
@@ -679,6 +757,7 @@ function App() {
                     onSelectItem={setSelectedItem}
                     onToggleEquip={handleToggleEquip}
                     onConsumeFood={handleConsumeFood}
+                    onSellItem={handleSellItem}
                     characterClass={character.class}
                   />
                 </div>
@@ -699,6 +778,8 @@ function App() {
                     return mapData && (
                       <QuestMap
                         mapData={mapData}
+                        playerClass={character.class}
+                        inventory={inventory}
                         onNPCInteract={(npc: NPC) => {
                           if (npc.questId) {
                             const quest = QUESTS.find(q => q.id === npc.questId);
@@ -733,6 +814,8 @@ function App() {
                         <QuestMap
                           quest={activeQuest}
                           mapData={mapData}
+                          playerClass={character.class}
+                          inventory={inventory}
                           onNPCInteract={(npc: NPC) => {
                             // If NPC on quest map has a quest, it might be the objective
                             setQuestState("active");

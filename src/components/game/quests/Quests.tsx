@@ -1,5 +1,10 @@
 import { motion } from "framer-motion";
-import type { Character, Quest, QuestChoice, QuestState, QuestResult } from "../../../types/game";
+import type { Character, Quest, QuestChoice, QuestState, QuestResult, InventoryItem } from "../../../types/game";
+import { WeaponIcon } from "../items/WeaponIcon";
+import { ArmorIcon } from "../items/ArmorIcon";
+import { HatIcon } from "../items/HatIcon";
+import { BootIcon } from "../items/BootIcon";
+import { SkillIcon } from "../battle/SkillIcons";
 
 interface QuestsProps {
   character: Character;
@@ -226,22 +231,69 @@ export function Quests({
             <p className="text-sm text-slate-400 mb-4">{questResult.message}</p>
 
             {questResult.success && (
-              <div className="flex justify-center gap-4">
-                <motion.span
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-emerald-950/50 text-emerald-400 px-3 py-1 rounded-full text-sm border border-emerald-700/30"
-                >
-                  +{questResult.xp} XP
-                </motion.span>
-                <motion.span
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                  className="bg-amber-950/40 text-amber-400 px-3 py-1 rounded-full text-sm border border-amber-700/30"
-                >
-                  +{questResult.gold} Gold
-                </motion.span>
+              <div className="space-y-4">
+                <div className="flex justify-center gap-4">
+                  <motion.span
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-emerald-950/50 text-emerald-400 px-3 py-1 rounded-full text-sm border border-emerald-700/30"
+                  >
+                    +{questResult.xp} XP
+                  </motion.span>
+                  <motion.span
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="bg-amber-950/40 text-amber-400 px-3 py-1 rounded-full text-sm border border-amber-700/30"
+                  >
+                    +{questResult.gold} Gold
+                  </motion.span>
+                </div>
+
+                {/* Reward Item */}
+                {questResult.rewardItem && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.2 }}
+                    className="mt-4 p-4 rounded-xl bg-slate-900/60 border border-amber-500/30 max-w-xs mx-auto text-center"
+                  >
+                    <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-3 leading-none">New Equipment Acquired!</p>
+                    <div className="flex items-center gap-3 justify-center">
+                      <div className="w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner">
+                        {questResult.rewardItem.type === "weapon" && <WeaponIcon weaponId={questResult.rewardItem.id} size="w-8 h-8" />}
+                        {questResult.rewardItem.type === "armor" && <ArmorIcon armorId={questResult.rewardItem.id} size="w-8 h-8" />}
+                        {questResult.rewardItem.type === "hat" && <HatIcon hatId={questResult.rewardItem.id} size="w-8 h-8" />}
+                        {questResult.rewardItem.type === "boot" && <BootIcon bootId={questResult.rewardItem.id} size="w-8 h-8" />}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-amber-100 leading-tight">{questResult.rewardItem.name}</p>
+                        <p className="text-[10px] text-amber-500/80 capitalize">{questResult.rewardItem.rarity} {questResult.rewardItem.type}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Reward Skill */}
+                {questResult.rewardSkill && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: 0.3 }}
+                    className="mt-4 p-4 rounded-xl bg-slate-900/60 border border-blue-500/30 max-w-xs mx-auto text-center"
+                  >
+                    <p className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest mb-3 leading-none">New Skill Learned!</p>
+                    <div className="flex items-center gap-3 justify-center">
+                      <div className="w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner">
+                        <SkillIcon skill={questResult.rewardSkill as any} className="w-8 h-8" />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-sm font-bold text-blue-100 leading-tight capitalize">{questResult.rewardSkill}</p>
+                        <p className="text-[10px] text-blue-400/80">Skill Unlocked</p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
             )}
           </motion.div>
