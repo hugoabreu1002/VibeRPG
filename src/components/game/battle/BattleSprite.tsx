@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import type { CharacterClass, BattleAnimationType } from '../animations/types';
+import { EnemySpriteBody } from './EnemySprites';
 
 // Generate pixel art colors based on class
 const getCharacterColors = (characterClass: CharacterClass) => {
@@ -32,30 +33,10 @@ const getCharacterColors = (characterClass: CharacterClass) => {
   }
 };
 
-const getEnemyColors = (enemyName: string) => {
-  if (enemyName.includes('Construct')) {
-    return { primary: '#708090', secondary: '#B0C4DE', accent: '#00FFFF' };
-  } else if (enemyName.includes('Undead')) {
-    return { primary: '#2F4F4F', secondary: '#556B2F', accent: '#00FF00' };
-  } else if (enemyName.includes('Mirror')) {
-    return { primary: '#E6E6FA', secondary: '#D8BFD8', accent: '#FF69B4' };
-  } else if (enemyName.includes('Pupil')) {
-    return { primary: '#4B0082', secondary: '#8A2BE2', accent: '#FF4500' };
-  } else if (enemyName.includes('Guardian')) {
-    return { primary: '#8B4513', secondary: '#A0522D', accent: '#FFA500' };
-  } else if (enemyName.includes('Shade')) {
-    return { primary: '#191970', secondary: '#4169E1', accent: '#00BFFF' };
-  } else if (enemyName.includes('Demon')) {
-    return { primary: '#8B0000', secondary: '#FF4500', accent: '#FFD700' };
-  } else if (enemyName.includes('Elemental')) {
-    return { primary: '#4B0082', secondary: '#9400D3', accent: '#00FF7F' };
-  }
-  return { primary: '#333333', secondary: '#666666', accent: '#FFFFFF' };
-};
-
 interface BattleSpriteProps {
   characterClass?: CharacterClass;
   enemyName?: string;
+  enemySprite?: string;
   playerName?: string;
   animationType?: BattleAnimationType;
   isPlayer?: boolean;
@@ -66,6 +47,7 @@ interface BattleSpriteProps {
 export function BattleSprite({
   characterClass,
   enemyName,
+  enemySprite,
   playerName,
   animationType = 'idle',
   isPlayer = true,
@@ -84,13 +66,7 @@ export function BattleSprite({
   }, [animationType]);
 
   const playerColors = characterClass ? getCharacterColors(characterClass) : null;
-  const enemyColors = enemyName ? getEnemyColors(enemyName) : null;
-  const colors = playerColors || enemyColors;
-
-  if (!colors) return null;
-  
   const isPlayerCharacter = isPlayer && characterClass;
-  const hasSkinHair = isPlayerCharacter && playerColors;
 
   // Animation variants
   const idleVariants = {
@@ -168,7 +144,7 @@ export function BattleSprite({
       className="relative flex flex-col items-center"
     >
       {/* Name label */}
-      <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-mono font-bold text-white drop-shadow-md">
+      <div className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-mono font-bold text-amber-200 drop-shadow-md">
         {displayName}
       </div>
 
@@ -180,7 +156,7 @@ export function BattleSprite({
         className="overflow-visible"
         style={{ transform: `translateY(${bobOffset}px)` }}
       >
-        {hasSkinHair && playerColors ? (
+        {isPlayerCharacter && playerColors ? (
           <g>
             {/* Body/Robe */}
             <rect x="-12" y="0" width="24" height="32" fill={playerColors.primary} />
@@ -198,15 +174,7 @@ export function BattleSprite({
             <rect x="2" y="-12" width="3" height="3" fill="#000" />
           </g>
         ) : (
-          <g>
-            {/* Enemy body */}
-            <rect x="-16" y="-8" width="32" height="32" fill={colors.primary} stroke={colors.secondary} strokeWidth="2" />
-            {/* Eyes */}
-            <circle cx="-6" cy="0" r="4" fill={colors.accent} />
-            <circle cx="6" cy="0" r="4" fill={colors.accent} />
-            <circle cx="-6" cy="0" r="2" fill="#000" />
-            <circle cx="6" cy="0" r="2" fill="#000" />
-          </g>
+          <EnemySpriteBody sprite={enemySprite || 'default'} />
         )}
       </svg>
 

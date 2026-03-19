@@ -1,8 +1,28 @@
 import type { CharacterClass } from "../lib/indexeddb";
 
-export type Tab = "Overview" | "Quests" | "Shop";
+export type Tab = "Inventory" | "World Map" | "Quests" | "Shop";
 
-export type QuestState = "list" | "active" | "battle" | "result";
+export type QuestState = "list" | "map" | "active" | "battle" | "result";
+
+export type TileType = "grass" | "path" | "water" | "mountain" | "forest" | "town" | "cave" | "lava";
+
+export interface NPC {
+  id: string;
+  name: string;
+  position: { x: number; y: number };
+  sprite: string;
+  dialog: string[];
+  questId?: string;
+}
+
+export interface QuestMapData {
+  width: number;
+  height: number;
+  tiles: TileType[][];
+  npcs: NPC[];
+  playerStart: { x: number; y: number };
+  name: string;
+}
 
 export interface Enemy {
   id: string;

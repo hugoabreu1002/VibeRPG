@@ -2,27 +2,58 @@ import { useState, useEffect, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, type CharacterClass } from "./lib/indexeddb";
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy } from "./types/game";
-import { Inventory, Quests, QuestBattle, Shop } from "./components/game";
+import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
+import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
 import { getQuestEnemy } from "./lib/game-data";
+import { getQuestMap } from "./lib/map-data";
 
-function statusBar(label: string, value: number, max: number) {
+const CLASS_ICONS: Record<CharacterClass, string> = {
+  mage: "🔮",
+  warrior: "⚔️",
+  priest: "✝️",
+};
+
+function statusBar(label: string, value: number, max: number, type: "hp" | "mp" | "xp" | "attack" = "hp") {
   const progress = max > 0 ? Math.min(100, Math.floor((value / max) * 100)) : 0;
+  const gradients: Record<string, string> = {
+    hp: "from-red-700 to-red-500",
+    mp: "from-blue-700 to-blue-500",
+    xp: "from-emerald-700 to-emerald-500",
+    attack: "from-amber-700 to-amber-500",
+  };
+  const bgColors: Record<string, string> = {
+    hp: "bg-red-950/50",
+    mp: "bg-blue-950/50",
+    xp: "bg-emerald-950/50",
+    attack: "bg-amber-950/50",
+  };
+  const labelIcons: Record<string, string> = {
+    hp: "❤️",
+    mp: "💧",
+    xp: "⭐",
+    attack: "⚔️",
+  };
+
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <div className="flex justify-between text-xs font-semibold">
-        <span>{label}</span>
-        <span>{value}/{max}</span>
+        <span className="text-amber-200/80">{labelIcons[type]} {label}</span>
+        <span className="text-slate-300 font-mono">{value}/{max}</span>
       </div>
-      <div className="h-2 rounded-full bg-slate-300">
-        <div className="h-2 rounded-full bg-indigo-500" style={{ width: `${progress}%` }} />
+      <div className={`h-2.5 rounded-full ${bgColors[type]} overflow-hidden border border-white/5`}>
+        <motion.div
+          className={`h-full rounded-full bg-gradient-to-r ${gradients[type]}`}
+          initial={{ width: 0 }}
+          animate={{ width: `${progress}%` }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+        />
       </div>
     </div>
   );
 }
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>("Overview");
+  const [activeTab, setActiveTab] = useState<Tab>("World Map");
   const [createName, setCreateName] = useState("");
   const [createClass, setCreateClass] = useState<CharacterClass>("mage");
   const [character, setCharacter] = useState<Character | null>(null);
@@ -73,7 +104,8 @@ function App() {
 
   const startQuest = (quest: Quest) => {
     setActiveQuest(quest);
-    setQuestState("active");
+    setQuestState("map");
+    setActiveTab("Quests");
   };
 
   const attemptQuestChoice = (choice: QuestChoice) => {
@@ -301,33 +333,79 @@ function App() {
     setCharacter(created);
   };
 
+  const tabConfig: { tab: Tab; icon: string; label: string }[] = [
+    { tab: "World Map", icon: "🗺️", label: "World Map" },
+    { tab: "Quests", icon: "📜", label: "Quest Log" },
+    { tab: "Inventory", icon: "🎒", label: "Inventory" },
+    { tab: "Shop", icon: "🏪", label: "Shop" },
+  ];
+
   return (
-    <div className="min-h-screen bg-background text-foreground p-4 md:p-8">
-      <header className="mx-auto max-w-6xl mb-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">VibeRPG Web</h1>
-            <p className="text-sm text-slate-500">Play in your browser or on mobile — same world, same adventures</p>
-          </div>
-          <div className="flex flex-wrap gap-2 text-xs items-center">
-            <span className="rounded-full bg-green-100 text-green-800 px-2 py-1">Ready to play!</span>
-            <span className="rounded-full bg-blue-100 text-blue-800 px-2 py-1">
-              {character ? `Player: ${character.name}` : "No character loaded"}
-            </span>
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => {
-                setShowCharacterSelect(!showCharacterSelect);
-                getAllCharacters().then(chars => setAllCharacters(chars));
-              }}
-              className="rounded-full bg-purple-100 text-purple-800 px-2 py-1 hover:bg-purple-200"
-            >
-              Switch Character
-            </motion.button>
-          </div>
+    <div className="min-h-screen bg-background text-foreground ambient-particles">
+      {/* Fantasy Header */}
+      <header className="fantasy-header px-4 md:px-8 py-3 mb-6 relative">
+        <div className="mx-auto max-w-6xl flex items-center justify-between">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            className="flex items-center gap-3"
+          >
+            <div className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">✨</div>
+            <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-500 to-amber-700 uppercase"
+              style={{ fontFamily: "'Cinzel', serif" }}>
+              VibeRPG
+            </h1>
+          </motion.div>
+
+          {character && (
+            <div className="flex items-center gap-3">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="hidden sm:flex items-center gap-4 bg-slate-900/40 backdrop-blur-sm px-4 py-2 rounded-xl border border-amber-500/10 shadow-inner"
+              >
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-none mb-1">Level</span>
+                  <span className="text-xl font-bold text-amber-100 leading-none">{character.level}</span>
+                </div>
+                <div className="w-px h-8 bg-slate-800"></div>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-none mb-1">Gold</span>
+                  <div className="flex items-center gap-1.5 leading-none">
+                    <span className="text-lg">💰</span>
+                    <span className="text-xl font-bold text-amber-300">{character.gold}</span>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center gap-2 bg-amber-900/20 px-3 py-1.5 rounded-xl border border-amber-600/20"
+              >
+                <div className="flex flex-col items-end mr-1">
+                  <span className="text-[9px] font-bold text-amber-500/60 uppercase tracking-tight leading-none mb-0.5">Hero</span>
+                  <span className="text-sm font-bold text-amber-50 leading-none">{character.name}</span>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    setShowCharacterSelect(!showCharacterSelect);
+                    getAllCharacters().then(chars => setAllCharacters(chars));
+                  }}
+                  className="w-10 h-10 rounded-lg bg-gradient-to-b from-amber-500 to-amber-700 text-white flex items-center justify-center shadow-lg shadow-amber-900/20 border border-amber-400/30"
+                  title="Switch Character"
+                >
+                  {CLASS_ICONS[character.class]}
+                </motion.button>
+              </motion.div>
+            </div>
+          )}
         </div>
       </header>
+
+      {/* Character Selection Modal */}
 
       {/* Character Selection Modal */}
       <AnimatePresence>
@@ -336,19 +414,19 @@ function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => setShowCharacterSelect(false)}
           >
             <motion.div
               initial={{ scale: 0.9, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.9, y: 20 }}
-              className="bg-white rounded-xl p-6 max-w-md w-full"
+              className="fantasy-card rounded-xl p-6 max-w-md w-full"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold">Select Character</h2>
-                <button onClick={() => setShowCharacterSelect(false)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>Select Character</h2>
+                <button onClick={() => setShowCharacterSelect(false)} className="text-slate-500 hover:text-slate-300 text-xl transition-colors">✕</button>
               </div>
               
               <div className="space-y-3 mb-4">
@@ -356,8 +434,10 @@ function App() {
                   <motion.div
                     key={char.id}
                     whileHover={{ scale: 1.02 }}
-                    className={`p-3 rounded-lg border-2 ${
-                      character?.id === char.id ? "border-indigo-500 bg-indigo-50" : "border-slate-200 hover:border-indigo-300"
+                    className={`p-3 rounded-lg border-2 transition-colors ${
+                      character?.id === char.id
+                        ? "border-amber-500/50 bg-amber-950/30"
+                        : "border-slate-700/50 hover:border-amber-600/30 bg-slate-800/40"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -369,19 +449,16 @@ function App() {
                           setShowCharacterSelect(false);
                         }}
                       >
-                        <span className="font-semibold">{char.name}</span>
-                        <span className="text-xs text-slate-500 ml-2">
-                          {char.class === 'mage' && '🔮'}
-                          {char.class === 'warrior' && '⚔️'}
-                          {char.class === 'priest' && '⛑️'}
-                          {char.class.toUpperCase()}
+                        <span className="font-semibold text-amber-100">{char.name}</span>
+                        <span className="text-xs text-slate-400 ml-2">
+                          {CLASS_ICONS[char.class]} {char.class.toUpperCase()}
                         </span>
                         <div className="text-xs text-slate-500 mt-1">Lv. {char.level}</div>
                       </div>
                       <div className="flex gap-2">
                         <button
                           onClick={() => setShowDeleteConfirm(char.id)}
-                          className="text-red-500 hover:text-red-700 text-sm font-medium border border-red-200 px-2 py-1 rounded hover:bg-red-50"
+                          className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-800/40 px-2 py-1 rounded hover:bg-red-950/50 transition-colors"
                         >
                           Delete
                         </button>
@@ -393,8 +470,8 @@ function App() {
 
               <p className="text-xs text-slate-500 text-center mb-4">Create a new character to play a different class!</p>
 
-              <div className="border-t pt-4">
-                <h3 className="font-semibold mb-2">Create New Character</h3>
+              <div className="border-t border-slate-700/50 pt-4">
+                <h3 className="font-semibold mb-2 text-amber-200/80" style={{ fontFamily: "'Cinzel', serif" }}>Create New Character</h3>
                 <form className="space-y-2" onSubmit={async (e) => {
                   e.preventDefault();
                   if (!createName.trim()) return;
@@ -418,21 +495,21 @@ function App() {
                     value={createName}
                     onChange={(e) => setCreateName(e.target.value)}
                     placeholder="Character name"
-                    className="w-full rounded border border-slate-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-600/50"
                   />
                   <div className="flex gap-2">
                     <select
                       value={createClass}
                       onChange={(e) => setCreateClass(e.target.value as CharacterClass)}
-                      className="flex-1 rounded border border-slate-300 px-3 py-2 text-sm"
+                      className="flex-1 rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
                     >
                       {CHARACTER_CLASSES.map((c) => (
                         <option key={c} value={c}>
-                          {c === 'mage' && '🔮 '}{c === 'warrior' && '⚔️ '}{c === 'priest' && '⛑️ '}{c}
+                          {CLASS_ICONS[c]} {c}
                         </option>
                       ))}
                     </select>
-                    <button type="submit" className="rounded bg-indigo-600 px-4 py-2 text-white text-sm hover:bg-indigo-700">Create</button>
+                    <button type="submit" className="btn-fantasy rounded-lg px-4 py-2 text-sm font-semibold">Create</button>
                   </div>
                 </form>
               </div>
@@ -443,35 +520,35 @@ function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+                  className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
                   onClick={() => setShowDeleteConfirm(null)}
                 >
                   <motion.div
                     initial={{ scale: 0.9, y: 20 }}
                     animate={{ scale: 1, y: 0 }}
                     exit={{ scale: 0.9, y: 20 }}
-                    className="bg-white rounded-xl p-6 max-w-md w-full"
+                    className="fantasy-card rounded-xl p-6 max-w-md w-full"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-bold">Delete Character</h2>
-                      <button onClick={() => setShowDeleteConfirm(null)} className="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                      <h2 className="text-xl font-bold text-red-400">⚠️ Delete Character</h2>
+                      <button onClick={() => setShowDeleteConfirm(null)} className="text-slate-500 hover:text-slate-300 text-xl">✕</button>
                     </div>
                     
-                    <p className="text-sm text-slate-600 mb-4">
+                    <p className="text-sm text-slate-400 mb-4">
                       Are you sure you want to delete this character? This action cannot be undone.
                     </p>
                     
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => setShowDeleteConfirm(null)}
-                        className="px-4 py-2 text-slate-600 border border-slate-300 rounded hover:bg-slate-50"
+                        className="px-4 py-2 text-slate-300 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
                       >
                         Cancel
                       </button>
                       <button
                         onClick={() => handleDeleteCharacter(showDeleteConfirm)}
-                        className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+                        className="px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-700 border border-red-700 transition-colors"
                       >
                         Delete Character
                       </button>
@@ -484,116 +561,217 @@ function App() {
         )}
       </AnimatePresence>
 
-      {isLoading ? (
-        <div className="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow-sm">Loading character...</div>
-      ) : !character ? (
-        <main className="mx-auto max-w-3xl rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-xl font-semibold">Create your first character</h2>
-          <form className="space-y-4" onSubmit={submitCreate}>
-            <input
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-              placeholder="Name"
-              className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            />
-            <select
-              value={createClass}
-              onChange={(e) => setCreateClass(e.target.value as CharacterClass)}
-              className="w-full rounded border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      <div className="px-4 md:px-8">
+        {isLoading ? (
+          <div className="mx-auto max-w-3xl fantasy-card rounded-xl p-6">
+            <div className="flex items-center gap-3">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                className="text-2xl"
+              >
+                ⚙️
+              </motion.div>
+              <span className="text-slate-300">Loading character...</span>
+            </div>
+          </div>
+        ) : !character ? (
+          <main className="mx-auto max-w-lg">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="fantasy-card rounded-xl p-8"
             >
-              {CHARACTER_CLASSES.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-            <button type="submit" className="rounded bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700">Create Character</button>
-          </form>
-        </main>
-      ) : (
-        <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-12">
-          <aside className="lg:col-span-3 rounded-xl bg-white p-4 shadow-sm">
-            <div className="mb-4">
-              <h2 className="text-lg font-semibold">Navigation</h2>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {(["Overview", "Quests", "Shop"] as Tab[]).map((tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`rounded px-3 py-2 text-sm ${activeTab === tab ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-700 hover:bg-slate-200"}`}
-                  >
-                    {tab}
-                  </button>
-                ))}
+              <div className="text-center mb-6">
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="text-5xl mb-3"
+                >
+                  ⚔️
+                </motion.div>
+                <h2 className="text-2xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
+                  Begin Your Adventure
+                </h2>
+                <p className="text-sm text-slate-400">Create your first hero and embark on an epic journey</p>
               </div>
-            </div>
-
-            <div className="space-y-2 rounded-lg border border-slate-200 p-3">
-              <h3 className="text-sm font-semibold">Character</h3>
-              <p>{character.name} ({character.class})</p>
-              <p>Level {character.level} · {character.gold} gold</p>
-            </div>
-          </aside>
-
-          <section className="lg:col-span-9 space-y-4">
-            {activeTab === "Overview" && (
-              <div className="space-y-4">
-                <div className="rounded-xl bg-white p-4 shadow-sm">
-                  <h2 className="text-xl font-semibold mb-4">Overview</h2>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {statusBar("HP", character.hp, character.maxHp)}
-                    {statusBar("MP", character.mp, character.maxMp)}
-                    {statusBar("XP", character.xp, character.xpToNext)}
-                    {statusBar("Attack", character.attack, character.attack + 20)}
-                  </div>
+              <form className="space-y-4" onSubmit={submitCreate}>
+                <div>
+                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">Hero Name</label>
+                  <input
+                    value={createName}
+                    onChange={(e) => setCreateName(e.target.value)}
+                    placeholder="Enter your hero's name..."
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-600/50"
+                  />
                 </div>
-
-                <Inventory
-                  inventory={inventory}
-                  selectedItem={selectedItem}
-                  onSelectItem={setSelectedItem}
-                  onToggleEquip={handleToggleEquip}
-                  onConsumeFood={handleConsumeFood}
-                  characterClass={character.class}
-                />
+                <div>
+                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">Class</label>
+                  <select
+                    value={createClass}
+                    onChange={(e) => setCreateClass(e.target.value as CharacterClass)}
+                    className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                  >
+                    {CHARACTER_CLASSES.map((c) => (
+                      <option key={c} value={c}>{CLASS_ICONS[c]} {c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                    ))}
+                  </select>
+                </div>
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  type="submit"
+                  className="btn-fantasy w-full py-3 rounded-lg font-bold tracking-wide"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  Create Character
+                </motion.button>
+              </form>
+            </motion.div>
+          </main>
+        ) : (
+          <div className="mx-auto grid max-w-6xl gap-4 lg:grid-cols-12">
+            {/* Sidebar */}
+            <aside className="lg:col-span-3 space-y-4">
+              {/* Navigation */}
+              <div className="fantasy-card rounded-xl p-4">
+                <h2 className="text-sm font-bold text-amber-200/70 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Navigation</h2>
+                <div className="flex flex-wrap lg:flex-col gap-2">
+                  {tabConfig.map(({ tab, icon, label }) => (
+                    <motion.button
+                      key={tab}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => setActiveTab(tab)}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                        activeTab === tab
+                          ? "btn-fantasy"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                      }`}
+                    >
+                      <span>{icon}</span>
+                      <span>{label}</span>
+                    </motion.button>
+                  ))}
+                </div>
               </div>
-            )}
 
-            {activeTab === "Shop" && character && (
-              <Shop 
-                gold={character.gold}
-                shopItems={SHOP_ITEMS}
-                onBuyItem={handleBuyItem}
-              />
-            )}
+              {/* Character Info */}
+               <div className="fantasy-card rounded-xl p-4">
+                 <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
+                 <div className="space-y-4 pt-1">
+                   {statusBar("HP", character.hp, character.maxHp, "hp")}
+                   {statusBar("MP", character.mp, character.maxMp, "mp")}
+                   {statusBar("XP", character.xp, character.xpToNext, "xp")}
+                   <div className="h-px bg-slate-800/50 my-1"></div>
+                   {statusBar("ATK Power", character.attack, character.attack + 20, "attack")}
+                 </div>
+               </div>
+            </aside>
 
-            {activeTab === "Quests" && character && (
-              <>
-                {questState === "battle" && activeEnemy ? (
-                  <QuestBattle
-                    character={character}
-                    enemy={activeEnemy}
-                    onVictory={handleBattleVictory}
-                    onDefeat={handleBattleDefeat}
-                    onFlee={handleBattleFlee}
-                    onUpdateCharacter={(updates) => setCharacter(prev => prev ? { ...prev, ...updates } : null)}
+            {/* Main Content */}
+            <section className="lg:col-span-9 space-y-4">
+              {activeTab === "Inventory" && (
+                <div className="space-y-4">
+                  <Inventory
+                    inventory={inventory}
+                    selectedItem={selectedItem}
+                    onSelectItem={setSelectedItem}
+                    onToggleEquip={handleToggleEquip}
+                    onConsumeFood={handleConsumeFood}
+                    characterClass={character.class}
                   />
-                ) : (
-                  <Quests
-                    character={character}
-                    quests={QUESTS}
-                    questState={questState}
-                    activeQuest={activeQuest}
-                    questResult={questResult}
-                    completedQuests={completedQuests}
-                    onStartQuest={startQuest}
-                    onAttemptChoice={attemptQuestChoice}
-                    onResetQuest={resetQuest}
-                  />
-                )}
-              </>
-            )}
-          </section>
-        </div>
-      )}
+                </div>
+              )}
+
+              {activeTab === "Shop" && character && (
+                <Shop 
+                  gold={character.gold}
+                  shopItems={SHOP_ITEMS}
+                  onBuyItem={handleBuyItem}
+                />
+              )}
+
+              {activeTab === "World Map" && character && (
+                <div className="space-y-4">
+                  {(() => {
+                    const mapData = getQuestMap("Hub Town");
+                    return mapData && (
+                      <QuestMap
+                        mapData={mapData}
+                        onNPCInteract={(npc: NPC) => {
+                          if (npc.questId) {
+                            const quest = QUESTS.find(q => q.id === npc.questId);
+                            if (quest && quest.class === character.class && quest.minLevel <= character.level) {
+                              startQuest(quest);
+                              setActiveTab("Quests");
+                            }
+                          }
+                        }}
+                        onBack={() => {}}
+                      />
+                    );
+                  })()}
+                </div>
+              )}
+
+              {activeTab === "Quests" && character && (
+                <>
+                  {questState === "battle" && activeEnemy ? (
+                    <QuestBattle
+                      character={character}
+                      enemy={activeEnemy}
+                      onVictory={handleBattleVictory}
+                      onDefeat={handleBattleDefeat}
+                      onFlee={handleBattleFlee}
+                      onUpdateCharacter={(updates) => setCharacter(prev => prev ? { ...prev, ...updates } : null)}
+                    />
+                  ) : questState === "map" && activeQuest ? (
+                    (() => {
+                      const mapData = getQuestMap(activeQuest.region);
+                      return mapData ? (
+                        <QuestMap
+                          quest={activeQuest}
+                          mapData={mapData}
+                          onNPCInteract={(npc: NPC) => {
+                            // If NPC on quest map has a quest, it might be the objective
+                            setQuestState("active");
+                          }}
+                          onBack={resetQuest}
+                        />
+                      ) : (
+                        <Quests
+                          character={character}
+                          quests={QUESTS}
+                          questState="active"
+                          activeQuest={activeQuest}
+                          questResult={questResult}
+                          completedQuests={completedQuests}
+                          onStartQuest={startQuest}
+                          onAttemptChoice={attemptQuestChoice}
+                          onResetQuest={resetQuest}
+                        />
+                      );
+                    })()
+                  ) : (
+                    <Quests
+                      character={character}
+                      quests={QUESTS}
+                      questState={questState}
+                      activeQuest={activeQuest}
+                      questResult={questResult}
+                      completedQuests={completedQuests}
+                      onStartQuest={startQuest}
+                      onAttemptChoice={attemptQuestChoice}
+                      onResetQuest={resetQuest}
+                    />
+                  )}
+                </>
+              )}
+            </section>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
