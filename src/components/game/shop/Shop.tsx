@@ -12,21 +12,30 @@ interface ShopProps {
   onBuyItem: (item: InventoryItem) => void;
 }
 
-const getRarityColor = (rarity: InventoryItem["rarity"]) => {
+const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
-    case "common": return "text-slate-400 border-slate-400";
-    case "rare": return "text-blue-400 border-blue-400";
-    case "epic": return "text-purple-400 border-purple-400";
-    case "legendary": return "text-amber-400 border-amber-400";
+    case "common": return "border-slate-600/40";
+    case "rare": return "border-blue-500/40 rarity-rare";
+    case "epic": return "border-purple-500/40 rarity-epic";
+    case "legendary": return "border-amber-400/40 rarity-legendary";
   }
 };
 
 const getRarityBg = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
-    case "common": return "bg-slate-100";
-    case "rare": return "bg-blue-50";
-    case "epic": return "bg-purple-50";
-    case "legendary": return "bg-amber-50";
+    case "common": return "bg-slate-800/40";
+    case "rare": return "bg-blue-950/30";
+    case "epic": return "bg-purple-950/30";
+    case "legendary": return "bg-amber-950/20";
+  }
+};
+
+const getRarityLabel = (rarity: InventoryItem["rarity"]) => {
+  switch (rarity) {
+    case "common": return "text-slate-400";
+    case "rare": return "text-blue-400";
+    case "epic": return "text-purple-400";
+    case "legendary": return "text-amber-400";
   }
 };
 
@@ -35,12 +44,12 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl bg-white p-4 shadow-sm"
+      className="fantasy-card rounded-xl p-5"
     >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold">Shop</h2>
-        <div className="font-semibold text-amber-600 bg-amber-50 px-3 py-1 rounded-lg">
-          {gold} Gold
+        <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🏪 Shop</h2>
+        <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30">
+          💰 {gold} Gold
         </div>
       </div>
 
@@ -51,11 +60,11 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
             initial={{ opacity: 0, scale: 0.8 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: index * 0.1 }}
-            className={`p-4 rounded-lg border-2 flex flex-col justify-between ${getRarityColor(item.rarity)}/20 ${getRarityBg(item.rarity)}`}
+            className={`p-4 rounded-lg border-2 flex flex-col justify-between ${getRarityBorder(item.rarity)} ${getRarityBg(item.rarity)}`}
           >
             <div>
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded bg-slate-800 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-lg bg-slate-900/60 border border-slate-700/30 flex items-center justify-center shrink-0">
                   {item.type === "weapon" && <WeaponIcon weaponId={item.id} size="w-8 h-8" />}
                   {item.type === "armor" && <ArmorIcon armorId={item.id} size="w-8 h-8" />}
                   {item.type === "hat" && <HatIcon hatId={item.id} size="w-8 h-8" />}
@@ -63,43 +72,45 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                   {item.type === "food" && <FoodIcon foodId={item.id} size="w-8 h-8" />}
                 </div>
                 <div className="flex-1">
-                  <span className="font-semibold text-slate-800 block text-sm leading-tight">{item.name}</span>
-                  <span className="text-xs text-slate-500 capitalize">{item.type}</span>
+                  <span className="font-semibold text-slate-100 block text-sm leading-tight">{item.name}</span>
+                  <span className={`text-xs capitalize ${getRarityLabel(item.rarity)}`}>{item.rarity} {item.type}</span>
                 </div>
-                <div className="font-bold text-amber-600 bg-white/50 px-2 rounded">
+                <div className="font-bold text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded text-sm">
                   {item.price}g
                 </div>
               </div>
               
-              <p className="text-xs text-slate-600 mb-3 line-clamp-2 min-h-[32px]">
+              <p className="text-xs text-slate-400 mb-3 line-clamp-2 min-h-[32px]">
                 {item.description}
               </p>
 
               <div className="flex gap-1 flex-wrap mb-4">
                 {Object.entries(item.stats).map(([stat, value]) => value ? (
-                  <span key={stat} className="text-xs bg-white/50 px-1.5 py-0.5 rounded text-slate-700 font-medium">
+                  <span key={stat} className="text-xs bg-slate-800/60 border border-slate-700/30 px-1.5 py-0.5 rounded text-slate-300 font-medium">
                     {stat}: +{value}
                   </span>
                 ) : null)}
                 {item.restores && Object.entries(item.restores).map(([stat, value]) => value ? (
-                  <span key={`restores-${stat}`} className="text-xs bg-green-100/50 px-1.5 py-0.5 rounded text-green-700 font-medium">
+                  <span key={`restores-${stat}`} className="text-xs bg-emerald-950/40 border border-emerald-800/30 px-1.5 py-0.5 rounded text-emerald-400 font-medium">
                     Restores {stat.toUpperCase()}: {value}
                   </span>
                 ) : null)}
               </div>
             </div>
 
-            <button
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => onBuyItem(item)}
               disabled={gold < item.price}
-              className={`w-full py-2 rounded-lg font-semibold text-sm transition-colors ${
+              className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all ${
                 gold >= item.price 
-                  ? "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"
-                  : "bg-slate-200 text-slate-400 cursor-not-allowed"
+                  ? "btn-fantasy"
+                  : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700/30"
               }`}
             >
               {gold >= item.price ? "Buy" : "Not enough gold"}
-            </button>
+            </motion.button>
           </motion.div>
         ))}
       </div>

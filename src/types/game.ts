@@ -1,8 +1,29 @@
 import type { CharacterClass } from "../lib/indexeddb";
+export type { CharacterClass };
 
-export type Tab = "Overview" | "Quests" | "Shop";
+export type Tab = "Inventory" | "World Map" | "Quests" | "Shop";
 
-export type QuestState = "list" | "active" | "battle" | "result";
+export type QuestState = "list" | "map" | "active" | "battle" | "result";
+
+export type TileType = "grass" | "path" | "water" | "mountain" | "forest" | "town" | "cave" | "lava";
+
+export interface NPC {
+  id: string;
+  name: string;
+  position: { x: number; y: number };
+  sprite: string;
+  dialog: string[];
+  questId?: string;
+}
+
+export interface QuestMapData {
+  width: number;
+  height: number;
+  tiles: TileType[][];
+  npcs: NPC[];
+  playerStart: { x: number; y: number };
+  name: string;
+}
 
 export interface Enemy {
   id: string;
@@ -26,6 +47,8 @@ export interface QuestChoice {
   failureMessage: string;
   xpReward: number;
   goldReward: number;
+  rewardItemId?: string;
+  rewardSkill?: string;
 }
 
 export interface Quest {
@@ -49,6 +72,7 @@ export interface InventoryItem {
     defense?: number;
     magicPower?: number;
     hp?: number;
+    mp?: number;
   };
   restores?: {
     hp?: number;
@@ -74,6 +98,8 @@ export interface Character {
   defense: number;
   magicPower: number;
   xpToNext: number;
+  skills: string[];
+  inventory: InventoryItem[];
 }
 
 export interface QuestResult {
@@ -81,4 +107,6 @@ export interface QuestResult {
   message: string;
   xp: number;
   gold: number;
+  rewardItem?: InventoryItem;
+  rewardSkill?: string;
 }

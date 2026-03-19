@@ -1,6 +1,6 @@
 // Animation types for the RPG
 
-export type CharacterClass = 'mage' | 'warrior' | 'priest';
+export type CharacterClass = 'mage' | 'warrior' | 'priest' | 'rogue';
 
 export interface SpriteConfig {
   x: number;

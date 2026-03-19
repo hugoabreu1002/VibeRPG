@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Character, Enemy } from "../../../types/game";
 import type { CharacterClass } from "../animations/types";
 import { BattleSprite } from "../battle/BattleSprite";
+import { SkillIcon } from "../battle/SkillIcons";
 
 interface QuestBattleProps {
   character: Character;
@@ -50,6 +51,15 @@ export function QuestBattle({
     setIsDefending(false);
     setLogs([{ message: `⚔️ A wild ${enemy.name} appears!`, type: "system" }]);
   }, [enemy.id]);
+  
+  // Sync health/mana to sidebar character state
+  useEffect(() => {
+    onUpdateCharacter({
+      hp: playerHp,
+      mp: playerMp,
+    });
+  }, [playerHp, playerMp, onUpdateCharacter]);
+
 
   // Check for victory/defeat
   useEffect(() => {
@@ -210,65 +220,31 @@ export function QuestBattle({
       className="rounded-xl bg-slate-900 p-4 shadow-lg"
     >
       {/* Battle Header */}
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-white">⚔️ Battle!</h2>
-        <span className="text-sm text-slate-400">Turn-based Combat</span>
-      </div>
+
 
       {/* Battle Arena */}
-      <div className="relative bg-gradient-to-b from-slate-800 to-slate-900 rounded-lg p-6 mb-4 min-h-[250px] overflow-hidden">
+      <div className="relative bg-gradient-to-b from-slate-800/80 to-slate-900/90 rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50">
         {/* Player */}
-        <div className="absolute left-8 bottom-8 flex flex-col items-center">
-          <div className="transform scale-150 mb-6 mt-4">
+        <div className="absolute left-[28%] bottom-16 flex flex-col items-center">
+          <div className="transform scale-150 mb-4">
             <BattleSprite
               characterClass={character.class}
               playerName={character.name}
               isPlayer={true}
               animationType={playerAnimation}
+              inventory={character.inventory}
             />
           </div>
-
-          {/* Player HP Bar */}
-          <div className="w-24 mt-4">
-            <div className="flex justify-between text-xs text-white mb-1">
-              <span>HP</span>
-              <span>{playerHp}/{character.maxHp}</span>
-            </div>
-            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-green-500"
-                initial={{ width: `${(playerHp / character.maxHp) * 100}%` }}
-                animate={{ width: `${(playerHp / character.maxHp) * 100}%` }}
-              />
-            </div>
-          </div>
-
-          {/* Player MP Bar */}
-          <div className="w-24 mt-1">
-            <div className="flex justify-between text-xs text-slate-400 mb-1">
-              <span>MP</span>
-              <span>{playerMp}/{character.maxMp}</span>
-            </div>
-            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-blue-500"
-                initial={{ width: `${(playerMp / character.maxMp) * 100}%` }}
-                animate={{ width: `${(playerMp / character.maxMp) * 100}%` }}
-              />
-            </div>
-          </div>
         </div>
 
-        {/* VS */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-          <div className="text-2xl font-bold text-white/30">VS</div>
-        </div>
+
 
         {/* Enemy */}
-        <div className="absolute right-8 bottom-8 flex flex-col items-center">
+        <div className="absolute right-[28%] bottom-16 flex flex-col items-center">
           <div className="transform scale-150 mb-6 mt-4">
             <BattleSprite
               enemyName={enemy.name}
+              enemySprite={enemy.sprite}
               isPlayer={false}
               animationType={enemyAnimation}
             />
@@ -280,7 +256,7 @@ export function QuestBattle({
               <span>HP</span>
               <span>{enemyHp}/{enemy.maxHp}</span>
             </div>
-            <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
+            <div className="h-6 bg-slate-900/60 rounded-full overflow-hidden border border-slate-700/30">
               <motion.div
                 className="h-full bg-red-500"
                 initial={{ width: "100%" }}
@@ -334,45 +310,55 @@ export function QuestBattle({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={playerAttack}
-            className="bg-red-600 hover:bg-red-700 text-white py-3 px-4 rounded-lg font-semibold flex flex-col items-center"
+            className="bg-gradient-to-b from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white py-3 px-2 rounded-lg font-semibold flex flex-col items-center border border-red-500/30 shadow-lg shadow-red-900/30"
           >
-            <span className="text-xl mb-1">⚔️</span>
-            <span className="text-sm">Attack</span>
+            <div className="w-6 h-6 mb-1">
+              <SkillIcon skill={character.class === 'mage' ? 'bolt' : character.class === 'warrior' ? 'slash' : 'smite'} />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-tight">{character.class === 'mage' ? 'Arcane Bolt' : character.class === 'warrior' ? 'Slash' : 'Smite'}</span>
           </motion.button>
 
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={playerSpell}
-            disabled={playerMp < 10}
-            className={`py-3 px-4 rounded-lg font-semibold flex flex-col items-center ${playerMp >= 10
-                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                : "bg-slate-600 text-slate-400 cursor-not-allowed"
-              }`}
-          >
-            <span className="text-xl mb-1">✨</span>
-            <span className="text-sm">Spell</span>
-            <span className="text-xs opacity-75">10 MP</span>
-          </motion.button>
+          {character.skills.some(s => ['fireball', 'strike', 'holy'].includes(s)) && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={playerSpell}
+              disabled={playerMp < 10}
+              className={`py-3 px-2 rounded-lg font-semibold flex flex-col items-center border shadow-lg ${playerMp >= 10
+                  ? "bg-gradient-to-b from-blue-600 to-indigo-800 hover:from-blue-500 hover:to-indigo-700 text-white border-blue-500/30 shadow-blue-900/30"
+                  : "bg-slate-800 text-slate-500 cursor-not-allowed border-slate-700/30"
+                }`}
+            >
+              <div className="w-6 h-6 mb-1">
+                <SkillIcon skill={character.class === 'mage' ? 'fireball' : character.class === 'warrior' ? 'strike' : 'holy'} />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-tight">{character.class === 'mage' ? 'Fireball' : character.class === 'warrior' ? 'Power Strike' : 'Holy Light'}</span>
+              <span className="text-[10px] opacity-75">10 MP</span>
+            </motion.button>
+          )}
 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={playerDefend}
-            className="bg-blue-400 hover:bg-blue-500 text-white py-3 px-4 rounded-lg font-semibold flex flex-col items-center"
+            className="bg-gradient-to-b from-cyan-600 to-cyan-800 hover:from-cyan-500 hover:to-cyan-700 text-white py-3 px-2 rounded-lg font-semibold flex flex-col items-center border border-cyan-500/30 shadow-lg shadow-cyan-900/30"
           >
-            <span className="text-xl mb-1">🛡️</span>
-            <span className="text-sm">Defend</span>
+            <div className="w-6 h-6 mb-1">
+              <SkillIcon skill={character.class === 'priest' ? 'barrier' : 'defend'} />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-tight">{character.class === 'priest' ? 'Barrier' : 'Defend'}</span>
           </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={playerFlee}
-            className="bg-slate-600 hover:bg-slate-500 text-white py-3 px-4 rounded-lg font-semibold flex flex-col items-center"
+            className="bg-gradient-to-b from-slate-600 to-slate-800 hover:from-slate-500 hover:to-slate-700 text-white py-3 px-2 rounded-lg font-semibold flex flex-col items-center border border-slate-500/30 shadow-lg shadow-slate-900/30"
           >
-            <span className="text-xl mb-1">🏃</span>
-            <span className="text-sm">Flee</span>
+            <div className="w-6 h-6 mb-1">
+              <SkillIcon skill="flee" />
+            </div>
+            <span className="text-[10px] font-bold uppercase tracking-tight">Flee</span>
           </motion.button>
         </div>
       )}
