@@ -6,6 +6,7 @@ import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestRes
 import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
 import { getQuestEnemy } from "./lib/game-data";
 import { getQuestMap } from "./lib/map-data";
+import { audioManager } from "./lib/audio";
 
 const CLASS_ICONS: Record<CharacterClass, string> = {
   mage: "🔮",
@@ -61,6 +62,7 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [isMusicEnabled, setIsMusicEnabled] = useState(false);
   
   // Quest state
   const [questState, setQuestState] = useState<QuestState>("list");
@@ -79,7 +81,26 @@ function App() {
       setAllCharacters(chars);
     });
   }, []);
-  
+
+  // Audio initialization and BGM control
+  useEffect(() => {
+    if (isMusicEnabled) {
+      audioManager.start();
+      if (activeTab === "World Map" || activeTab === "Inventory" || activeTab === "Shop") {
+        audioManager.playBgm("main");
+      }
+    } else {
+      audioManager.stopBgm();
+    }
+  }, [isMusicEnabled, activeTab]);
+
+  const toggleMusic = () => {
+    if (!isMusicEnabled) {
+      audioManager.start();
+      audioManager.playSfx("click");
+    }
+    setIsMusicEnabled(!isMusicEnabled);
+  };
   // Auto-save character
   useEffect(() => {
     if (character) {
@@ -433,6 +454,23 @@ function App() {
             </h1>
           </motion.div>
 
+          {/* Audio Controls */}
+          <div className="flex items-center gap-2 mr-auto ml-6">
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={toggleMusic}
+              className={`w-10 h-10 rounded-full flex items-center justify-center border ${
+                isMusicEnabled 
+                  ? "bg-amber-500/20 border-amber-500/50 text-amber-200 shadow-[0_0_15px_rgba(245,158,11,0.3)]" 
+                  : "bg-slate-800/40 border-slate-700/50 text-slate-500"
+              } transition-all duration-300`}
+              title={isMusicEnabled ? "Disable Music" : "Enable Music"}
+            >
+              {isMusicEnabled ? "🔊" : "🔇"}
+            </motion.button>
+          </div>
+
           {character && (
             <div className="flex items-center gap-3">
               <motion.div
@@ -720,7 +758,10 @@ function App() {
                       key={tab}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      onClick={() => setActiveTab(tab)}
+                      onClick={() => {
+                        setActiveTab(tab);
+                        audioManager.playSfx("click");
+                      }}
                       className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
                         activeTab === tab
                           ? "btn-fantasy"

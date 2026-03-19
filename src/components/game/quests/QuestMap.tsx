@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Quest, QuestMapData, NPC, TileType, InventoryItem, CharacterClass } from "../../../types/game";
 import { NPCSprite } from "../world/NPCSprites";
 import { InventorySprite } from "../character/InventorySprite";
+import { audioManager } from "../../../lib/audio";
 
 const TILE_SIZE = 64;
 
@@ -38,13 +39,16 @@ export function QuestMap({ quest, mapData, playerClass = "warrior", inventory = 
 
   const handleDialogAdvance = useCallback(() => {
     if (!selectedNPC) return;
+
     if (dialogIndex < selectedNPC.dialog.length - 1) {
       setDialogIndex(dialogIndex + 1);
+      audioManager.playSfx("click");
     } else {
       // Last dialog line — trigger quest interaction
       onNPCInteract(selectedNPC);
       setSelectedNPC(null);
       setDialogIndex(0);
+      audioManager.playSfx("questAccept");
     }
   }, [selectedNPC, dialogIndex, onNPCInteract]);
 

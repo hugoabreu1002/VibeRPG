@@ -4,6 +4,7 @@ import type { Character, Enemy } from "../../../types/game";
 import type { CharacterClass } from "../animations/types";
 import { BattleSprite } from "../battle/BattleSprite";
 import { SkillIcon } from "../battle/SkillIcons";
+import { audioManager } from "../../../lib/audio";
 
 interface QuestBattleProps {
   character: Character;
@@ -41,6 +42,7 @@ export function QuestBattle({
   const [playerAnimation, setPlayerAnimation] = useState<"idle" | "attack" | "spell" | "defend" | "hit">("idle");
   const [enemyAnimation, setEnemyAnimation] = useState<"idle" | "attack" | "hit">("idle");
   const [showDamage, setShowDamage] = useState<{ target: "player" | "enemy"; value: number } | null>(null);
+  const [isShaking, setIsShaking] = useState(false);
 
   // Reset when enemy changes
   useEffect(() => {
@@ -50,6 +52,9 @@ export function QuestBattle({
     setPhase("player-turn");
     setIsDefending(false);
     setLogs([{ message: `⚔️ A wild ${enemy.name} appears!`, type: "system" }]);
+    
+    // Switch to battle music
+    audioManager.playBgm("battle");
   }, [enemy.id]);
   
   // Sync health/mana to sidebar character state
@@ -66,10 +71,12 @@ export function QuestBattle({
     if (enemyHp <= 0 && phase !== "victory") {
       setPhase("victory");
       setLogs((prev) => [...prev, { message: `🎉 You defeated the ${enemy.name}!`, type: "system" }]);
+      audioManager.playSfx("victory");
       onVictory(enemy.xpReward, enemy.goldReward);
     } else if (playerHp <= 0 && phase !== "defeat") {
       setPhase("defeat");
       setLogs((prev) => [...prev, { message: `💀 You were defeated by the ${enemy.name}...`, type: "system" }]);
+      audioManager.playSfx("defeat");
       onDefeat();
     }
   }, [enemyHp, playerHp, phase]);
@@ -107,6 +114,7 @@ export function QuestBattle({
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
     addLog(`⚔️ You attack for ${damage} damage!`, "player");
+    audioManager.playSfx("attack");
 
     setPhase("enemy-turn");
   };
@@ -138,6 +146,7 @@ export function QuestBattle({
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
     addLog(`✨ You cast a spell for ${damage} magic damage!`, "player");
+    audioManager.playSfx("spell");
 
     setPhase("enemy-turn");
   };
@@ -203,6 +212,11 @@ export function QuestBattle({
 
     // Apply damage
     setPlayerHp((prev) => Math.max(0, prev - damage));
+    audioManager.playSfx("hit");
+    
+    // Trigger screen shake
+    setIsShaking(true);
+    setTimeout(() => setIsShaking(false), 500);
 
     // Reset defense
     setIsDefending(false);
@@ -223,7 +237,11 @@ export function QuestBattle({
 
 
       {/* Battle Arena */}
-      <div className="relative bg-gradient-to-b from-slate-800/80 to-slate-900/90 rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50">
+      <motion.div 
+        animate={isShaking ? { x: [-4, 4, -4, 4, 0], y: [-2, 2, -2, 2, 0] } : {}}
+        transition={{ duration: 0.4 }}
+        className="relative bg-gradient-to-b from-slate-800/80 to-slate-900/90 rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50"
+      >
         {/* Player */}
         <div className="absolute left-[28%] bottom-16 flex flex-col items-center">
           <div className="transform scale-150 mb-4">
@@ -282,7 +300,7 @@ export function QuestBattle({
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Battle Log */}
       <div className="bg-slate-800 rounded-lg p-3 mb-4 h-24 overflow-y-auto">

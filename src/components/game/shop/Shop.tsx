@@ -5,6 +5,7 @@ import { ArmorIcon } from "../items/ArmorIcon";
 import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
+import { audioManager } from "../../../lib/audio";
 
 interface ShopProps {
   gold: number;
@@ -101,7 +102,10 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => onBuyItem(item)}
+              onClick={() => {
+                onBuyItem(item);
+                audioManager.playSfx("click");
+              }}
               disabled={gold < item.price}
               className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all ${
                 gold >= item.price 
