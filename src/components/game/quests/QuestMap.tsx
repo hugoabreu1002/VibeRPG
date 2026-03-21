@@ -29,6 +29,7 @@ interface QuestMapProps {
   inventory?: InventoryItem[];
   completedQuests?: string[];
   activeQuestId?: string;
+  allQuests?: Quest[];
   onNPCInteract: (npc: NPC) => void;
   onBack: () => void;
 }
@@ -129,7 +130,6 @@ const MapCanvas = memo(({
         ctx.moveTo(ix-tileSize/2, iy); ctx.lineTo(ix, iy+tileSize/4); ctx.lineTo(ix, iy+tileSize/4+8); ctx.lineTo(ix-tileSize/2, iy+8);
         ctx.fill();
 
-        // Tile Face
         ctx.beginPath();
         ctx.moveTo(ix, iy - tileSize/4); ctx.lineTo(ix + tileSize/2, iy); ctx.lineTo(ix, iy + tileSize/4); ctx.lineTo(ix - tileSize/2, iy);
         ctx.closePath();
@@ -193,6 +193,7 @@ export function QuestMap({
   inventory = [], 
   completedQuests = [],
   activeQuestId,
+  allQuests = [],
   onNPCInteract, 
   onBack 
 }: QuestMapProps) {
@@ -200,7 +201,11 @@ export function QuestMap({
   const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
   const [dialogIndex, setDialogIndex] = useState(0);
   const [playerPos, setPlayerPos] = useState(mapData.playerStart);
-
+  
+  // Reset player position when map changes
+  useEffect(() => {
+    setPlayerPos(mapData.playerStart);
+  }, [mapData]);
   const viewScale = isWideView ? 0.65 : 1.0;
   const viewportHeight = (isWideView ? 10 : 7) * TILE_SIZE;
 
@@ -277,7 +282,7 @@ export function QuestMap({
 
   useEffect(() => {
     setCamPos({ x: targetCamX, y: targetCamY });
-  }, [playerPos.x, playerPos.y, targetCamX, targetCamY]);
+  }, [playerPos.x, playerPos.y, targetCamX, targetCamY, setCamPos]);
 
   const handleTileClick = useCallback((x: number, y: number) => {
     const npc = mapData.npcs.find(n => n.position.x === x && n.position.y === y);
@@ -359,11 +364,15 @@ export function QuestMap({
                     animate={{ y: [-10, 0, -10] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
                     className={`absolute -top-20 left-1/2 -translate-x-1/2 ${
-                      completedQuests.includes(npc.questId)
-                        ? "text-emerald-400 drop-shadow-[0_0_15px_#10B981]"
-                        : activeQuestId === npc.questId
-                          ? "text-amber-400 drop-shadow-[0_0_15px_#F59E0B]"
-                          : "text-red-500 drop-shadow-[0_0_15px_#EF4444]"
+                      (() => {
+                        if (completedQuests.includes(npc.questId)) return "text-emerald-400 drop-shadow-[0_0_15px_#10B981]";
+                        if (activeQuestId === npc.questId) return "text-amber-400 drop-shadow-[0_0_15px_#F59E0B]";
+                        
+                        const questData = allQuests.find(q => q.id === npc.questId);
+                        if (questData && questData.class !== playerClass) return "text-slate-500 opacity-40";
+                        
+                        return "text-red-500 drop-shadow-[0_0_15px_#EF4444]";
+                      })()
                     }`}
                   >
                     <ExclamationIndicator size={32} />
@@ -509,7 +518,16 @@ export function QuestMap({
                         : "btn-fantasy"
                     }`}
                   >
-                    {dialogIndex < selectedNPC.dialog.length - 1 ? "Continue (Enter) ▶" : "Accept Quest (Enter) ⚔️"}
+                    {dialogIndex < selectedNPC.dialog.length - 1 
+                      ? "Continue (Enter) ▶" 
+                      : selectedNPC.questId 
+                        ? (() => {
+                            if (completedQuests.includes(selectedNPC.questId)) return "Close (Enter) ✕";
+                            const questData = allQuests.find(q => q.id === selectedNPC.questId);
+                            if (questData && questData.class !== playerClass) return "Wait (Enter) ...";
+                            return "Accept Quest (Enter) ⚔️";
+                          })()
+                        : "Close (Enter) ✕"}
                   </motion.button>
                 </div>
               </div>

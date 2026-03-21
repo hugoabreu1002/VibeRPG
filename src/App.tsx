@@ -141,10 +141,10 @@ function App() {
       if (remainingChars.length > 0) {
         const newChar = remainingChars[0];
         setCharacter(newChar);
-        setInventory(getStarterItems(newChar.class));
+        setInventory(newChar.inventory || getStarterItems(newChar.class));
       } else {
         setCharacter(null);
-        setInventory(getStarterItems("mage"));
+        setInventory([]);
       }
     }
     
@@ -456,6 +456,7 @@ function App() {
 
     const created = await dbCreateCharacter(newCharacter);
     setCharacter(created);
+    setInventory(created.inventory);
   };
 
   const tabConfig: { tab: Tab; icon: React.ReactNode; label: string }[] = [
@@ -603,7 +604,7 @@ function App() {
                         className="flex-1 cursor-pointer"
                         onClick={() => {
                           setCharacter(char);
-                          setInventory(getStarterItems(char.class));
+                          setInventory(char.inventory || getStarterItems(char.class));
                           setShowCharacterSelect(false);
                         }}
                       >
@@ -648,6 +649,7 @@ function App() {
                   };
                   const created = await dbCreateCharacter(newCharacter);
                   setCharacter(created);
+                  setInventory(created.inventory);
                   setAllCharacters([...allCharacters, created]);
                   setShowCharacterSelect(false);
                   setCreateName("");
@@ -877,6 +879,7 @@ function App() {
                         }}
                         completedQuests={completedQuests}
                         activeQuestId={activeQuest?.id}
+                        allQuests={QUESTS}
                         onBack={() => {}}
                       />
                     );
@@ -888,7 +891,7 @@ function App() {
                 <>
                   {questState === "battle" && activeEnemy ? (
                     <QuestBattle
-                      character={character}
+                      character={{ ...character, inventory }}
                       enemy={activeEnemy}
                       onVictory={handleBattleVictory}
                       onDefeat={handleBattleDefeat}
@@ -901,14 +904,17 @@ function App() {
                       return mapData ? (
                         <QuestMap
                           quest={activeQuest}
-                          mapData={mapData}
+                          mapData={getQuestMap(activeQuest.region)}
                           playerClass={character.class}
                           inventory={inventory}
                           completedQuests={completedQuests}
                           activeQuestId={activeQuest?.id}
+                          allQuests={QUESTS}
                           onNPCInteract={(npc: NPC) => {
-                            // If NPC on quest map has a quest, it might be the objective
-                            setQuestState("active");
+                            // If NPC on quest map has a quest, it must be the objective
+                            if (npc.questId === activeQuest?.id) {
+                              setQuestState("active");
+                            }
                           }}
                           onBack={resetQuest}
                         />

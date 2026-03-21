@@ -97,7 +97,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
       "FPPGGFFFFFPF",
       "FFPPPPPPPPFF",
       "FFFGGGGGFFFF",
-      "FFFFFFFFFFFFFFFFF",
+      "FFFFFFFFFFFF",
     ]),
     playerStart: { x: 2, y: 7 },
     npcs: [

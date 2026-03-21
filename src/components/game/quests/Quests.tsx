@@ -152,7 +152,7 @@ export function Quests({
                </div>
                <div>
                   <h3 className="font-bold text-xl text-amber-50 text-shadow-sm" style={{ fontFamily: "'Cinzel', serif" }}>{activeQuest.title}</h3>
-                  <p className="text-xs text-slate-500 font-medium">任务地区：{activeQuest.region}</p>
+                  <p className="text-xs text-slate-500 font-medium">Region: {activeQuest.region}</p>
                </div>
             </div>
 
