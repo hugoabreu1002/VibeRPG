@@ -241,7 +241,9 @@ function App() {
     }
     
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
-      setCompletedQuests([...completedQuests, activeQuest.id]);
+      const newCompleted = [...completedQuests, activeQuest.id];
+      setCompletedQuests(newCompleted);
+      if (character) setCharacter({ ...character, completedQuests: newCompleted });
     }
     
     setQuestState("result");
@@ -299,7 +301,9 @@ function App() {
     });
     
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
-      setCompletedQuests([...completedQuests, activeQuest.id]);
+      const newCompleted = [...completedQuests, activeQuest.id];
+      setCompletedQuests(newCompleted);
+      if (character) setCharacter({ ...character, completedQuests: newCompleted });
     }
     
     setQuestState("result");
@@ -325,7 +329,9 @@ function App() {
     });
     
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
-      setCompletedQuests([...completedQuests, activeQuest.id]);
+      const newCompleted = [...completedQuests, activeQuest.id];
+      setCompletedQuests(newCompleted);
+      if (character) setCharacter({ ...character, completedQuests: newCompleted });
     }
     
     setQuestState("result");
@@ -351,10 +357,12 @@ function App() {
         const enrichedChar = {
           ...char,
           skills: char.skills || getInitialCharacterStats(char.class).skills,
-          inventory: char.inventory || getStarterItems(char.class)
+          inventory: char.inventory || getStarterItems(char.class),
+          completedQuests: char.completedQuests || []
         };
         setCharacter(enrichedChar);
         setInventory(enrichedChar.inventory);
+        setCompletedQuests(enrichedChar.completedQuests);
       }
       setIsLoading(false);
     });
@@ -442,6 +450,7 @@ function App() {
       xpToNext: 100,
       inventory: getStarterItems(createClass),
       skills: getInitialCharacterStats(createClass).skills,
+      completedQuests: [],
       ...stats,
     };
 
@@ -634,6 +643,7 @@ function App() {
                     xpToNext: 100,
                     inventory: getStarterItems(createClass),
                     skills: getInitialCharacterStats(createClass).skills,
+                    completedQuests: [],
                     ...stats,
                   };
                   const created = await dbCreateCharacter(newCharacter);
@@ -865,6 +875,8 @@ function App() {
                             }
                           }
                         }}
+                        completedQuests={completedQuests}
+                        activeQuestId={activeQuest?.id}
                         onBack={() => {}}
                       />
                     );
@@ -892,6 +904,8 @@ function App() {
                           mapData={mapData}
                           playerClass={character.class}
                           inventory={inventory}
+                          completedQuests={completedQuests}
+                          activeQuestId={activeQuest?.id}
                           onNPCInteract={(npc: NPC) => {
                             // If NPC on quest map has a quest, it might be the objective
                             setQuestState("active");

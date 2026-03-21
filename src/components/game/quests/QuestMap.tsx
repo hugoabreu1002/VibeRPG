@@ -27,6 +27,8 @@ interface QuestMapProps {
   mapData: QuestMapData;
   playerClass?: CharacterClass;
   inventory?: InventoryItem[];
+  completedQuests?: string[];
+  activeQuestId?: string;
   onNPCInteract: (npc: NPC) => void;
   onBack: () => void;
 }
@@ -184,7 +186,16 @@ const MapCanvas = memo(({
 });
 
 
-export function QuestMap({ quest, mapData, playerClass = "warrior", inventory = [], onNPCInteract, onBack }: QuestMapProps) {
+export function QuestMap({ 
+  quest, 
+  mapData, 
+  playerClass = "warrior", 
+  inventory = [], 
+  completedQuests = [],
+  activeQuestId,
+  onNPCInteract, 
+  onBack 
+}: QuestMapProps) {
   const [isWideView, setIsWideView] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
   const [dialogIndex, setDialogIndex] = useState(0);
@@ -347,7 +358,13 @@ export function QuestMap({ quest, mapData, playerClass = "warrior", inventory = 
                   <motion.div
                     animate={{ y: [-10, 0, -10] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className="absolute -top-20 left-1/2 -translate-x-1/2 text-amber-400 drop-shadow-[0_0_15px_#F59E0B]"
+                    className={`absolute -top-20 left-1/2 -translate-x-1/2 ${
+                      completedQuests.includes(npc.questId)
+                        ? "text-emerald-400 drop-shadow-[0_0_15px_#10B981]"
+                        : activeQuestId === npc.questId
+                          ? "text-amber-400 drop-shadow-[0_0_15px_#F59E0B]"
+                          : "text-red-500 drop-shadow-[0_0_15px_#EF4444]"
+                    }`}
                   >
                     <ExclamationIndicator size={32} />
                   </motion.div>

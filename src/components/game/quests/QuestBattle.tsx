@@ -7,8 +7,12 @@ import { SkillIcon } from "../battle/SkillIcons";
 import { audioManager } from "../../../lib/audio";
 import { 
   SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon, 
-  HealthIcon, ManaIcon, GoldIcon, XPIcon 
+  HealthIcon, ManaIcon, GoldIcon, XPIcon,
+  TileTreeIcon, TileWaterIcon, TileMountainIcon, TileCaveIcon, TileLavaIcon
 } from "../ui/GameIcons";
+import { ThemeProp } from "../battle/ThemeProps";
+import type { MusicTrack } from "../../../lib/audio";
+import { getMonsterColors } from "../../../lib/utils";
 
 interface QuestBattleProps {
   character: Character;
@@ -28,6 +32,59 @@ interface BattleLog {
   icon?: "attack" | "spell" | "defend" | "victory" | "defeat";
 }
 
+const BATTLE_THEMES: Record<string, { gradient: string, music: MusicTrack, icons: any[] }> = {
+  grassland: {
+    gradient: "from-emerald-900/40 to-slate-900/90",
+    music: "battle",
+    icons: [TileTreeIcon]
+  },
+  forest: {
+    gradient: "from-green-950/60 to-slate-950/95",
+    music: "battle_forest",
+    icons: [TileTreeIcon, TileTreeIcon]
+  },
+  undead: {
+    gradient: "from-purple-950/50 to-slate-950/95",
+    music: "battle_undead",
+    icons: [TileCaveIcon]
+  },
+  fire: {
+    gradient: "from-orange-950/60 to-red-950/90",
+    music: "battle_fire",
+    icons: [TileLavaIcon]
+  },
+  ice: {
+    gradient: "from-cyan-900/40 to-slate-900/90",
+    music: "battle_magical",
+    icons: [TileMountainIcon]
+  },
+  water: {
+    gradient: "from-blue-900/40 to-slate-900/90",
+    music: "battle_magical",
+    icons: [TileWaterIcon]
+  },
+  cave: {
+    gradient: "from-zinc-900/80 to-black",
+    music: "battle_undead",
+    icons: [TileCaveIcon]
+  },
+  mountain: {
+    gradient: "from-slate-800/50 to-slate-950/95",
+    music: "battle_forest",
+    icons: [TileMountainIcon]
+  },
+  magical: {
+    gradient: "from-indigo-900/50 to-slate-950/95",
+    music: "battle_magical",
+    icons: [TileCaveIcon]
+  },
+  boss: {
+    gradient: "from-amber-950/40 via-red-950/60 to-black",
+    music: "battle_boss",
+    icons: [TileLavaIcon, TileLavaIcon]
+  }
+};
+
 export function QuestBattle({
   character,
   enemy,
@@ -36,6 +93,8 @@ export function QuestBattle({
   onFlee,
   onUpdateCharacter,
 }: QuestBattleProps) {
+  const theme = BATTLE_THEMES[enemy.battleTheme || "grassland"] || BATTLE_THEMES.grassland;
+
   const [playerHp, setPlayerHp] = useState(character.hp);
   const [playerMp, setPlayerMp] = useState(character.mp);
   const [enemyHp, setEnemyHp] = useState(enemy.maxHp);
@@ -48,6 +107,13 @@ export function QuestBattle({
   const [enemyAnimation, setEnemyAnimation] = useState<"idle" | "attack" | "hit">("idle");
   const [showDamage, setShowDamage] = useState<{ target: "player" | "enemy"; value: number } | null>(null);
   const [isShaking, setIsShaking] = useState(false);
+  const monsterColors = getMonsterColors(enemy.sprite, enemy.name);
+  
+  // Custom gradient for this monster
+  const customGradient = `linear-gradient(to bottom, 
+    hsla(${monsterColors.hue}, 40%, 10%, 0.8), 
+    hsla(${(monsterColors.hue + 180) % 360}, 20%, 5%, 0.95)
+  )`;
 
   // Reset when enemy changes
   useEffect(() => {
@@ -58,9 +124,9 @@ export function QuestBattle({
     setIsDefending(false);
     setLogs([{ message: `A wild ${enemy.name} appears!`, type: "system", icon: "attack" }]);
     
-    // Switch to battle music
-    audioManager.playBgm("battle");
-  }, [enemy.id]);
+    // Switch to battle music based on theme
+    audioManager.playBgm(theme.music);
+  }, [enemy.id, theme.music]);
   
   // Sync health/mana to sidebar character state
   useEffect(() => {
@@ -220,8 +286,8 @@ export function QuestBattle({
     audioManager.playSfx("hit");
     
     // Trigger screen shake
-    setIsShaking(true);
-    setTimeout(() => setIsShaking(false), 500);
+    const shakeDuration = enemy.battleTheme === 'boss' ? 800 : 400;
+    setTimeout(() => setIsShaking(false), shakeDuration);
 
     // Reset defense
     setIsDefending(false);
@@ -245,8 +311,45 @@ export function QuestBattle({
       <motion.div 
         animate={isShaking ? { x: [-4, 4, -4, 4, 0], y: [-2, 2, -2, 2, 0] } : {}}
         transition={{ duration: 0.4 }}
-        className="relative bg-gradient-to-b from-slate-800/80 to-slate-900/90 rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50"
+        className={`relative rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50`}
       >
+        {/* Dynamic Theme Background */}
+        <div 
+          className="absolute inset-0 z-0 transition-colors duration-1000"
+          style={{ background: customGradient }}
+        />
+        
+        {/* Decorative Layer 1 (Theme) */}
+        <div className={`absolute inset-0 z-0 opacity-20 bg-gradient-to-b ${theme.gradient}`} />
+        
+        {/* Decorative Background Icons */}
+        <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
+           {theme.icons.map((Icon, i) => (
+             <div 
+               key={i} 
+               className="absolute" 
+               style={{ 
+                 left: `${15 + (i * 40) + (Math.random() * 20)}%`, 
+                 bottom: `${10 + (Math.random() * 20)}%`,
+                 transform: `scale(${1.5 + Math.random()}) rotate(${Math.random() * 20 - 10}deg)`
+               }}
+             >
+               <Icon size={120} />
+             </div>
+           ))}
+        </div>
+
+        {/* Decorative Layer 2 (Unique Monster Specific) */}
+      <div className="absolute top-0 right-0 bottom-0 w-[60%] z-0 pointer-events-none overflow-hidden">
+        {[...Array(6)].map((_, i) => (
+          <ThemeProp 
+            key={`theme-prop-${i}`}
+            theme={enemy.battleTheme || 'grassland'} 
+            color={monsterColors.secondary}
+            index={i}
+          />
+        ))}
+      </div>
         {/* Player */}
         <div className="absolute left-[28%] bottom-16 flex flex-col items-center">
           <div className="transform scale-150 mb-4">
@@ -270,14 +373,19 @@ export function QuestBattle({
               enemySprite={enemy.sprite}
               isPlayer={false}
               animationType={enemyAnimation}
+              battleTheme={enemy.battleTheme}
             />
           </div>
 
           {/* Enemy HP Bar */}
           <div className="w-24 mt-4">
-            <div className="flex justify-between text-xs text-white mb-1">
-              <span>HP</span>
-              <span>{enemyHp}/{enemy.maxHp}</span>
+            <div className="flex justify-between items-center mb-1">
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${
+                enemy.battleTheme === 'boss' ? 'text-amber-400 animate-pulse' : 'text-slate-400 opacity-60'
+              }`}>
+                {enemy.battleTheme || 'Common'}
+              </span>
+              <span className="text-[10px] font-mono text-slate-300">{Math.ceil(enemyHp)}/{enemy.maxHp}</span>
             </div>
             <div className="h-6 bg-slate-900/60 rounded-full overflow-hidden border border-slate-700/30">
               <motion.div

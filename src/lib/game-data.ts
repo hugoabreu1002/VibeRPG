@@ -281,37 +281,37 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "green-slime", name: "Green Slime", hp: 20, maxHp: 20,
     attack: 4, defense: 1, magicPower: 0, xpReward: 15, goldReward: 8,
     description: "A jiggling mass of green goo. Weak but plentiful.",
-    sprite: "slime"
+    sprite: "slime", battleTheme: "grassland"
   },
   "giant-rat": {
     id: "giant-rat", name: "Giant Rat", hp: 25, maxHp: 25,
     attack: 7, defense: 2, magicPower: 0, xpReward: 20, goldReward: 10,
     description: "A disease-ridden rodent the size of a dog.",
-    sprite: "rat"
+    sprite: "rat", battleTheme: "grassland"
   },
   "wild-boar": {
     id: "wild-boar", name: "Wild Boar", hp: 45, maxHp: 45,
     attack: 14, defense: 8, magicPower: 0, xpReward: 35, goldReward: 18,
     description: "A tusked beast that charges with savage fury.",
-    sprite: "boar"
+    sprite: "boar", battleTheme: "forest"
   },
   "terror-hawk": {
     id: "terror-hawk", name: "Terror Hawk", hp: 35, maxHp: 35,
     attack: 18, defense: 4, magicPower: 0, xpReward: 40, goldReward: 22,
     description: "A massive bird of prey with razor-sharp talons.",
-    sprite: "hawk"
+    sprite: "hawk", battleTheme: "forest"
   },
   "dire-bear": {
     id: "dire-bear", name: "Dire Bear", hp: 90, maxHp: 90,
     attack: 22, defense: 14, magicPower: 0, xpReward: 80, goldReward: 45,
     description: "An enormous bear corrupted by dark energy. Massive and relentless.",
-    sprite: "bear"
+    sprite: "bear", battleTheme: "forest"
   },
   "wolf-pack": {
     id: "wolf-pack", name: "Wolf Pack", hp: 50, maxHp: 50,
     attack: 16, defense: 6, magicPower: 0, xpReward: 45, goldReward: 25,
     description: "A fierce pack of man-eating wolves guarding their nest.",
-    sprite: "wolf"
+    sprite: "wolf", battleTheme: "forest"
   },
 
   // ── UNDEAD ──────────────────────────────────────────────
@@ -319,37 +319,37 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "skeleton-soldier", name: "Skeleton Soldier", hp: 35, maxHp: 35,
     attack: 12, defense: 6, magicPower: 3, xpReward: 30, goldReward: 15,
     description: "An animated pile of bones wielding a rusty sword.",
-    sprite: "skeleton"
+    sprite: "skeleton", battleTheme: "undead"
   },
   "zombie": {
     id: "zombie", name: "Shambling Zombie", hp: 50, maxHp: 50,
     attack: 10, defense: 3, magicPower: 5, xpReward: 35, goldReward: 18,
     description: "A decaying corpse that hungers for the living.",
-    sprite: "zombie"
+    sprite: "zombie", battleTheme: "undead"
   },
   "wraith": {
     id: "wraith", name: "Wraith", hp: 40, maxHp: 40,
     attack: 8, defense: 2, magicPower: 20, xpReward: 55, goldReward: 30,
     description: "A spectral being of pure malice that drains life force.",
-    sprite: "wraith"
+    sprite: "wraith", battleTheme: "undead"
   },
   "lich": {
     id: "lich", name: "Lich", hp: 75, maxHp: 75,
     attack: 10, defense: 8, magicPower: 30, xpReward: 120, goldReward: 65,
     description: "An undead sorcerer of terrible power, sustained by dark magic.",
-    sprite: "lich"
+    sprite: "lich", battleTheme: "undead"
   },
   "death-knight": {
     id: "death-knight", name: "Death Knight", hp: 100, maxHp: 100,
     attack: 25, defense: 18, magicPower: 12, xpReward: 150, goldReward: 80,
     description: "A fallen paladin who serves darkness, clad in cursed black armor.",
-    sprite: "death-knight"
+    sprite: "death-knight", battleTheme: "undead"
   },
   "restless-ghost": {
     id: "restless-ghost", name: "Restless Ghost", hp: 35, maxHp: 35,
     attack: 14, defense: 2, magicPower: 18, xpReward: 50, goldReward: 25,
     description: "A sorrowful spirit unable to find peace.",
-    sprite: "ghost"
+    sprite: "ghost", battleTheme: "undead"
   },
 
   // ── ELEMENTAL ──────────────────────────────────────────
@@ -357,37 +357,37 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "fire-sprite", name: "Fire Sprite", hp: 30, maxHp: 30,
     attack: 6, defense: 3, magicPower: 16, xpReward: 35, goldReward: 20,
     description: "A tiny flame spirit that dances through the air.",
-    sprite: "fire-sprite"
+    sprite: "fire-sprite", battleTheme: "fire"
   },
   "ice-golem": {
     id: "ice-golem", name: "Ice Golem", hp: 70, maxHp: 70,
     attack: 15, defense: 20, magicPower: 10, xpReward: 65, goldReward: 35,
     description: "A construct of frozen ice, slow but incredibly tough.",
-    sprite: "ice-golem"
+    sprite: "ice-golem", battleTheme: "ice"
   },
   "thunder-hawk": {
     id: "thunder-hawk", name: "Thunder Hawk", hp: 45, maxHp: 45,
     attack: 20, defense: 5, magicPower: 15, xpReward: 55, goldReward: 30,
     description: "A storm bird that crackles with electrical energy.",
-    sprite: "thunder-hawk"
+    sprite: "thunder-hawk", battleTheme: "mountain"
   },
   "water-serpent": {
     id: "water-serpent", name: "Water Serpent", hp: 55, maxHp: 55,
     attack: 16, defense: 8, magicPower: 14, xpReward: 50, goldReward: 28,
     description: "A sinuous aquatic creature that strikes from the depths.",
-    sprite: "water-serpent"
+    sprite: "water-serpent", battleTheme: "water"
   },
   "earth-elemental": {
     id: "earth-elemental", name: "Earth Elemental", hp: 80, maxHp: 80,
     attack: 18, defense: 15, magicPower: 8, xpReward: 100, goldReward: 50,
     description: "A massive construct of rock and earth.",
-    sprite: "earth-elemental"
+    sprite: "earth-elemental", battleTheme: "mountain"
   },
   "storm-djinn": {
     id: "storm-djinn", name: "Storm Djinn", hp: 65, maxHp: 65,
     attack: 12, defense: 6, magicPower: 28, xpReward: 110, goldReward: 60,
     description: "An ancient wind spirit of devastating magical power.",
-    sprite: "storm-djinn"
+    sprite: "storm-djinn", battleTheme: "mountain"
   },
 
   // ── PLANT / INSECT ─────────────────────────────────────
@@ -395,25 +395,25 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "treant", name: "Ancient Treant", hp: 85, maxHp: 85,
     attack: 20, defense: 16, magicPower: 8, xpReward: 70, goldReward: 38,
     description: "A massive walking tree corrupted by fungal spores.",
-    sprite: "treant"
+    sprite: "treant", battleTheme: "forest"
   },
   "mushroom-horror": {
     id: "mushroom-horror", name: "Mushroom Horror", hp: 30, maxHp: 30,
     attack: 5, defense: 4, magicPower: 14, xpReward: 25, goldReward: 15,
     description: "A sentient fungus that releases toxic spores.",
-    sprite: "mushroom"
+    sprite: "mushroom", battleTheme: "forest"
   },
   "giant-spider": {
     id: "giant-spider", name: "Giant Spider", hp: 40, maxHp: 40,
     attack: 15, defense: 5, magicPower: 6, xpReward: 40, goldReward: 22,
     description: "A venomous arachnid lurking in dark caves.",
-    sprite: "spider"
+    sprite: "spider", battleTheme: "cave"
   },
   "mantis-warrior": {
     id: "mantis-warrior", name: "Mantis Warrior", hp: 55, maxHp: 55,
     attack: 22, defense: 7, magicPower: 0, xpReward: 50, goldReward: 28,
     description: "A blade-armed insectoid fighter with deadly precision.",
-    sprite: "mantis"
+    sprite: "mantis", battleTheme: "forest"
   },
 
   // ── DEMONIC ────────────────────────────────────────────
@@ -421,37 +421,37 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "imp", name: "Imp", hp: 25, maxHp: 25,
     attack: 8, defense: 3, magicPower: 10, xpReward: 25, goldReward: 15,
     description: "A small, mischievous demon that throws fireballs.",
-    sprite: "imp"
+    sprite: "imp", battleTheme: "fire"
   },
   "shadow-fiend": {
     id: "shadow-fiend", name: "Shadow Fiend", hp: 55, maxHp: 55,
     attack: 18, defense: 5, magicPower: 16, xpReward: 60, goldReward: 35,
     description: "A creature born from nightmares, phasing between shadows.",
-    sprite: "shadow-fiend"
+    sprite: "shadow-fiend", battleTheme: "undead"
   },
   "hellhound": {
     id: "hellhound", name: "Hellhound", hp: 60, maxHp: 60,
     attack: 22, defense: 8, magicPower: 8, xpReward: 65, goldReward: 38,
     description: "A fiery canine from the abyss, breathing brimstone.",
-    sprite: "hellhound"
+    sprite: "hellhound", battleTheme: "fire"
   },
   "succubus": {
     id: "succubus", name: "Succubus", hp: 50, maxHp: 50,
     attack: 14, defense: 6, magicPower: 22, xpReward: 75, goldReward: 42,
     description: "A seductive demon that drains life through dark magic.",
-    sprite: "succubus"
+    sprite: "succubus", battleTheme: "fire"
   },
   "arch-demon": {
     id: "arch-demon", name: "Arch-Demon", hp: 120, maxHp: 120,
     attack: 28, defense: 15, magicPower: 25, xpReward: 200, goldReward: 100,
     description: "A lord of the underworld, wreathed in hellfire and shadow.",
-    sprite: "arch-demon"
+    sprite: "arch-demon", battleTheme: "boss"
   },
   "dark-corrupter": {
     id: "dark-corrupter", name: "Dark Corrupter", hp: 65, maxHp: 65,
     attack: 10, defense: 6, magicPower: 22, xpReward: 75, goldReward: 40,
     description: "A shadowy entity seeking to corrupt the village.",
-    sprite: "dark-corrupter"
+    sprite: "dark-corrupter", battleTheme: "undead"
   },
 
   // ── DRAGONS ────────────────────────────────────────────
@@ -459,25 +459,25 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "wyvern", name: "Wyvern", hp: 70, maxHp: 70,
     attack: 24, defense: 10, magicPower: 8, xpReward: 85, goldReward: 48,
     description: "A two-legged drake with venomous tail and leathery wings.",
-    sprite: "wyvern"
+    sprite: "wyvern", battleTheme: "mountain"
   },
   "drake": {
     id: "drake", name: "Fire Drake", hp: 90, maxHp: 90,
     attack: 26, defense: 14, magicPower: 18, xpReward: 120, goldReward: 65,
     description: "A young dragon that breathes scorching flames.",
-    sprite: "drake"
+    sprite: "drake", battleTheme: "fire"
   },
   "crystal-dragon": {
     id: "crystal-dragon", name: "Crystal Dragon", hp: 110, maxHp: 110,
     attack: 20, defense: 22, magicPower: 30, xpReward: 180, goldReward: 90,
     description: "A dragon whose scales shimmer with prismatic energy.",
-    sprite: "crystal-dragon"
+    sprite: "crystal-dragon", battleTheme: "boss"
   },
   "elder-dragon": {
     id: "elder-dragon", name: "Elder Dragon", hp: 150, maxHp: 150,
     attack: 35, defense: 20, magicPower: 35, xpReward: 300, goldReward: 150,
     description: "An ancient wyrm of immeasurable power. Few survive its wrath.",
-    sprite: "elder-dragon"
+    sprite: "elder-dragon", battleTheme: "boss"
   },
 
   // ── HUMANOID ───────────────────────────────────────────
@@ -485,31 +485,31 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "goblin", name: "Goblin Scout", hp: 22, maxHp: 22,
     attack: 8, defense: 3, magicPower: 0, xpReward: 18, goldReward: 12,
     description: "A sneaky little creature armed with a crude dagger.",
-    sprite: "goblin"
+    sprite: "goblin", battleTheme: "cave"
   },
   "orc-warrior": {
     id: "orc-warrior", name: "Orc Warrior", hp: 65, maxHp: 65,
     attack: 20, defense: 10, magicPower: 0, xpReward: 55, goldReward: 30,
     description: "A brutal green-skinned fighter with a massive axe.",
-    sprite: "orc"
+    sprite: "orc", battleTheme: "forest"
   },
   "dark-mage": {
     id: "dark-mage", name: "Dark Mage", hp: 40, maxHp: 40,
     attack: 6, defense: 4, magicPower: 24, xpReward: 65, goldReward: 35,
     description: "A rogue sorcerer wielding forbidden magic.",
-    sprite: "dark-mage"
+    sprite: "dark-mage", battleTheme: "undead"
   },
   "bandit-leader": {
     id: "bandit-leader", name: "Bandit Leader", hp: 60, maxHp: 60,
     attack: 20, defense: 8, magicPower: 2, xpReward: 50, goldReward: 30,
     description: "A ruthless outlaw leading the attack on the village.",
-    sprite: "bandit"
+    sprite: "bandit", battleTheme: "grassland"
   },
   "honor-knight": {
     id: "honor-knight", name: "Honor Knight", hp: 70, maxHp: 70,
     attack: 22, defense: 12, magicPower: 5, xpReward: 70, goldReward: 40,
     description: "A skilled knight testing worthy warriors in combat.",
-    sprite: "knight"
+    sprite: "knight", battleTheme: "grassland"
   },
 
   // ── MAGICAL ────────────────────────────────────────────
@@ -517,25 +517,25 @@ export const ENEMIES: Record<string, Enemy> = {
     id: "wild-spirit", name: "Wild Spirit", hp: 40, maxHp: 40,
     attack: 8, defense: 3, magicPower: 12, xpReward: 30, goldReward: 15,
     description: "An unstable magical entity born from wild arcane energy.",
-    sprite: "spirit"
+    sprite: "spirit", battleTheme: "magical"
   },
   "arcane-book": {
     id: "arcane-book", name: "Arcane Book", hp: 30, maxHp: 30,
     attack: 15, defense: 5, magicPower: 20, xpReward: 40, goldReward: 20,
     description: "A sentient spellbook overflowing with chaotic magic.",
-    sprite: "arcane-book"
+    sprite: "arcane-book", battleTheme: "magical"
   },
   "plague-beast": {
     id: "plague-beast", name: "Plague Beast", hp: 45, maxHp: 45,
     attack: 12, defense: 4, magicPower: 8, xpReward: 40, goldReward: 20,
     description: "A twisted creature spreading the mysterious illness.",
-    sprite: "plague-beast"
+    sprite: "plague-beast", battleTheme: "undead"
   },
   "mimic": {
     id: "mimic", name: "Mimic", hp: 50, maxHp: 50,
     attack: 18, defense: 12, magicPower: 10, xpReward: 55, goldReward: 45,
     description: "A treasure chest that was never a treasure chest.",
-    sprite: "mimic"
+    sprite: "mimic", battleTheme: "cave"
   },
 };
 

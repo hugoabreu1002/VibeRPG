@@ -4,6 +4,7 @@ import type { CharacterClass, BattleAnimationType } from '../animations/types';
 import type { InventoryItem } from '../../../types/game';
 import { EnemySpriteBody } from './EnemySprites';
 import { InventorySprite } from '../character/InventorySprite';
+import { getMonsterColors } from '../../../lib/utils';
 
 interface BattleSpriteProps {
   characterClass?: CharacterClass;
@@ -15,6 +16,7 @@ interface BattleSpriteProps {
   hp?: number;
   maxHp?: number;
   inventory?: InventoryItem[];
+  battleTheme?: string;
 }
 
 export function BattleSprite({
@@ -27,8 +29,26 @@ export function BattleSprite({
   hp,
   maxHp,
   inventory,
+  battleTheme,
 }: BattleSpriteProps) {
   const [frame, setFrame] = useState(0);
+  const colors = getMonsterColors(enemySprite, enemyName);
+
+  const THEME_AURAS: Record<string, string> = {
+    grassland: "rgba(34, 197, 94, 0.25)",
+    forest: "rgba(22, 101, 52, 0.4)",
+    undead: "rgba(168, 85, 247, 0.3)",
+    fire: "rgba(239, 68, 68, 0.4)",
+    ice: "rgba(14, 165, 233, 0.3)",
+    water: "rgba(59, 130, 246, 0.3)",
+    cave: "rgba(113, 113, 122, 0.25)",
+    mountain: "rgba(148, 163, 184, 0.3)",
+    magical: "rgba(129, 140, 248, 0.4)",
+    boss: "rgba(245, 158, 11, 0.5)",
+  };
+
+  const baseAura = battleTheme ? THEME_AURAS[battleTheme] : colors.primary;
+  const hpFactor = hp !== undefined && maxHp !== undefined ? (hp / maxHp) : 1;
 
   // Idle breathing animation
   useEffect(() => {
@@ -117,12 +137,62 @@ export function BattleSprite({
       className="relative flex flex-col items-center"
     >
       {/* Name label */}
-      <div className="absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-black tracking-widest uppercase text-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] bg-black/20 px-2 py-0.5 rounded-full border border-amber-500/10">
+      <div className={`absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-black tracking-widest uppercase text-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] ${
+        isPlayer ? '' : 'bg-black/20 px-2 py-0.5 rounded-full border border-amber-500/10'
+      }`}>
         {displayName}
       </div>
 
       {/* Character SVG */}
       <div className="relative pt-8">
+        {!isPlayer && (
+          <>
+            {/* Core Pulse Aura */}
+            <motion.div
+              animate={{ 
+                scale: [1.4, 1.6 * (1.2 - hpFactor * 0.2), 1.4],
+                opacity: [0.3, 0.6 * (1.2 - hpFactor * 0.2), 0.3]
+              }}
+              transition={{ duration: 2 + hpFactor * 2, repeat: Infinity, ease: "easeInOut" }}
+              className="absolute inset-0 rounded-full blur-3xl -z-10"
+              style={{ backgroundColor: baseAura, transform: 'scale(1.8) translateY(10px)' }}
+            />
+            
+            {/* Elemental Energy Ripples */}
+            <motion.svg
+              viewBox="0 0 100 100"
+              animate={{ rotate: 360 }}
+              transition={{ duration: 15 + hpFactor * 10, repeat: Infinity, ease: "linear" }}
+              className="absolute inset-[-40px] opacity-20 -z-5 pointer-events-none"
+            >
+              <motion.circle
+                cx="50" cy="50" r="40"
+                fill="none"
+                stroke={colors.secondary}
+                strokeWidth="1"
+                strokeDasharray="10 5"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
+              <motion.path
+                d="M50 10 L50 20 M10 50 L20 50 M50 90 L50 80 M90 50 L80 50"
+                stroke={colors.accent}
+                strokeWidth="2"
+                strokeLinecap="round"
+                animate={{ opacity: [0.2, 0.8, 0.2] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+            </motion.svg>
+
+            {/* Ground Reflection */}
+            <div 
+              className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 h-6 rounded-full blur-xl -z-20 opacity-30"
+              style={{ 
+                background: `radial-gradient(circle, ${colors.accent} 0%, transparent 70%)` 
+              }}
+            />
+          </>
+        )}
         {isPlayerCharacter ? (
           <InventorySprite
             characterClass={characterClass}

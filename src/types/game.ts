@@ -37,6 +37,7 @@ export interface Enemy {
   goldReward: number;
   description: string;
   sprite: string;
+  battleTheme?: string;
 }
 
 export interface QuestChoice {
@@ -100,6 +101,7 @@ export interface Character {
   xpToNext: number;
   skills: string[];
   inventory: InventoryItem[];
+  completedQuests: string[];
 }
 
 export interface QuestResult {

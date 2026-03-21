@@ -17,6 +17,11 @@ export type SoundEffect =
 export type MusicTrack = 
   | 'main' 
   | 'battle' 
+  | 'battle_forest'
+  | 'battle_undead'
+  | 'battle_fire'
+  | 'battle_boss'
+  | 'battle_magical'
   | 'dungeon';
 
 class AudioManager {
@@ -26,16 +31,26 @@ class AudioManager {
   private sfxVolume: number = 0.5;
   private isMuted: boolean = false;
   private musicTracks: Record<MusicTrack, string> = {
-    main: "https://www.soundjay.com/nature/sounds/river-1.mp3", // Temporary placeholder — ideally some actual BGM loop
-    battle: "https://www.soundjay.com/nature/sounds/rain-01.mp3", // Placeholder
-    dungeon: "https://www.soundjay.com/nature/sounds/wind-1.mp3", // Placeholder
+    main: "https://www.soundjay.com/nature/sounds/river-1.mp3",
+    battle: "https://www.soundjay.com/nature/sounds/rain-01.mp3",
+    battle_forest: "https://www.soundjay.com/nature/sounds/forest-wind-1.mp3",
+    battle_undead: "https://www.soundjay.com/nature/sounds/wind-1.mp3",
+    battle_fire: "https://www.soundjay.com/nature/sounds/fire-1.mp3",
+    battle_boss: "https://www.soundjay.com/nature/sounds/thunder-1.mp3",
+    battle_magical: "https://www.soundjay.com/nature/sounds/wind-2.mp3",
+    dungeon: "https://www.soundjay.com/nature/sounds/wind-1.mp3",
   };
   
-  // Real BGM sources (Kevin MacLeod / Incompetech - Creative Commons)
+  // Real BGM sources (Kevin MacLeod / Pixabay - Creative Commons)
   private realMusicTracks: Record<MusicTrack, string> = {
-    main: "https://cdn.pixabay.com/audio/2022/10/14/audio_3e95123512.mp3", // "Fantasy World" - Soft/Ethereal
-    battle: "https://cdn.pixabay.com/audio/2023/10/25/audio_5b3eb7b79a.mp3", // "Epic Battle" - Fast/Energetic
-    dungeon: "https://cdn.pixabay.com/audio/2022/01/18/audio_6c9e0d164d.mp3", // "Dark Dungeon" - Atmospheric
+    main: "https://cdn.pixabay.com/audio/2022/10/14/audio_3e95123512.mp3", // "Fantasy World"
+    battle: "https://cdn.pixabay.com/audio/2023/10/25/audio_5b3eb7b79a.mp3", // "Epic Battle"
+    battle_forest: "https://cdn.pixabay.com/audio/2022/03/15/audio_7315cc969a.mp3", // "Adventure"
+    battle_undead: "https://cdn.pixabay.com/audio/2021/11/24/audio_985532d52f.mp3", // "Dark Mystery"
+    battle_fire: "https://cdn.pixabay.com/audio/2023/11/04/audio_3d332d7337.mp3", // "Aggressive Metal"
+    battle_boss: "https://cdn.pixabay.com/audio/2022/03/10/audio_c76ae75f8f.mp3", // "Epic Cinematic"
+    battle_magical: "https://cdn.pixabay.com/audio/2023/06/11/audio_540986689d.mp3", // "Magic World"
+    dungeon: "https://cdn.pixabay.com/audio/2022/01/18/audio_6c9e0d164d.mp3", // "Dark Dungeon"
   };
 
   private isStarted: boolean = false;
