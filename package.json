@@ -7,7 +7,6 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "build:crazygames": "vite build --base=./",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit"
   },
@@ -77,6 +76,7 @@
   },
   "devDependencies": {
     "prettier": "^3.8.1",
-    "typescript": "~5.9.2"
+    "typescript": "~5.9.2",
+    "vite-plugin-singlefile": "^2.3.2"
   }
 }

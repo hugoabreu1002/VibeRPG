@@ -6,6 +6,9 @@ import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
 import { audioManager } from "../../../lib/audio";
+import { 
+  ShopTabIcon, GoldIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon 
+} from "../ui/GameIcons";
 
 interface ShopProps {
   gold: number;
@@ -48,9 +51,11 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
       className="fantasy-card rounded-xl p-5"
     >
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🏪 Shop</h2>
-        <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30">
-          💰 {gold} Gold
+        <h2 className="text-xl font-bold text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
+          <ShopTabIcon size={28} /> Shop
+        </h2>
+        <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30 flex items-center gap-2 shadow-inner">
+          <GoldIcon size={20} /> {gold} Gold
         </div>
       </div>
 
@@ -76,8 +81,8 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                   <span className="font-semibold text-slate-100 block text-sm leading-tight">{item.name}</span>
                   <span className={`text-xs capitalize ${getRarityLabel(item.rarity)}`}>{item.rarity} {item.type}</span>
                 </div>
-                <div className="font-bold text-amber-400 bg-amber-950/40 px-2 py-0.5 rounded text-sm">
-                  {item.price}g
+                <div className="font-bold text-amber-400 bg-amber-950/40 px-2.5 py-1 rounded-lg text-sm border border-amber-800/20 flex items-center gap-1">
+                  <GoldIcon size={14} /> {item.price}
                 </div>
               </div>
               
@@ -85,15 +90,21 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                 {item.description}
               </p>
 
-              <div className="flex gap-1 flex-wrap mb-4">
+              <div className="flex gap-1.5 flex-wrap mb-4">
                 {Object.entries(item.stats).map(([stat, value]) => value ? (
-                  <span key={stat} className="text-xs bg-slate-800/60 border border-slate-700/30 px-1.5 py-0.5 rounded text-slate-300 font-medium">
-                    {stat}: +{value}
+                  <span key={stat} className="text-[10px] bg-slate-800/60 border border-slate-700/30 px-2 py-1 rounded text-slate-300 font-bold flex items-center gap-1 uppercase">
+                    {stat === 'attack' && <SwordIcon size={12} />}
+                    {stat === 'defense' && <ShieldIcon size={12} />}
+                    {stat === 'hp' && <HealthIcon size={12} />}
+                    {stat === 'mp' && <ManaIcon size={12} />}
+                    <span className="opacity-70">|</span> +{value}
                   </span>
                 ) : null)}
                 {item.restores && Object.entries(item.restores).map(([stat, value]) => value ? (
-                  <span key={`restores-${stat}`} className="text-xs bg-emerald-950/40 border border-emerald-800/30 px-1.5 py-0.5 rounded text-emerald-400 font-medium">
-                    Restores {stat.toUpperCase()}: {value}
+                  <span key={`restores-${stat}`} className="text-[10px] bg-emerald-950/40 border border-emerald-800/30 px-2 py-1 rounded text-emerald-400 font-bold flex items-center gap-1.5 uppercase">
+                    {stat === 'hp' && <HealthIcon size={12} />}
+                    {stat === 'mp' && <ManaIcon size={12} />}
+                    {stat}: +{value}
                   </span>
                 ) : null)}
               </div>

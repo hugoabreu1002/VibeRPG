@@ -6,6 +6,9 @@ import { HatIcon } from "./HatIcon";
 import { BootIcon } from "./BootIcon";
 import { FoodIcon } from "./FoodIcon";
 import { audioManager } from "../../../lib/audio";
+import { 
+  SwordIcon, ShieldIcon, HealthIcon, ManaIcon, GoldIcon 
+} from "../ui/GameIcons";
 
 const getRarityColor = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -83,15 +86,25 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
         <div className="space-y-2 mb-4 bg-slate-900/40 border border-slate-700/30 p-3 rounded-lg">
           <h4 className="text-xs font-bold text-amber-200/60 uppercase">{item.type === "food" ? "Effects" : "Stats"}</h4>
           {Object.entries(item.stats).map(([stat, value]) => value ? (
-            <div key={stat} className="flex justify-between text-sm">
-              <span className="text-slate-400 capitalize">{stat === 'magicPower' ? 'Magic Power' : stat}</span>
+            <div key={stat} className="flex justify-between items-center text-sm py-0.5">
+              <span className="text-slate-400 capitalize flex items-center gap-1.5">
+                {stat === 'attack' && <SwordIcon size={12} />}
+                {stat === 'defense' && <ShieldIcon size={12} />}
+                {stat === 'hp' && <HealthIcon size={12} />}
+                {stat === 'mp' && <ManaIcon size={12} />}
+                {stat === 'magicPower' ? 'Magic Power' : stat}
+              </span>
               <span className="font-bold text-emerald-400">+{value}</span>
             </div>
           ) : null)}
           {item.restores && Object.entries(item.restores).map(([stat, value]) => value ? (
-            <div key={`restores-${stat}`} className="flex justify-between text-sm">
-              <span className="text-slate-400 capitalize">Restores {stat.toUpperCase()}</span>
-              <span className="font-bold text-emerald-400">{value}</span>
+            <div key={`restores-${stat}`} className="flex justify-between items-center text-sm py-0.5">
+              <span className="text-slate-400 capitalize flex items-center gap-1.5">
+                {stat === 'hp' && <HealthIcon size={12} />}
+                {stat === 'mp' && <ManaIcon size={12} />}
+                Restores {stat.toUpperCase()}
+              </span>
+              <span className="font-bold text-emerald-400">+{value}</span>
             </div>
           ) : null)}
         </div>
@@ -136,8 +149,8 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
             className="w-full py-2.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition-colors flex items-center justify-center gap-2"
           >
             <span>SELL ITEM</span>
-            <span className="text-amber-500 font-mono text-sm leading-none bg-amber-950/40 px-2 py-1 rounded border border-amber-900/30">
-              💰 {Math.floor((item.price || 10) / 2)}
+            <span className="text-amber-500 font-mono text-sm leading-none bg-amber-950/40 px-2.5 py-1.5 rounded-lg border border-amber-900/30 flex items-center gap-1.5 shadow-inner">
+              <GoldIcon size={14} /> {Math.floor((item.price || 10) / 2)}
             </span>
           </motion.button>
         )}

@@ -7,7 +7,7 @@ A classic turn-based RPG set in a vibe coded world. Built with React and designe
 VibeRPG is structured as a single-page application (SPA). The architecture focuses on a fast, client-side first experience where most of the logic lives in the frontend:
 
 - **Frontend UI**: Built with React and Vite. Tailwind CSS handles the styling, while Framer Motion is used for smooth UI transitions and micro-animations.
-- **State & Data Persistence**: Active game state is persisted locally using **localStorage**, enabling seamless automatic synchronization and backups through the CrazyGames APS system.
+- **State & Data Persistence**: Active game state is persisted locally using **localStorage**.
 - **Game Engine**: Turn-based combat, quest progression, and shop systems are driven by client-side data modules. 
 
 *Note: This architecture is deliberately high-level and modular. As the game scales, the data layer can easily be abstracted to connect to a remote backend server and database.*

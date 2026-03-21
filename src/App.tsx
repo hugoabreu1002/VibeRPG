@@ -7,12 +7,17 @@ import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/gam
 import { getQuestEnemy } from "./lib/game-data";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
+import { 
+  HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
+  ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
+  MapTabIcon, QuestTabIcon, InventoryTabIcon, ShopTabIcon
+} from "./components/game/ui/GameIcons";
 
-const CLASS_ICONS: Record<CharacterClass, string> = {
-  mage: "🔮",
-  warrior: "⚔️",
-  priest: "✝️",
-  rogue: "🗡️",
+const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
+  mage: <ClassMageIcon size={20} />,
+  warrior: <ClassWarriorIcon size={20} />,
+  priest: <ClassPriestIcon size={20} />,
+  rogue: <ClassRogueIcon size={20} />,
 };
 
 function statusBar(label: string, value: number, max: number, type: "hp" | "mp" | "xp" | "attack" = "hp") {
@@ -29,17 +34,19 @@ function statusBar(label: string, value: number, max: number, type: "hp" | "mp" 
     xp: "bg-emerald-950/50",
     attack: "bg-amber-950/50",
   };
-  const labelIcons: Record<string, string> = {
-    hp: "❤️",
-    mp: "💧",
-    xp: "⭐",
-    attack: "⚔️",
+  const labelIcons: Record<string, React.ReactNode> = {
+    hp: <HealthIcon size={14} className="inline mr-1" />,
+    mp: <ManaIcon size={14} className="inline mr-1" />,
+    xp: <XPIcon size={14} className="inline mr-1" />,
+    attack: <SwordIcon size={14} className="inline mr-1" />,
   };
 
   return (
     <div className="space-y-1.5">
       <div className="flex justify-between text-xs font-semibold">
-        <span className="text-amber-200/80">{labelIcons[type]} {label}</span>
+        <span className="text-amber-200/80 flex items-center">
+          {labelIcons[type]} {label}
+        </span>
         <span className="text-slate-300 font-mono">{value}/{max}</span>
       </div>
       <div className={`h-6 rounded-full ${bgColors[type]} overflow-hidden border border-white/5 shadow-inner shadow-black/30`}>
@@ -442,11 +449,11 @@ function App() {
     setCharacter(created);
   };
 
-  const tabConfig: { tab: Tab; icon: string; label: string }[] = [
-    { tab: "World Map", icon: "🗺️", label: "World Map" },
-    { tab: "Quests", icon: "📜", label: "Quest Log" },
-    { tab: "Inventory", icon: "🎒", label: "Inventory" },
-    { tab: "Shop", icon: "🏪", label: "Shop" },
+  const tabConfig: { tab: Tab; icon: React.ReactNode; label: string }[] = [
+    { tab: "World Map", icon: <MapTabIcon />, label: "World Map" },
+    { tab: "Quests", icon: <QuestTabIcon />, label: "Quest Log" },
+    { tab: "Inventory", icon: <InventoryTabIcon />, label: "Inventory" },
+    { tab: "Shop", icon: <ShopTabIcon />, label: "Shop" },
   ];
 
   return (
@@ -514,7 +521,7 @@ function App() {
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-none mb-1">Gold</span>
                   <div className="flex items-center gap-1.5 leading-none">
-                    <span className="text-lg">💰</span>
+                    <GoldIcon size={18} />
                     <span className="text-xl font-bold text-amber-300">{character.gold}</span>
                   </div>
                 </div>
@@ -850,7 +857,7 @@ function App() {
                         playerClass={character.class}
                         inventory={inventory}
                         onNPCInteract={(npc: NPC) => {
-                          if (npc.questId) {
+                          if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
                             const quest = QUESTS.find(q => q.id === npc.questId);
                             if (quest && quest.class === character.class && quest.minLevel <= character.level) {
                               startQuest(quest);

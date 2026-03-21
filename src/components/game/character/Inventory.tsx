@@ -10,6 +10,7 @@ import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
 import { InventorySprite } from "./InventorySprite";
+import { InventoryTabIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon } from "../ui/GameIcons";
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -73,7 +74,9 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
       animate={{ opacity: 1, y: 0 }}
       className="fantasy-card rounded-xl p-5"
     >
-      <h2 className="text-xl font-bold mb-5 text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🎒 Inventory</h2>
+      <h2 className="text-xl font-bold mb-5 text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
+        <InventoryTabIcon size={28} /> Inventory
+      </h2>
 
       {/* Equipment Slots */}
       <div className="mb-6">
@@ -176,10 +179,14 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                   )}
                 </div>
                 <div className={`text-xs capitalize mb-1 ${getRarityLabel(item.rarity)}`}>{item.rarity} {item.type}</div>
-                <div className="flex gap-1 flex-wrap">
+                <div className="flex gap-1.5 flex-wrap">
                   {Object.entries(item.stats).map(([stat, value]) => (
-                    <span key={stat} className="text-xs bg-slate-800/60 border border-slate-700/30 px-1.5 py-0.5 rounded text-slate-300">
-                      +{value}
+                    <span key={stat} className="text-[10px] bg-slate-800/60 border border-slate-700/30 px-1.5 py-1 rounded text-slate-300 flex items-center gap-1">
+                      {stat === 'attack' && <SwordIcon size={10} />}
+                      {stat === 'defense' && <ShieldIcon size={10} />}
+                      {stat === 'hp' && <HealthIcon size={10} />}
+                      {stat === 'mp' && <ManaIcon size={10} />}
+                      <span className="font-bold">+{value}</span>
                     </span>
                   ))}
                 </div>
@@ -219,10 +226,12 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                     </div>
                   </div>
                   <div className="text-xs text-slate-500 capitalize mb-1">{item.type}</div>
-                  <div className="flex gap-1 flex-wrap">
+                  <div className="flex gap-1.5 flex-wrap">
                     {item.restores && Object.entries(item.restores).map(([stat, value]) => (
-                      <span key={`restores-${stat}`} className="text-xs bg-emerald-950/40 border border-emerald-800/30 px-1.5 py-0.5 rounded text-emerald-400 font-medium">
-                        Restores {stat.toUpperCase()}: {value}
+                      <span key={`restores-${stat}`} className="text-[10px] bg-emerald-950/40 border border-emerald-800/30 px-2 py-1 rounded text-emerald-400 font-bold flex items-center gap-1.5 uppercase letter-spacing-1">
+                        {stat === 'hp' && <HealthIcon size={12} />}
+                        {stat === 'mp' && <ManaIcon size={12} />}
+                        <span>{stat}: {value}</span>
                       </span>
                     ))}
                   </div>

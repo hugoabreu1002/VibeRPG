@@ -5,6 +5,10 @@ import { ArmorIcon } from "../items/ArmorIcon";
 import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { SkillIcon } from "../battle/SkillIcons";
+import { 
+  ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
+  SwordIcon, ManaIcon, ShieldIcon, XPIcon, GoldIcon
+} from "../ui/GameIcons";
 
 interface QuestsProps {
   character: Character;
@@ -18,10 +22,11 @@ interface QuestsProps {
   onResetQuest: () => void;
 }
 
-const CLASS_ICONS: Record<string, string> = {
-  mage: "🔮",
-  warrior: "⚔️",
-  priest: "✝️",
+const CLASS_ICONS: Record<string, React.ReactNode> = {
+  mage: <ClassMageIcon size={18} />,
+  warrior: <ClassWarriorIcon size={18} />,
+  priest: <ClassPriestIcon size={18} />,
+  rogue: <ClassRogueIcon size={18} />,
 };
 
 export function Quests({
@@ -115,9 +120,9 @@ export function Quests({
                 <div className="flex gap-2 flex-wrap relative z-10">
                   {quest.choices.map((choice, idx) => (
                     <span key={idx} className="text-[10px] font-bold bg-slate-900/40 border border-slate-700/30 px-2 py-1 rounded-md text-slate-400 flex items-center gap-1.5">
-                      {choice.requiredStat === 'attack' && <span className="text-red-400">⚔️ ATK</span>}
-                      {choice.requiredStat === 'magicPower' && <span className="text-blue-400">🔮 MAG</span>}
-                      {choice.requiredStat === 'defense' && <span className="text-cyan-400">🛡️ DEF</span>}
+                      {choice.requiredStat === 'attack' && <SwordIcon size={12} className="text-red-400" />}
+                      {choice.requiredStat === 'magicPower' && <ManaIcon size={12} className="text-blue-400" />}
+                      {choice.requiredStat === 'defense' && <ShieldIcon size={12} className="text-cyan-400" />}
                       <span className="text-slate-500 opacity-50">|</span>
                       <span>{choice.difficulty}</span>
                     </span>
@@ -181,9 +186,9 @@ export function Quests({
                     </div>
                     <div className="ml-4 shrink-0">
                       <div className="flex items-center gap-2 bg-slate-900/60 border border-slate-700/30 px-3 py-1.5 rounded-lg text-slate-300 shadow-inner">
-                        {choice.requiredStat === 'attack' && <span className="text-lg">⚔️</span>}
-                        {choice.requiredStat === 'magicPower' && <span className="text-lg">🔮</span>}
-                        {choice.requiredStat === 'defense' && <span className="text-lg">🛡️</span>}
+                        {choice.requiredStat === 'attack' && <SwordIcon size={20} />}
+                        {choice.requiredStat === 'magicPower' && <ManaIcon size={20} />}
+                        {choice.requiredStat === 'defense' && <ShieldIcon size={20} />}
                         <div className="flex flex-col items-center">
                           <span className="text-[9px] font-bold text-slate-500 leading-none mb-0.5">REQ</span>
                           <span className="text-xs font-bold leading-none">{choice.difficulty}</span>
@@ -236,17 +241,19 @@ export function Quests({
                   <motion.span
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-emerald-950/50 text-emerald-400 px-3 py-1 rounded-full text-sm border border-emerald-700/30"
+                    className="bg-emerald-950/50 text-emerald-400 px-3 py-1 rounded-full text-sm border border-emerald-700/30 flex items-center gap-1.5"
                   >
-                    +{questResult.xp} XP
+                    <XPIcon size={14} />
+                    <span>+{questResult.xp} XP</span>
                   </motion.span>
                   <motion.span
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="bg-amber-950/40 text-amber-400 px-3 py-1 rounded-full text-sm border border-amber-700/30"
+                    className="bg-amber-950/40 text-amber-400 px-3 py-1 rounded-full text-sm border border-amber-700/30 flex items-center gap-1.5"
                   >
-                    +{questResult.gold} Gold
+                    <GoldIcon size={14} />
+                    <span>+{questResult.gold} Gold</span>
                   </motion.span>
                 </div>
 

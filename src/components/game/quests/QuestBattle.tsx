@@ -5,6 +5,10 @@ import type { CharacterClass } from "../animations/types";
 import { BattleSprite } from "../battle/BattleSprite";
 import { SkillIcon } from "../battle/SkillIcons";
 import { audioManager } from "../../../lib/audio";
+import { 
+  SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon, 
+  HealthIcon, ManaIcon, GoldIcon, XPIcon 
+} from "../ui/GameIcons";
 
 interface QuestBattleProps {
   character: Character;
@@ -21,6 +25,7 @@ type BattlePhase = "player-turn" | "enemy-turn" | "victory" | "defeat";
 interface BattleLog {
   message: string;
   type: "player" | "enemy" | "system";
+  icon?: "attack" | "spell" | "defend" | "victory" | "defeat";
 }
 
 export function QuestBattle({
@@ -36,7 +41,7 @@ export function QuestBattle({
   const [enemyHp, setEnemyHp] = useState(enemy.maxHp);
   const [phase, setPhase] = useState<BattlePhase>("player-turn");
   const [logs, setLogs] = useState<BattleLog[]>([
-    { message: `⚔️ A wild ${enemy.name} appears!`, type: "system" },
+    { message: `A wild ${enemy.name} appears!`, type: "system", icon: "attack" },
   ]);
   const [isDefending, setIsDefending] = useState(false);
   const [playerAnimation, setPlayerAnimation] = useState<"idle" | "attack" | "spell" | "defend" | "hit">("idle");
@@ -51,7 +56,7 @@ export function QuestBattle({
     setPlayerMp(character.mp);
     setPhase("player-turn");
     setIsDefending(false);
-    setLogs([{ message: `⚔️ A wild ${enemy.name} appears!`, type: "system" }]);
+    setLogs([{ message: `A wild ${enemy.name} appears!`, type: "system", icon: "attack" }]);
     
     // Switch to battle music
     audioManager.playBgm("battle");
@@ -70,12 +75,12 @@ export function QuestBattle({
   useEffect(() => {
     if (enemyHp <= 0 && phase !== "victory") {
       setPhase("victory");
-      setLogs((prev) => [...prev, { message: `🎉 You defeated the ${enemy.name}!`, type: "system" }]);
+      setLogs((prev) => [...prev, { message: `You defeated the ${enemy.name}!`, type: "system", icon: "victory" }]);
       audioManager.playSfx("victory");
       onVictory(enemy.xpReward, enemy.goldReward);
     } else if (playerHp <= 0 && phase !== "defeat") {
       setPhase("defeat");
-      setLogs((prev) => [...prev, { message: `💀 You were defeated by the ${enemy.name}...`, type: "system" }]);
+      setLogs((prev) => [...prev, { message: `You were defeated by the ${enemy.name}...`, type: "system", icon: "defeat" }]);
       audioManager.playSfx("defeat");
       onDefeat();
     }
@@ -91,8 +96,8 @@ export function QuestBattle({
     }
   }, [phase]);
 
-  const addLog = (message: string, type: "player" | "enemy" | "system") => {
-    setLogs((prev) => [...prev.slice(-4), { message, type }]);
+  const addLog = (message: string, type: "player" | "enemy" | "system", icon?: BattleLog["icon"]) => {
+    setLogs((prev) => [...prev.slice(-4), { message, type, icon }]);
   };
 
   const playerAttack = () => {
@@ -113,7 +118,7 @@ export function QuestBattle({
 
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
-    addLog(`⚔️ You attack for ${damage} damage!`, "player");
+    addLog(`You attack for ${damage} damage!`, "player", "attack");
     audioManager.playSfx("attack");
 
     setPhase("enemy-turn");
@@ -145,7 +150,7 @@ export function QuestBattle({
 
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
-    addLog(`✨ You cast a spell for ${damage} magic damage!`, "player");
+    addLog(`You cast a spell for ${damage} magic damage!`, "player", "spell");
     audioManager.playSfx("spell");
 
     setPhase("enemy-turn");
@@ -158,7 +163,7 @@ export function QuestBattle({
     setIsDefending(true);
     setTimeout(() => setPlayerAnimation("idle"), 500);
 
-    addLog("🛡️ You take a defensive stance!", "player");
+    addLog("You take a defensive stance!", "player", "defend");
     setPhase("enemy-turn");
   };
 
@@ -186,20 +191,20 @@ export function QuestBattle({
       const baseDamage = enemy.magicPower;
       const variance = Math.floor(Math.random() * 4) - 2;
       damage = Math.max(1, baseDamage + variance);
-      addLog(`✨ The ${enemy.name} casts a spell!`, "enemy");
+      addLog(`The ${enemy.name} casts a spell!`, "enemy", "spell");
     } else {
       const baseDamage = enemy.attack;
       const variance = Math.floor(Math.random() * 4) - 2;
       damage = Math.max(1, baseDamage + variance);
-      addLog(`⚔️ The ${enemy.name} attacks!`, "enemy");
+      addLog(`The ${enemy.name} attacks!`, "enemy", "attack");
     }
 
     // Apply defense reduction
     if (isDefending) {
       damage = Math.max(1, Math.floor(damage / 2));
-      addLog(`🛡️ Your defense reduces damage to ${damage}!`, "player");
+      addLog(`Your defense reduces damage to ${damage}!`, "player", "defend");
     } else {
-      addLog(`💥 You take ${damage} damage!`, "enemy");
+      addLog(`You take ${damage} damage!`, "enemy", "defeat");
     }
 
     // Animation
@@ -308,14 +313,21 @@ export function QuestBattle({
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`text-sm ${log.type === "player"
+              className={`text-sm flex items-center gap-2 ${log.type === "player"
                   ? "text-green-400"
                   : log.type === "enemy"
                     ? "text-red-400"
                     : "text-slate-400"
                 }`}
             >
-              {log.message}
+              <div className="shrink-0 w-4 h-4 opacity-70">
+                {log.icon === "attack" && <SwordIcon size={14} />}
+                {log.icon === "spell" && <SparkleIcon size={14} />}
+                {log.icon === "defend" && <ShieldIcon size={14} />}
+                {log.icon === "victory" && <VictoryIcon size={14} />}
+                {log.icon === "defeat" && <DefeatIcon size={14} />}
+              </div>
+              <span>{log.message}</span>
             </div>
           ))}
         </div>
@@ -387,17 +399,22 @@ export function QuestBattle({
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className={`text-4xl mb-2 ${phase === "victory" ? "text-green-400" : "text-red-400"}`}
+            className={`flex justify-center mb-2 ${phase === "victory" ? "text-green-400" : "text-red-400"}`}
           >
-            {phase === "victory" ? "🏆" : "💀"}
+            {phase === "victory" ? <VictoryIcon size={64} /> : <DefeatIcon size={64} />}
           </motion.div>
-          <p className={`text-lg font-bold mb-2 ${phase === "victory" ? "text-green-400" : "text-red-400"}`}>
-            {phase === "victory" ? "Victory!" : "Defeat!"}
+          <p className={`text-xl font-bold mb-3 uppercase tracking-widest ${phase === "victory" ? "text-green-400" : "text-red-400"}`} style={{ fontFamily: "'Cinzel', serif" }}>
+            {phase === "victory" ? "Quest Victory" : "Quest Failed"}
           </p>
           {phase === "victory" && (
-            <p className="text-amber-400 text-sm">
-              +{enemy.xpReward} XP • +{enemy.goldReward} Gold
-            </p>
+            <div className="flex justify-center gap-4">
+               <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-bold bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-800/20">
+                 <XPIcon size={14} /> +{enemy.xpReward}
+               </span>
+               <span className="flex items-center gap-1.5 text-amber-400 text-sm font-bold bg-amber-950/30 px-3 py-1 rounded-full border border-amber-800/20">
+                 <GoldIcon size={14} /> +{enemy.goldReward}
+               </span>
+            </div>
           )}
         </div>
       )}
