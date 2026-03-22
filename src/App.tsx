@@ -9,6 +9,7 @@ import { getTranslatedEnemy } from "./lib/game-data";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
+import { initPokiSDK, pokiGameLoadingFinished, pokiGameplayStart, pokiGameplayStop, pokiCommercialBreak } from "./lib/poki-sdk";
 import {
   HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
@@ -87,8 +88,14 @@ function AppContent() {
   const [selectedChoice, setSelectedChoice] = useState<QuestChoice | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
-  // Load all characters
+  // Initialize Poki SDK and load characters
   useEffect(() => {
+    // Initialize Poki SDK
+    initPokiSDK().then(() => {
+      console.log("[VibeRPG] Poki SDK initialized");
+    });
+
+    // Load all characters
     getAllCharacters().then(chars => {
       setAllCharacters(chars);
     });
@@ -158,7 +165,17 @@ function AppContent() {
     setShowDeleteConfirm(null);
   };
 
-  const startQuest = (quest: Quest) => {
+  const startQuest = async (quest: Quest) => {
+    // Show commercial break before starting a new quest
+    await pokiCommercialBreak(() => {
+      // Pause audio before ad
+      audioManager.setMasterMute(true);
+    });
+    // Resume audio after ad
+    if (isMusicEnabled) {
+      audioManager.setMasterMute(false);
+    }
+    
     setActiveQuest(quest);
     setQuestState("active");
     setActiveTab("Quests");
@@ -177,6 +194,8 @@ function AppContent() {
       // Start battle!
       setActiveEnemy(enemy);
       setQuestState("battle");
+      // Notify Poki SDK that gameplay has started
+      pokiGameplayStart();
     } else {
       // Fallback to old behavior if no enemy found
       resolveQuest(choice, false, "You encounter an unexpected enemy!");
@@ -314,6 +333,8 @@ function AppContent() {
 
     setQuestState("result");
     setActiveEnemy(null);
+    // Notify Poki SDK that gameplay has stopped
+    pokiGameplayStop();
   };
 
   const handleBattleDefeat = () => {
@@ -342,6 +363,8 @@ function AppContent() {
 
     setQuestState("result");
     setActiveEnemy(null);
+    // Notify Poki SDK that gameplay has stopped
+    pokiGameplayStop();
   };
 
   const handleBattleFlee = () => {
@@ -349,6 +372,8 @@ function AppContent() {
     setQuestState("list");
     setActiveEnemy(null);
     setSelectedChoice(null);
+    // Notify Poki SDK that gameplay has stopped
+    pokiGameplayStop();
   };
 
   const resetQuest = () => {
@@ -371,6 +396,8 @@ function AppContent() {
         setCompletedQuests(enrichedChar.completedQuests);
       }
       setIsLoading(false);
+      // Notify Poki SDK that game loading has finished
+      pokiGameLoadingFinished();
     });
   }, []);
 
