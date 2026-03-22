@@ -1,5 +1,6 @@
 import type { CharacterClass } from "./storage";
 import type { InventoryItem, Quest, Enemy } from "../types/game";
+import { useI18n } from "./i18n";
 
 export const CHARACTER_CLASSES: CharacterClass[] = ["mage", "warrior", "priest"];
 
@@ -1439,4 +1440,839 @@ export const QUEST_ENEMIES: Record<string, string> = {
 export function getQuestEnemy(questId: string): Enemy | null {
   const enemyId = QUEST_ENEMIES[questId];
   return enemyId ? ENEMIES[enemyId] : null;
+}
+
+// Function to get translated quests
+export function getTranslatedQuests(t: (key: string) => string): Quest[] {
+  return [
+    // 🔮 MAGE QUESTS
+    {
+      id: "mage-library",
+      title: t("quests.mage-library.title"),
+      description: t("quests.mage-library.description"),
+      class: "mage",
+      minLevel: 1,
+      region: "Northern Village",
+      choices: [
+        {
+          text: t("quests.mage-library.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 15,
+          successMessage: t("quests.mage-library.success1"),
+          failureMessage: t("quests.mage-library.failure1"),
+          xpReward: 50,
+          goldReward: 25,
+          rewardItemId: "mystic-ring"
+        },
+        {
+          text: t("quests.mage-library.choice2"),
+          requiredStat: "magicPower",
+          difficulty: 10,
+          successMessage: t("quests.mage-library.success2"),
+          failureMessage: t("quests.mage-library.failure2"),
+          xpReward: 30,
+          goldReward: 15
+        },
+        {
+          text: t("quests.mage-library.choice3"),
+          requiredStat: "magicPower",
+          difficulty: 8,
+          successMessage: t("quests.mage-library.success3"),
+          failureMessage: t("quests.mage-library.failure3"),
+          xpReward: 20,
+          goldReward: 10
+        }
+      ]
+    },
+    {
+      id: "mage-apprentice",
+      title: t("quests.mage-apprentice.title"),
+      description: t("quests.mage-apprentice.description"),
+      class: "mage",
+      minLevel: 1,
+      region: "Whispering Woods",
+      choices: [
+        {
+          text: t("quests.mage-apprentice.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 12,
+          successMessage: t("quests.mage-apprentice.success1"),
+          failureMessage: t("quests.mage-apprentice.failure1"),
+          xpReward: 40,
+          goldReward: 20,
+          rewardSkill: "fireball"
+        },
+        {
+          text: t("quests.mage-apprentice.choice2"),
+          requiredStat: "magicPower",
+          difficulty: 15,
+          successMessage: t("quests.mage-apprentice.success2"),
+          failureMessage: t("quests.mage-apprentice.failure2"),
+          xpReward: 35,
+          goldReward: 15
+        }
+      ]
+    },
+    {
+      id: "mage-elemental",
+      title: t("quests.mage-elemental.title"),
+      description: t("quests.mage-elemental.description"),
+      class: "mage",
+      minLevel: 2,
+      region: "Mountain Pass",
+      choices: [
+        {
+          text: t("quests.mage-elemental.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 25,
+          successMessage: t("quests.mage-elemental.success1"),
+          failureMessage: t("quests.mage-elemental.failure1"),
+          xpReward: 80,
+          goldReward: 50
+        },
+        {
+          text: t("quests.mage-elemental.choice2"),
+          requiredStat: "magicPower",
+          difficulty: 20,
+          successMessage: t("quests.mage-elemental.success2"),
+          failureMessage: t("quests.mage-elemental.failure2"),
+          xpReward: 60,
+          goldReward: 30
+        },
+        {
+          text: t("quests.mage-elemental.choice3"),
+          requiredStat: "magicPower",
+          difficulty: 30,
+          successMessage: t("quests.mage-elemental.success3"),
+          failureMessage: t("quests.mage-elemental.failure3"),
+          xpReward: 100,
+          goldReward: 75
+        }
+      ]
+    },
+    {
+      id: "mage-crystalcave",
+      title: t("quests.mage-crystalcave.title"),
+      description: t("quests.mage-crystalcave.description"),
+      class: "mage",
+      minLevel: 2,
+      region: "Crystal Caverns",
+      choices: [
+        {
+          text: t("quests.mage-crystalcave.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 22,
+          successMessage: t("quests.mage-crystalcave.success1"),
+          failureMessage: t("quests.mage-crystalcave.failure1"),
+          xpReward: 70,
+          goldReward: 40
+        },
+        {
+          text: t("quests.mage-crystalcave.choice2"),
+          requiredStat: "defense",
+          difficulty: 18,
+          successMessage: t("quests.mage-crystalcave.success2"),
+          failureMessage: t("quests.mage-crystalcave.failure2"),
+          xpReward: 55,
+          goldReward: 30
+        }
+      ]
+    },
+    {
+      id: "mage-tower",
+      title: t("quests.mage-tower.title"),
+      description: t("quests.mage-tower.description"),
+      class: "mage",
+      minLevel: 3,
+      region: "Shadow Tower",
+      choices: [
+        {
+          text: t("quests.mage-tower.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 30,
+          successMessage: t("quests.mage-tower.success1"),
+          failureMessage: t("quests.mage-tower.failure1"),
+          xpReward: 120,
+          goldReward: 70,
+          rewardItemId: "fire-staff"
+        },
+        {
+          text: t("quests.mage-tower.choice2"),
+          requiredStat: "magicPower",
+          difficulty: 25,
+          successMessage: t("quests.mage-tower.success2"),
+          failureMessage: t("quests.mage-tower.failure2"),
+          xpReward: 90,
+          goldReward: 50
+        }
+      ]
+    },
+    // ⚔️ WARRIOR QUESTS
+    {
+      id: "warrior-village",
+      title: t("quests.warrior-village.title"),
+      description: t("quests.warrior-village.description"),
+      class: "warrior",
+      minLevel: 1,
+      region: "Northern Village",
+      choices: [
+        {
+          text: t("quests.warrior-village.choice1"),
+          requiredStat: "attack",
+          difficulty: 15,
+          successMessage: t("quests.warrior-village.success1"),
+          failureMessage: t("quests.warrior-village.failure1"),
+          xpReward: 50,
+          goldReward: 25,
+          rewardItemId: "silver-dagger"
+        },
+        {
+          text: t("quests.warrior-village.choice2"),
+          requiredStat: "attack",
+          difficulty: 20,
+          successMessage: t("quests.warrior-village.success2"),
+          failureMessage: t("quests.warrior-village.failure2"),
+          xpReward: 60,
+          goldReward: 35
+        }
+      ]
+    },
+    {
+      id: "warrior-duel",
+      title: t("quests.warrior-duel.title"),
+      description: t("quests.warrior-duel.description"),
+      class: "warrior",
+      minLevel: 2,
+      region: "Training Grounds",
+      choices: [
+        {
+          text: t("quests.warrior-duel.choice1"),
+          requiredStat: "attack",
+          difficulty: 25,
+          successMessage: t("quests.warrior-duel.success1"),
+          failureMessage: t("quests.warrior-duel.failure1"),
+          xpReward: 70,
+          goldReward: 40,
+          rewardSkill: "strike"
+        },
+        {
+          text: t("quests.warrior-duel.choice2"),
+          requiredStat: "defense",
+          difficulty: 20,
+          successMessage: t("quests.warrior-duel.success2"),
+          failureMessage: t("quests.warrior-duel.failure2"),
+          xpReward: 55,
+          goldReward: 30
+        }
+      ]
+    },
+    {
+      id: "warrior-monster",
+      title: t("quests.warrior-monster.title"),
+      description: t("quests.warrior-monster.description"),
+      class: "warrior",
+      minLevel: 1,
+      region: "Trade Route",
+      choices: [
+        {
+          text: t("quests.warrior-monster.choice1"),
+          requiredStat: "attack",
+          difficulty: 20,
+          successMessage: t("quests.warrior-monster.success1"),
+          failureMessage: t("quests.warrior-monster.failure1"),
+          xpReward: 55,
+          goldReward: 30
+        },
+        {
+          text: t("quests.warrior-monster.choice2"),
+          requiredStat: "defense",
+          difficulty: 15,
+          successMessage: t("quests.warrior-monster.success2"),
+          failureMessage: t("quests.warrior-monster.failure2"),
+          xpReward: 40,
+          goldReward: 20
+        }
+      ]
+    },
+    {
+      id: "warrior-orc-camp",
+      title: t("quests.warrior-orc-camp.title"),
+      description: t("quests.warrior-orc-camp.description"),
+      class: "warrior",
+      minLevel: 2,
+      region: "Dark Forest",
+      choices: [
+        {
+          text: t("quests.warrior-orc-camp.choice1"),
+          requiredStat: "attack",
+          difficulty: 28,
+          successMessage: t("quests.warrior-orc-camp.success1"),
+          failureMessage: t("quests.warrior-orc-camp.failure1"),
+          xpReward: 85,
+          goldReward: 50
+        },
+        {
+          text: t("quests.warrior-orc-camp.choice2"),
+          requiredStat: "defense",
+          difficulty: 22,
+          successMessage: t("quests.warrior-orc-camp.success2"),
+          failureMessage: t("quests.warrior-orc-camp.failure2"),
+          xpReward: 65,
+          goldReward: 35
+        }
+      ]
+    },
+    {
+      id: "warrior-dragon-lair",
+      title: t("quests.warrior-dragon-lair.title"),
+      description: t("quests.warrior-dragon-lair.description"),
+      class: "warrior",
+      minLevel: 3,
+      region: "Dragon Peak",
+      choices: [
+        {
+          text: t("quests.warrior-dragon-lair.choice1"),
+          requiredStat: "attack",
+          difficulty: 32,
+          successMessage: t("quests.warrior-dragon-lair.success1"),
+          failureMessage: t("quests.warrior-dragon-lair.failure1"),
+          xpReward: 130,
+          goldReward: 75,
+          rewardItemId: "knight-armor"
+        },
+        {
+          text: t("quests.warrior-dragon-lair.choice2"),
+          requiredStat: "defense",
+          difficulty: 26,
+          successMessage: t("quests.warrior-dragon-lair.success2"),
+          failureMessage: t("quests.warrior-dragon-lair.failure2"),
+          xpReward: 100,
+          goldReward: 55
+        }
+      ]
+    },
+    // ⛑️ PRIEST QUESTS
+    {
+      id: "priest-plague",
+      title: t("quests.priest-plague.title"),
+      description: t("quests.priest-plague.description"),
+      class: "priest",
+      minLevel: 1,
+      region: "Southern Village",
+      choices: [
+        {
+          text: t("quests.priest-plague.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 15,
+          successMessage: t("quests.priest-plague.success1"),
+          failureMessage: t("quests.priest-plague.failure1"),
+          xpReward: 50,
+          goldReward: 25,
+          rewardItemId: "holy-relic"
+        },
+        {
+          text: t("quests.priest-plague.choice2"),
+          requiredStat: "defense",
+          difficulty: 10,
+          successMessage: t("quests.priest-plague.success2"),
+          failureMessage: t("quests.priest-plague.failure2"),
+          xpReward: 35,
+          goldReward: 20
+        },
+        {
+          text: t("quests.priest-plague.choice3"),
+          requiredStat: "magicPower",
+          difficulty: 20,
+          successMessage: t("quests.priest-plague.success3"),
+          failureMessage: t("quests.priest-plague.failure3"),
+          xpReward: 60,
+          goldReward: 35
+        }
+      ]
+    },
+    {
+      id: "priest-ghost",
+      title: t("quests.priest-ghost.title"),
+      description: t("quests.priest-ghost.description"),
+      class: "priest",
+      minLevel: 1,
+      region: "Abandoned Church",
+      choices: [
+        {
+          text: t("quests.priest-ghost.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 18,
+          successMessage: t("quests.priest-ghost.success1"),
+          failureMessage: t("quests.priest-ghost.failure1"),
+          xpReward: 55,
+          goldReward: 30
+        },
+        {
+          text: t("quests.priest-ghost.choice2"),
+          requiredStat: "magicPower",
+          difficulty: 12,
+          successMessage: t("quests.priest-ghost.success2"),
+          failureMessage: t("quests.priest-ghost.failure2"),
+          xpReward: 40,
+          goldReward: 20,
+          rewardSkill: "holy"
+        }
+      ]
+    },
+    {
+      id: "priest-blessing",
+      title: t("quests.priest-blessing.title"),
+      description: t("quests.priest-blessing.description"),
+      class: "priest",
+      minLevel: 2,
+      region: "Northern Village",
+      choices: [
+        {
+          text: t("quests.priest-blessing.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 25,
+          successMessage: t("quests.priest-blessing.success1"),
+          failureMessage: t("quests.priest-blessing.failure1"),
+          xpReward: 75,
+          goldReward: 45
+        },
+        {
+          text: t("quests.priest-blessing.choice2"),
+          requiredStat: "defense",
+          difficulty: 20,
+          successMessage: t("quests.priest-blessing.success2"),
+          failureMessage: t("quests.priest-blessing.failure2"),
+          xpReward: 55,
+          goldReward: 30
+        }
+      ]
+    },
+    {
+      id: "priest-undead-crypt",
+      title: t("quests.priest-undead-crypt.title"),
+      description: t("quests.priest-undead-crypt.description"),
+      class: "priest",
+      minLevel: 2,
+      region: "Sacred Catacombs",
+      choices: [
+        {
+          text: t("quests.priest-undead-crypt.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 24,
+          successMessage: t("quests.priest-undead-crypt.success1"),
+          failureMessage: t("quests.priest-undead-crypt.failure1"),
+          xpReward: 80,
+          goldReward: 45
+        },
+        {
+          text: t("quests.priest-undead-crypt.choice2"),
+          requiredStat: "defense",
+          difficulty: 20,
+          successMessage: t("quests.priest-undead-crypt.success2"),
+          failureMessage: t("quests.priest-undead-crypt.failure2"),
+          xpReward: 60,
+          goldReward: 35
+        }
+      ]
+    },
+    {
+      id: "priest-demon-portal",
+      title: t("quests.priest-demon-portal.title"),
+      description: t("quests.priest-demon-portal.description"),
+      class: "priest",
+      minLevel: 3,
+      region: "Cursed Ruins",
+      choices: [
+        {
+          text: t("quests.priest-demon-portal.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 30,
+          successMessage: t("quests.priest-demon-portal.success1"),
+          failureMessage: t("quests.priest-demon-portal.failure1"),
+          xpReward: 130,
+          goldReward: 70,
+          rewardItemId: "divine-robes"
+        },
+        {
+          text: t("quests.priest-demon-portal.choice2"),
+          requiredStat: "attack",
+          difficulty: 25,
+          successMessage: t("quests.priest-demon-portal.success2"),
+          failureMessage: t("quests.priest-demon-portal.failure2"),
+          xpReward: 100,
+          goldReward: 55
+        }
+      ]
+    },
+    // ═══════════════════════════════════════════════════════════════
+    // GUILD SYSTEM - REPEATABLE GOLD FARMING QUESTS
+    // ═══════════════════════════════════════════════════════════════
+    {
+      id: "guild-bounty-slimes",
+      title: t("quests.guild-bounty-slimes.title"),
+      description: t("quests.guild-bounty-slimes.description"),
+      class: "mage",
+      minLevel: 1,
+      region: "Eastern Farmlands",
+      choices: [
+        {
+          text: t("quests.guild-bounty-slimes.choice1"),
+          requiredStat: "magicPower",
+          difficulty: 8,
+          successMessage: t("quests.guild-bounty-slimes.success1"),
+          failureMessage: t("quests.guild-bounty-slimes.failure1"),
+          xpReward: 15,
+          goldReward: 35
+        },
+        {
+          text: t("quests.guild-bounty-slimes.choice2"),
+          requiredStat: "defense",
+          difficulty: 5,
+          successMessage: t("quests.guild-bounty-slimes.success2"),
+          failureMessage: t("quests.guild-bounty-slimes.failure2"),
+          xpReward: 10,
+          goldReward: 25
+        }
+      ]
+    },
+    {
+      id: "guild-bounty-rats",
+      title: t("quests.guild-bounty-rats.title"),
+      description: t("quests.guild-bounty-rats.description"),
+      class: "warrior",
+      minLevel: 1,
+      region: "Tavern Cellar",
+      choices: [
+        {
+          text: t("quests.guild-bounty-rats.choice1"),
+          requiredStat: "attack",
+          difficulty: 10,
+          successMessage: t("quests.guild-bounty-rats.success1"),
+          failureMessage: t("quests.guild-bounty-rats.failure1"),
+          xpReward: 20,
+          goldReward: 40
+        },
+        {
+          text: t("quests.guild-bounty-rats.choice2"),
+          requiredStat: "defense",
+          difficulty: 8,
+          successMessage: t("quests.guild-bounty-rats.success2"),
+          failureMessage: t("quests.guild-bounty-rats.failure2"),
+          xpReward: 15,
+          goldReward: 30
+        }
+      ]
+    }
+  ];
+}
+
+// Helper function to get translated enemy by ID
+export function getTranslatedEnemy(enemyId: string, t: (key: string) => string): Enemy | null {
+  const translatedEnemies = getTranslatedEnemies(t);
+  return translatedEnemies[enemyId] || null;
+}
+
+// Function to get translated enemies
+export function getTranslatedEnemies(t: (key: string) => string): Record<string, Enemy> {
+  return {
+    // ── BEASTS ──────────────────────────────────────────────
+    "green-slime": {
+      id: "green-slime", name: t("enemies.green-slime.name"), hp: 20, maxHp: 20,
+      attack: 4, defense: 1, magicPower: 0, xpReward: 15, goldReward: 8,
+      description: t("enemies.green-slime.description"),
+      sprite: "slime", battleTheme: "grassland"
+    },
+    "giant-rat": {
+      id: "giant-rat", name: t("enemies.giant-rat.name"), hp: 25, maxHp: 25,
+      attack: 7, defense: 2, magicPower: 0, xpReward: 20, goldReward: 10,
+      description: t("enemies.giant-rat.description"),
+      sprite: "rat", battleTheme: "grassland"
+    },
+    "wild-boar": {
+      id: "wild-boar", name: t("enemies.wild-boar.name"), hp: 45, maxHp: 45,
+      attack: 14, defense: 8, magicPower: 0, xpReward: 35, goldReward: 18,
+      description: t("enemies.wild-boar.description"),
+      sprite: "boar", battleTheme: "forest"
+    },
+    "terror-hawk": {
+      id: "terror-hawk", name: t("enemies.terror-hawk.name"), hp: 35, maxHp: 35,
+      attack: 18, defense: 4, magicPower: 0, xpReward: 40, goldReward: 22,
+      description: t("enemies.terror-hawk.description"),
+      sprite: "hawk", battleTheme: "forest"
+    },
+    "dire-bear": {
+      id: "dire-bear", name: t("enemies.dire-bear.name"), hp: 90, maxHp: 90,
+      attack: 22, defense: 14, magicPower: 0, xpReward: 80, goldReward: 45,
+      description: t("enemies.dire-bear.description"),
+      sprite: "bear", battleTheme: "forest"
+    },
+    "wolf-pack": {
+      id: "wolf-pack", name: t("enemies.wolf-pack.name"), hp: 50, maxHp: 50,
+      attack: 16, defense: 6, magicPower: 0, xpReward: 45, goldReward: 25,
+      description: t("enemies.wolf-pack.description"),
+      sprite: "wolf", battleTheme: "forest"
+    },
+
+    // ── UNDEAD ──────────────────────────────────────────────
+    "skeleton-soldier": {
+      id: "skeleton-soldier", name: t("enemies.skeleton-soldier.name"), hp: 35, maxHp: 35,
+      attack: 12, defense: 6, magicPower: 3, xpReward: 30, goldReward: 15,
+      description: t("enemies.skeleton-soldier.description"),
+      sprite: "skeleton", battleTheme: "undead"
+    },
+    "zombie": {
+      id: "zombie", name: t("enemies.zombie.name"), hp: 50, maxHp: 50,
+      attack: 10, defense: 3, magicPower: 5, xpReward: 35, goldReward: 18,
+      description: t("enemies.zombie.description"),
+      sprite: "zombie", battleTheme: "undead"
+    },
+    "wraith": {
+      id: "wraith", name: t("enemies.wraith.name"), hp: 40, maxHp: 40,
+      attack: 8, defense: 2, magicPower: 20, xpReward: 55, goldReward: 30,
+      description: t("enemies.wraith.description"),
+      sprite: "wraith", battleTheme: "undead"
+    },
+    "lich": {
+      id: "lich", name: t("enemies.lich.name"), hp: 75, maxHp: 75,
+      attack: 10, defense: 8, magicPower: 30, xpReward: 120, goldReward: 65,
+      description: t("enemies.lich.description"),
+      sprite: "lich", battleTheme: "undead"
+    },
+    "death-knight": {
+      id: "death-knight", name: t("enemies.death-knight.name"), hp: 100, maxHp: 100,
+      attack: 25, defense: 18, magicPower: 12, xpReward: 150, goldReward: 80,
+      description: t("enemies.death-knight.description"),
+      sprite: "death-knight", battleTheme: "undead"
+    },
+    "restless-ghost": {
+      id: "restless-ghost", name: t("enemies.restless-ghost.name"), hp: 35, maxHp: 35,
+      attack: 14, defense: 2, magicPower: 18, xpReward: 50, goldReward: 25,
+      description: t("enemies.restless-ghost.description"),
+      sprite: "ghost", battleTheme: "undead"
+    },
+
+    // ── ELEMENTAL ──────────────────────────────────────────
+    "fire-sprite": {
+      id: "fire-sprite", name: t("enemies.fire-sprite.name"), hp: 30, maxHp: 30,
+      attack: 6, defense: 3, magicPower: 16, xpReward: 35, goldReward: 20,
+      description: t("enemies.fire-sprite.description"),
+      sprite: "fire-sprite", battleTheme: "fire"
+    },
+    "ice-golem": {
+      id: "ice-golem", name: t("enemies.ice-golem.name"), hp: 70, maxHp: 70,
+      attack: 15, defense: 20, magicPower: 10, xpReward: 65, goldReward: 35,
+      description: t("enemies.ice-golem.description"),
+      sprite: "ice-golem", battleTheme: "ice"
+    },
+    "thunder-hawk": {
+      id: "thunder-hawk", name: t("enemies.thunder-hawk.name"), hp: 45, maxHp: 45,
+      attack: 20, defense: 5, magicPower: 15, xpReward: 55, goldReward: 30,
+      description: t("enemies.thunder-hawk.description"),
+      sprite: "thunder-hawk", battleTheme: "mountain"
+    },
+    "water-serpent": {
+      id: "water-serpent", name: t("enemies.water-serpent.name"), hp: 55, maxHp: 55,
+      attack: 16, defense: 8, magicPower: 14, xpReward: 50, goldReward: 28,
+      description: t("enemies.water-serpent.description"),
+      sprite: "water-serpent", battleTheme: "water"
+    },
+    "earth-elemental": {
+      id: "earth-elemental", name: t("enemies.earth-elemental.name"), hp: 80, maxHp: 80,
+      attack: 18, defense: 15, magicPower: 8, xpReward: 100, goldReward: 50,
+      description: t("enemies.earth-elemental.description"),
+      sprite: "earth-elemental", battleTheme: "mountain"
+    },
+    "storm-djinn": {
+      id: "storm-djinn", name: t("enemies.storm-djinn.name"), hp: 65, maxHp: 65,
+      attack: 12, defense: 6, magicPower: 28, xpReward: 110, goldReward: 60,
+      description: t("enemies.storm-djinn.description"),
+      sprite: "storm-djinn", battleTheme: "mountain"
+    },
+
+    // ── PLANT / INSECT ─────────────────────────────────────
+    "treant": {
+      id: "treant", name: t("enemies.treant.name"), hp: 85, maxHp: 85,
+      attack: 20, defense: 16, magicPower: 8, xpReward: 70, goldReward: 38,
+      description: t("enemies.treant.description"),
+      sprite: "treant", battleTheme: "forest"
+    },
+    "mushroom-horror": {
+      id: "mushroom-horror", name: t("enemies.mushroom-horror.name"), hp: 30, maxHp: 30,
+      attack: 5, defense: 4, magicPower: 14, xpReward: 25, goldReward: 15,
+      description: t("enemies.mushroom-horror.description"),
+      sprite: "mushroom", battleTheme: "forest"
+    },
+    "giant-spider": {
+      id: "giant-spider", name: t("enemies.giant-spider.name"), hp: 40, maxHp: 40,
+      attack: 15, defense: 5, magicPower: 6, xpReward: 40, goldReward: 22,
+      description: t("enemies.giant-spider.description"),
+      sprite: "spider", battleTheme: "cave"
+    },
+    "mantis-warrior": {
+      id: "mantis-warrior", name: t("enemies.mantis-warrior.name"), hp: 55, maxHp: 55,
+      attack: 22, defense: 7, magicPower: 0, xpReward: 50, goldReward: 28,
+      description: t("enemies.mantis-warrior.description"),
+      sprite: "mantis", battleTheme: "forest"
+    },
+
+    // ── DEMONIC ────────────────────────────────────────────
+    "imp": {
+      id: "imp", name: t("enemies.imp.name"), hp: 25, maxHp: 25,
+      attack: 8, defense: 3, magicPower: 10, xpReward: 25, goldReward: 15,
+      description: t("enemies.imp.description"),
+      sprite: "imp", battleTheme: "fire"
+    },
+    "shadow-fiend": {
+      id: "shadow-fiend", name: t("enemies.shadow-fiend.name"), hp: 55, maxHp: 55,
+      attack: 18, defense: 5, magicPower: 16, xpReward: 60, goldReward: 35,
+      description: t("enemies.shadow-fiend.description"),
+      sprite: "shadow-fiend", battleTheme: "undead"
+    },
+    "hellhound": {
+      id: "hellhound", name: t("enemies.hellhound.name"), hp: 60, maxHp: 60,
+      attack: 22, defense: 8, magicPower: 8, xpReward: 65, goldReward: 38,
+      description: t("enemies.hellhound.description"),
+      sprite: "hellhound", battleTheme: "fire"
+    },
+    "succubus": {
+      id: "succubus", name: t("enemies.succubus.name"), hp: 50, maxHp: 50,
+      attack: 14, defense: 6, magicPower: 22, xpReward: 75, goldReward: 42,
+      description: t("enemies.succubus.description"),
+      sprite: "succubus", battleTheme: "fire"
+    },
+    "arch-demon": {
+      id: "arch-demon", name: t("enemies.arch-demon.name"), hp: 120, maxHp: 120,
+      attack: 28, defense: 15, magicPower: 25, xpReward: 200, goldReward: 100,
+      description: t("enemies.arch-demon.description"),
+      sprite: "arch-demon", battleTheme: "boss"
+    },
+    "dark-corrupter": {
+      id: "dark-corrupter", name: t("enemies.dark-corrupter.name"), hp: 65, maxHp: 65,
+      attack: 10, defense: 6, magicPower: 22, xpReward: 75, goldReward: 40,
+      description: t("enemies.dark-corrupter.description"),
+      sprite: "dark-corrupter", battleTheme: "undead"
+    },
+
+    // ── DRAGONS ────────────────────────────────────────────
+    "wyvern": {
+      id: "wyvern", name: t("enemies.wyvern.name"), hp: 70, maxHp: 70,
+      attack: 24, defense: 10, magicPower: 8, xpReward: 85, goldReward: 48,
+      description: t("enemies.wyvern.description"),
+      sprite: "wyvern", battleTheme: "mountain"
+    },
+    "drake": {
+      id: "drake", name: t("enemies.drake.name"), hp: 90, maxHp: 90,
+      attack: 26, defense: 14, magicPower: 18, xpReward: 120, goldReward: 65,
+      description: t("enemies.drake.description"),
+      sprite: "drake", battleTheme: "fire"
+    },
+    "crystal-dragon": {
+      id: "crystal-dragon", name: t("enemies.crystal-dragon.name"), hp: 110, maxHp: 110,
+      attack: 20, defense: 22, magicPower: 30, xpReward: 180, goldReward: 90,
+      description: t("enemies.crystal-dragon.description"),
+      sprite: "crystal-dragon", battleTheme: "boss"
+    },
+    "elder-dragon": {
+      id: "elder-dragon", name: t("enemies.elder-dragon.name"), hp: 150, maxHp: 150,
+      attack: 35, defense: 20, magicPower: 35, xpReward: 300, goldReward: 150,
+      description: t("enemies.elder-dragon.description"),
+      sprite: "elder-dragon", battleTheme: "boss"
+    },
+
+    // ── HUMANOID ───────────────────────────────────────────
+    "goblin": {
+      id: "goblin", name: t("enemies.goblin.name"), hp: 22, maxHp: 22,
+      attack: 8, defense: 3, magicPower: 0, xpReward: 18, goldReward: 12,
+      description: t("enemies.goblin.description"),
+      sprite: "goblin", battleTheme: "cave"
+    },
+    "orc-warrior": {
+      id: "orc-warrior", name: t("enemies.orc-warrior.name"), hp: 65, maxHp: 65,
+      attack: 20, defense: 10, magicPower: 0, xpReward: 55, goldReward: 30,
+      description: t("enemies.orc-warrior.description"),
+      sprite: "orc", battleTheme: "forest"
+    },
+    "dark-mage": {
+      id: "dark-mage", name: t("enemies.dark-mage.name"), hp: 40, maxHp: 40,
+      attack: 6, defense: 4, magicPower: 24, xpReward: 65, goldReward: 35,
+      description: t("enemies.dark-mage.description"),
+      sprite: "dark-mage", battleTheme: "undead"
+    },
+    "bandit-leader": {
+      id: "bandit-leader", name: t("enemies.bandit-leader.name"), hp: 60, maxHp: 60,
+      attack: 20, defense: 8, magicPower: 2, xpReward: 50, goldReward: 30,
+      description: t("enemies.bandit-leader.description"),
+      sprite: "bandit", battleTheme: "grassland"
+    },
+    "honor-knight": {
+      id: "honor-knight", name: t("enemies.honor-knight.name"), hp: 70, maxHp: 70,
+      attack: 22, defense: 12, magicPower: 5, xpReward: 70, goldReward: 40,
+      description: t("enemies.honor-knight.description"),
+      sprite: "knight", battleTheme: "grassland"
+    },
+
+    // ── MAGICAL ────────────────────────────────────────────
+    "wild-spirit": {
+      id: "wild-spirit", name: t("enemies.wild-spirit.name"), hp: 40, maxHp: 40,
+      attack: 8, defense: 3, magicPower: 12, xpReward: 30, goldReward: 15,
+      description: t("enemies.wild-spirit.description"),
+      sprite: "spirit", battleTheme: "magical"
+    },
+    "arcane-book": {
+      id: "arcane-book", name: t("enemies.arcane-book.name"), hp: 30, maxHp: 30,
+      attack: 15, defense: 5, magicPower: 20, xpReward: 40, goldReward: 20,
+      description: t("enemies.arcane-book.description"),
+      sprite: "arcane-book", battleTheme: "magical"
+    },
+    "plague-beast": {
+      id: "plague-beast", name: t("enemies.plague-beast.name"), hp: 45, maxHp: 45,
+      attack: 12, defense: 4, magicPower: 8, xpReward: 40, goldReward: 20,
+      description: t("enemies.plague-beast.description"),
+      sprite: "plague-beast", battleTheme: "undead"
+    },
+    "mimic": {
+      id: "mimic", name: t("enemies.mimic.name"), hp: 50, maxHp: 50,
+      attack: 18, defense: 12, magicPower: 10, xpReward: 55, goldReward: 45,
+      description: t("enemies.mimic.description"),
+      sprite: "mimic", battleTheme: "cave"
+    },
+  };
+}
+
+// Function to get translated skills
+export function getTranslatedSkills(t: (key: string) => string): Record<string, { name: string; description: string }> {
+  return {
+    bolt: {
+      name: t("skills.bolt.name"),
+      description: t("skills.bolt.description")
+    },
+    defend: {
+      name: t("skills.defend.name"),
+      description: t("skills.defend.description")
+    },
+    flee: {
+      name: t("skills.flee.name"),
+      description: t("skills.flee.description")
+    },
+    slash: {
+      name: t("skills.slash.name"),
+      description: t("skills.slash.description")
+    },
+    smite: {
+      name: t("skills.smite.name"),
+      description: t("skills.smite.description")
+    },
+    fireball: {
+      name: t("skills.fireball.name"),
+      description: t("skills.fireball.description")
+    },
+    holy: {
+      name: t("skills.holy.name"),
+      description: t("skills.holy.description")
+    },
+    strike: {
+      name: t("skills.strike.name"),
+      description: t("skills.strike.description")
+    }
+  };
 }

@@ -3,6 +3,7 @@ import { Character } from "../../../types/game";
 import { RANKS, canEvolve, getNextRank, getRankSkills } from "../../../lib/rank-utils";
 import { GoldIcon, XPIcon } from "./GameIcons";
 import { audioManager } from "../../../lib/audio";
+import { useI18n } from "../../../lib/i18n";
 
 interface GuildEvolutionProps {
   character: Character;
@@ -11,6 +12,7 @@ interface GuildEvolutionProps {
 }
 
 export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionProps) {
+  const { t } = useI18n();
   const nextRank = getNextRank(character.rank);
   const evolutionCheck = canEvolve(character);
 
@@ -43,8 +45,8 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
     <div className="flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>Adventurer's Guild</h2>
-          <p className="text-sm text-slate-400">Evolve your rank and unlock legendary potential</p>
+          <h2 className="text-2xl font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>{t("guild.title")}</h2>
+          <p className="text-sm text-slate-400">{t("guild.subtitle")}</p>
         </div>
         <button 
           onClick={onClose}
@@ -57,7 +59,7 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
       <div className="grid md:grid-cols-2 gap-6 flex-1 overflow-y-auto pr-2">
         {/* Current Status */}
         <div className="fantasy-card p-6 bg-slate-900/40 border-slate-700/30">
-          <h3 className="text-xs font-bold text-amber-500/60 uppercase tracking-widest mb-4">Current Status</h3>
+          <h3 className="text-xs font-bold text-amber-500/60 uppercase tracking-widest mb-4">{t("guild.currentStatus")}</h3>
           <div className="flex flex-col items-center py-4">
              <div 
                className="text-6xl font-black mb-2 filter drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]"
@@ -70,13 +72,13 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
           
           <div className="space-y-3 mt-4">
              <div className="flex justify-between text-sm">
-               <span className="text-slate-400">Current Gold</span>
+               <span className="text-slate-400">{t("guild.currentGold")}</span>
                <span className="text-amber-300 font-bold flex items-center gap-1">
                  <GoldIcon size={14} /> {character.gold.toLocaleString()}
                </span>
              </div>
              <div className="flex justify-between text-sm">
-               <span className="text-slate-400">Current Level</span>
+               <span className="text-slate-400">{t("guild.currentLevel")}</span>
                <span className="text-emerald-400 font-bold flex items-center gap-1">
                  <XPIcon size={14} /> {character.level}
                </span>
@@ -93,7 +95,7 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
                 animate={{ opacity: 1, scale: 1 }}
                 className="relative z-10"
               >
-                <h3 className="text-xs font-bold text-amber-500/60 uppercase tracking-widest mb-4">Next Evolution</h3>
+                <h3 className="text-xs font-bold text-amber-500/60 uppercase tracking-widest mb-4">{t("guild.nextEvolution")}</h3>
                 <div className="flex flex-col items-center py-4">
                    <motion.div 
                      animate={{ 
@@ -111,25 +113,25 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
 
                 <div className="mt-6 p-4 rounded-xl bg-black/40 border border-white/5 space-y-4">
                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-400">Evolution Cost</span>
+                      <span className="text-sm text-slate-400">{t("guild.evolutionCost")}</span>
                       <span className={`text-base font-bold flex items-center gap-1.5 ${character.gold >= nextRank.cost ? 'text-amber-400' : 'text-red-400'}`}>
                         <GoldIcon size={18} /> {nextRank.cost.toLocaleString()}
                       </span>
                    </div>
                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-slate-400">Min. Level Required</span>
+                      <span className="text-sm text-slate-400">{t("guild.minLevel")}</span>
                       <span className={`text-base font-bold flex items-center gap-1.5 ${character.level >= nextRank.minLevel ? 'text-emerald-400' : 'text-red-400'}`}>
-                         Level {nextRank.minLevel}
+                         {t("guild.level", { level: nextRank.minLevel })}
                       </span>
                    </div>
                 </div>
 
                 <div className="mt-6">
-                   <h4 className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-2">Unlocked Potential</h4>
+                   <h4 className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-2">{t("guild.unlockedPotential")}</h4>
                    <div className="flex flex-wrap gap-2">
-                      <span className="text-xs py-1 px-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-200">New Class Skills</span>
-                      <span className="text-xs py-1 px-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-200">Permanent Stat Boost</span>
-                      <span className="text-xs py-1 px-3 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-200">Elite Character Sprite</span>
+                      <span className="text-xs py-1 px-3 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-200">{t("guild.newSkills")}</span>
+                      <span className="text-xs py-1 px-3 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-200">{t("guild.statBoost")}</span>
+                      <span className="text-xs py-1 px-3 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-200">{t("guild.eliteSprite")}</span>
                    </div>
                 </div>
 
@@ -145,7 +147,7 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
                   }`}
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  {evolutionCheck.can ? "Begin Evolution" : "Requirements Not Met"}
+                  {evolutionCheck.can ? t("guild.beginEvolution") : t("guild.requirementsNotMet")}
                 </motion.button>
                 
                 {!evolutionCheck.can && (
@@ -164,8 +166,8 @@ export function GuildEvolution({ character, onEvolve, onClose }: GuildEvolutionP
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center">
                <div className="text-5xl mb-4">👑</div>
-               <h3 className="text-xl font-bold text-amber-200 mb-2">Maximum Rank Reached!</h3>
-               <p className="text-sm text-slate-400">You have attained the pinnacle of power. You are a true Legend of VibeRPG.</p>
+               <h3 className="text-xl font-bold text-amber-200 mb-2">{t("guild.maxRank")}</h3>
+               <p className="text-sm text-slate-400">{t("guild.legend")}</p>
             </div>
           )}
         </div>

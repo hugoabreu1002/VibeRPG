@@ -4,6 +4,7 @@ import type { Quest, QuestMapData, NPC, TileType, InventoryItem, CharacterClass 
 import { NPCSprite } from "../world/NPCSprites";
 import { InventorySprite } from "../character/InventorySprite";
 import { audioManager } from "../../../lib/audio";
+import { useI18n } from "../../../lib/i18n";
 import { 
   TileTreeIcon, TileWaterIcon, TileMountainIcon, TileHouseIcon, 
   TileCaveIcon, TileLavaIcon, ExclamationIndicator 
@@ -205,6 +206,7 @@ export function QuestMap({
   onNPCInteract, 
   onBack 
 }: QuestMapProps) {
+  const { t } = useI18n();
   const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
   const [dialogIndex, setDialogIndex] = useState(0);
   const [playerPos, setPlayerPos] = useState(mapData.playerStart);
@@ -432,7 +434,7 @@ export function QuestMap({
           animate={{ x: 0, opacity: 1 }}
           className="bg-slate-900/80 backdrop-blur-xl border border-amber-500/20 px-5 py-3 rounded-2xl shadow-2xl"
         >
-          <div className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-1">Current Region</div>
+          <div className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-1">{t("quest.currentRegion")}</div>
           <div className="text-2xl font-black text-white flex items-center gap-3" style={{ fontFamily: "'Cinzel', serif" }}>
             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10B981]" />
             {mapData.name} <span className="text-slate-500 font-normal text-sm">Realm</span>
@@ -442,11 +444,11 @@ export function QuestMap({
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
         <div className="px-6 py-2.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/10 flex gap-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest shadow-2xl">
-          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">ARROWS</span> MOVE</div>
+          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">{t("quest.arrows")}</span> {t("quest.move")}</div>
           <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">ENTER</span> TALK</div>
+          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">{t("quest.enter")}</span> {t("quest.talk")}</div>
           <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2 font-black text-amber-400">QUESTS ACTIVE</div>
+          <div className="flex items-center gap-2 font-black text-amber-400">{t("quest.questsActive")}</div>
         </div>
       </div>
 

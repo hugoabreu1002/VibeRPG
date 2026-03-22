@@ -13,6 +13,7 @@ import {
 import { ThemeProp } from "../battle/ThemeProps";
 import type { MusicTrack } from "../../../lib/audio";
 import { getMonsterColors } from "../../../lib/utils";
+import { useI18n } from "../../../lib/i18n";
 
 interface QuestBattleProps {
   character: Character;
@@ -93,6 +94,7 @@ export function QuestBattle({
   onFlee,
   onUpdateCharacter,
 }: QuestBattleProps) {
+  const { t } = useI18n();
   const theme = BATTLE_THEMES[enemy.battleTheme || "grassland"] || BATTLE_THEMES.grassland;
 
   const [playerHp, setPlayerHp] = useState(character.hp);
@@ -100,7 +102,7 @@ export function QuestBattle({
   const [enemyHp, setEnemyHp] = useState(enemy.maxHp);
   const [phase, setPhase] = useState<BattlePhase>("player-turn");
   const [logs, setLogs] = useState<BattleLog[]>([
-    { message: `A wild ${enemy.name} appears!`, type: "system", icon: "attack" },
+    { message: t("battle.wildAppears", { enemy: enemy.name }), type: "system", icon: "attack" },
   ]);
   const [isDefending, setIsDefending] = useState(false);
   const [playerAnimation, setPlayerAnimation] = useState<"idle" | "attack" | "spell" | "defend" | "hit">("idle");
@@ -122,7 +124,7 @@ export function QuestBattle({
     setPlayerMp(character.mp);
     setPhase("player-turn");
     setIsDefending(false);
-    setLogs([{ message: `A wild ${enemy.name} appears!`, type: "system", icon: "attack" }]);
+    setLogs([{ message: t("battle.wildAppears", { enemy: enemy.name }), type: "system", icon: "attack" }]);
     
     // Switch to battle music based on theme
     audioManager.playBgm(theme.music);
@@ -141,12 +143,12 @@ export function QuestBattle({
   useEffect(() => {
     if (enemyHp <= 0 && phase !== "victory") {
       setPhase("victory");
-      setLogs((prev) => [...prev, { message: `You defeated the ${enemy.name}!`, type: "system", icon: "victory" }]);
+      setLogs((prev) => [...prev, { message: t("battle.victory", { enemy: enemy.name }), type: "system", icon: "victory" }]);
       audioManager.playSfx("victory");
       onVictory(enemy.xpReward, enemy.goldReward);
     } else if (playerHp <= 0 && phase !== "defeat") {
       setPhase("defeat");
-      setLogs((prev) => [...prev, { message: `You were defeated by the ${enemy.name}...`, type: "system", icon: "defeat" }]);
+      setLogs((prev) => [...prev, { message: t("battle.defeat", { enemy: enemy.name }), type: "system", icon: "defeat" }]);
       audioManager.playSfx("defeat");
       onDefeat();
     }
@@ -184,7 +186,7 @@ export function QuestBattle({
 
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
-    addLog(`You attack for ${damage} damage!`, "player", "attack");
+    addLog(t("battle.attackDamage", { damage }), "player", "attack");
     audioManager.playSfx("attack");
 
     setPhase("enemy-turn");
@@ -195,7 +197,7 @@ export function QuestBattle({
 
     const spellCost = 10;
     if (playerMp < spellCost) {
-      addLog("❌ Not enough MP to cast spell!", "system");
+      addLog(t("battle.notEnoughMp"), "system");
       return;
     }
 
@@ -216,7 +218,7 @@ export function QuestBattle({
 
     // Apply damage
     setEnemyHp((prev) => Math.max(0, prev - damage));
-    addLog(`You cast a spell for ${damage} magic damage!`, "player", "spell");
+    addLog(t("battle.spellDamage", { damage }), "player", "spell");
     audioManager.playSfx("spell");
 
     setPhase("enemy-turn");
@@ -229,7 +231,7 @@ export function QuestBattle({
     setIsDefending(true);
     setTimeout(() => setPlayerAnimation("idle"), 500);
 
-    addLog("You take a defensive stance!", "player", "defend");
+    addLog(t("battle.defend"), "player", "defend");
     setPhase("enemy-turn");
   };
 
@@ -238,10 +240,10 @@ export function QuestBattle({
 
     // 50% chance to flee
     if (Math.random() > 0.5) {
-      addLog("🏃 You successfully fled from battle!", "player");
+      addLog(t("battle.fleeSuccess"), "player");
       setTimeout(() => onFlee(), 500);
     } else {
-      addLog("❌ Failed to flee! The enemy catches you!", "enemy");
+      addLog(t("battle.fleeFail"), "enemy");
       setPhase("enemy-turn");
     }
   };
@@ -257,20 +259,20 @@ export function QuestBattle({
       const baseDamage = enemy.magicPower;
       const variance = Math.floor(Math.random() * 4) - 2;
       damage = Math.max(1, baseDamage + variance);
-      addLog(`The ${enemy.name} casts a spell!`, "enemy", "spell");
+      addLog(t("battle.enemySpell", { enemy: enemy.name }), "enemy", "spell");
     } else {
       const baseDamage = enemy.attack;
       const variance = Math.floor(Math.random() * 4) - 2;
       damage = Math.max(1, baseDamage + variance);
-      addLog(`The ${enemy.name} attacks!`, "enemy", "attack");
+      addLog(t("battle.enemyAttack", { enemy: enemy.name }), "enemy", "attack");
     }
 
     // Apply defense reduction
     if (isDefending) {
       damage = Math.max(1, Math.floor(damage / 2));
-      addLog(`Your defense reduces damage to ${damage}!`, "player", "defend");
+      addLog(t("battle.defenseReduces", { damage }), "player", "defend");
     } else {
-      addLog(`You take ${damage} damage!`, "enemy", "defeat");
+      addLog(t("battle.takeDamage", { damage }), "enemy", "defeat");
     }
 
     // Animation
@@ -383,7 +385,7 @@ export function QuestBattle({
               <span className={`text-[10px] font-black uppercase tracking-tighter ${
                 enemy.battleTheme === 'boss' ? 'text-amber-400 animate-pulse' : 'text-slate-400 opacity-60'
               }`}>
-                {enemy.battleTheme || 'Common'}
+                {enemy.battleTheme ? t(`battle.${enemy.battleTheme}`) : t("battle.common")}
               </span>
               <span className="text-[10px] font-mono text-slate-300">{Math.ceil(enemyHp)}/{enemy.maxHp}</span>
             </div>
@@ -512,7 +514,7 @@ export function QuestBattle({
             {phase === "victory" ? <VictoryIcon size={64} /> : <DefeatIcon size={64} />}
           </motion.div>
           <p className={`text-xl font-bold mb-3 uppercase tracking-widest ${phase === "victory" ? "text-green-400" : "text-red-400"}`} style={{ fontFamily: "'Cinzel', serif" }}>
-            {phase === "victory" ? "Quest Victory" : "Quest Failed"}
+            {phase === "victory" ? t("battle.questVictory") : t("battle.questFailed")}
           </p>
           {phase === "victory" && (
             <div className="flex justify-center gap-4">
