@@ -103,6 +103,7 @@ export interface Character {
   skills: string[];
   inventory: InventoryItem[];
   completedQuests: string[];
+  currentRegion: string;
 }
 
 export interface QuestResult {

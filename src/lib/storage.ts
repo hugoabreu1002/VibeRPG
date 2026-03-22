@@ -22,6 +22,7 @@ export interface Character {
   skills: string[];
   inventory: InventoryItem[];
   completedQuests: string[];
+  currentRegion: string;
 }
 
 const STORAGE_KEY = "viberpg-characters";

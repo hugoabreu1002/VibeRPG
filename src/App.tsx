@@ -8,6 +8,7 @@ import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
+import { getCurrentRegion, getAvailableRegions, getNextAvailableRegions, shouldAutoAdvanceRegion, getRegionMapData, getRegionProgress } from "./lib/region-utils";
 import {
   HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
@@ -360,7 +361,8 @@ function AppContent() {
           ...char,
           skills: char.skills || getInitialCharacterStats(char.class).skills,
           inventory: char.inventory || getStarterItems(char.class),
-          completedQuests: char.completedQuests || []
+          completedQuests: char.completedQuests || [],
+          currentRegion: char.currentRegion || "Hub Town"
         };
         setCharacter(enrichedChar);
         setInventory(enrichedChar.inventory);
@@ -369,6 +371,22 @@ function AppContent() {
       setIsLoading(false);
     });
   }, []);
+
+  // Auto-advance region when all quests in current region are completed
+  useEffect(() => {
+    if (!character) return;
+
+    // Check if we should auto-advance to next region
+    if (shouldAutoAdvanceRegion(character)) {
+      const nextRegions = getNextAvailableRegions(character);
+      if (nextRegions.length > 0) {
+        // Auto-advance to the first available next region
+        const nextRegion = nextRegions[0];
+        setCharacter({ ...character, currentRegion: nextRegion.id });
+        audioManager.playSfx("victory");
+      }
+    }
+  }, [character, completedQuests]);
 
   const handleToggleEquip = (item: InventoryItem) => {
     const newEquipped = !item.equipped;
@@ -888,8 +906,59 @@ function AppContent() {
 
               {activeTab === "World Map" && character && (
                 <div className="space-y-4">
+                  {/* Region Header */}
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="fantasy-card rounded-xl p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>
+                          🗺️ {getCurrentRegion(character).name}
+                        </h3>
+                        <p className="text-sm text-slate-400">{getCurrentRegion(character).description}</p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <span className="text-xs text-amber-500/60 uppercase tracking-widest font-bold">Region Progress</span>
+                          <div className="flex items-center gap-2 mt-1">
+                            <div className="w-24 bg-slate-800 rounded-full h-2">
+                              <div 
+                                className="h-2 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+                                style={{ width: `${getRegionProgress(character).percentage}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-slate-300 font-mono">
+                              {getRegionProgress(character).current}/{getRegionProgress(character).total}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        {/* Region Navigation */}
+                        <div className="flex gap-2">
+                          {getNextAvailableRegions(character).map(region => (
+                            <motion.button
+                              key={region.id}
+                              whileHover={{ scale: 1.05 }}
+                              whileTap={{ scale: 0.95 }}
+                              onClick={() => {
+                                setCharacter({ ...character, currentRegion: region.id });
+                                audioManager.playSfx("click");
+                              }}
+                              className="btn-fantasy px-3 py-1.5 text-xs font-bold"
+                            >
+                              🚶‍♂️ {region.name}
+                            </motion.button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Map */}
                   {(() => {
-                    const mapData = getQuestMap("Hub Town");
+                    const mapData = getRegionMapData(character.currentRegion);
                     return mapData && (
                       <QuestMap
                         mapData={mapData}
