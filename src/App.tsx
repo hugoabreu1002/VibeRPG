@@ -171,7 +171,8 @@ function AppContent() {
     setSelectedChoice(choice);
 
     // Get the enemy for this quest (translated)
-    const enemy = getTranslatedEnemy(activeQuest.id, t);
+    const enemyId = QUEST_ENEMIES[activeQuest.id];
+    const enemy = enemyId ? getTranslatedEnemy(enemyId, t) : null;
     if (enemy) {
       // Start battle!
       setActiveEnemy(enemy);
