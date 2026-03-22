@@ -252,36 +252,11 @@ export function QuestMap({
         }
         return;
       }
-
-      let nextX = playerPos.x;
-      let nextY = playerPos.y;
-
-      if (e.key === "ArrowUp") nextY--;
-      else if (e.key === "ArrowDown") nextY++;
-      else if (e.key === "ArrowLeft") nextX--;
-      else if (e.key === "ArrowRight") nextX++;
-      else return;
-
-      e.preventDefault();
-
-      if (nextX >= 0 && nextX < mapData.width && nextY >= 0 && nextY < mapData.height) {
-        const tile = mapData.tiles[nextY]?.[nextX];
-        const npc = mapData.npcs.find(n => n.position.x === nextX && n.position.y === nextY);
-        if (npc) {
-          setSelectedNPC(npc);
-          setDialogIndex(0);
-          return;
-        }
-
-        if (tile && tile !== "water" && tile !== "mountain" && tile !== "lava") {
-          setPlayerPos({ x: nextX, y: nextY });
-        }
-      }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [playerPos, selectedNPC, mapData, handleDialogAdvance]);
+  }, [selectedNPC, handleDialogAdvance]);
 
   const { x: isoPlayerX, y: isoPlayerY } = getIsoPos(playerPos.x, playerPos.y);
   // Static camera - centered on map center (matching canvas rendering)
@@ -444,7 +419,7 @@ export function QuestMap({
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
         <div className="px-6 py-2.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/10 flex gap-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest shadow-2xl">
-          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">{t("quest.arrows")}</span> {t("quest.move")}</div>
+          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">🖱️</span> {t("quest.click")}</div>
           <div className="w-px h-4 bg-white/10" />
           <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">{t("quest.enter")}</span> {t("quest.talk")}</div>
           <div className="w-px h-4 bg-white/10" />
@@ -454,7 +429,7 @@ export function QuestMap({
 
       {/* Hint */}
       <p className="text-xs text-slate-500 text-center mb-4">
-        Click or walk into NPCs to interact. Arrows to move, Enter to advance.
+        Click on NPCs to interact. Press Enter to advance dialog.
       </p>
 
       {/* NPC Dialog Overlay */}
