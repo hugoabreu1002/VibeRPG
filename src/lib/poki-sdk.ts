@@ -33,12 +33,10 @@ class PokiSDKWrapper {
   private initialized = false;
   private initPromise: Promise<void> | null = null;
   private gameplayActive = false;
+  private isDevelopment = false;
 
   private constructor() {
-    // Check if PokiSDK is available
-    if (typeof window !== "undefined" && window.PokiSDK) {
-      this.sdk = window.PokiSDK;
-    }
+    // Don't check for PokiSDK here - it may not be loaded yet
   }
 
   static getInstance(): PokiSDKWrapper {
@@ -46,6 +44,32 @@ class PokiSDKWrapper {
       PokiSDKWrapper.instance = new PokiSDKWrapper();
     }
     return PokiSDKWrapper.instance;
+  }
+
+  /**
+   * Wait for PokiSDK to be available
+   * @param maxWaitMs Maximum time to wait in milliseconds
+   * @returns Promise that resolves when PokiSDK is available or timeout
+   */
+  private waitForPokiSDK(maxWaitMs: number = 5000): Promise<boolean> {
+    return new Promise((resolve) => {
+      // Check if already available
+      if (typeof window !== "undefined" && window.PokiSDK) {
+        resolve(true);
+        return;
+      }
+
+      const startTime = Date.now();
+      const checkInterval = setInterval(() => {
+        if (typeof window !== "undefined" && window.PokiSDK) {
+          clearInterval(checkInterval);
+          resolve(true);
+        } else if (Date.now() - startTime >= maxWaitMs) {
+          clearInterval(checkInterval);
+          resolve(false);
+        }
+      }, 100);
+    });
   }
 
   /**
@@ -62,37 +86,31 @@ class PokiSDKWrapper {
       return this.initPromise;
     }
 
-    this.initPromise = new Promise<void>((resolve) => {
+    this.initPromise = new Promise<void>(async (resolve) => {
       // Wait for PokiSDK to be available
-      const checkSdk = () => {
-        if (typeof window !== "undefined" && window.PokiSDK) {
-          this.sdk = window.PokiSDK;
-          this.sdk
-            .init()
-            .then(() => {
-              console.log("[Poki SDK] Successfully initialized");
-              this.initialized = true;
-              resolve();
-            })
-            .catch(() => {
-              console.log(
-                "[Poki SDK] Initialization failed, but continuing anyway"
-              );
-              this.initialized = true;
-              resolve();
-            });
-        } else {
-          // PokiSDK not available, might be in development
-          console.log(
-            "[Poki SDK] Not available - running in development mode"
-          );
+      const sdkAvailable = await this.waitForPokiSDK();
+      
+      if (sdkAvailable && window.PokiSDK) {
+        this.sdk = window.PokiSDK;
+        console.log("[Poki SDK] SDK found, initializing...");
+        
+        try {
+          await this.sdk.init();
+          console.log("[Poki SDK] Successfully initialized");
+          this.initialized = true;
+          resolve();
+        } catch (error) {
+          console.log("[Poki SDK] Initialization failed, but continuing anyway", error);
           this.initialized = true;
           resolve();
         }
-      };
-
-      // Check immediately, then poll if needed
-      checkSdk();
+      } else {
+        // PokiSDK not available - development mode
+        this.isDevelopment = true;
+        console.log("[Poki SDK] Not available - running in development mode");
+        this.initialized = true;
+        resolve();
+      }
     });
 
     return this.initPromise;

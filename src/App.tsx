@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS } from "./lib/game-data";
+import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
@@ -9,7 +9,7 @@ import { getTranslatedEnemy } from "./lib/game-data";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
-import { initPokiSDK, pokiGameLoadingFinished, pokiGameplayStart, pokiGameplayStop, pokiCommercialBreak } from "./lib/poki-sdk";
+import { initPokiSDK, pokiGameLoadingFinished, pokiGameplayStart, pokiGameplayStop, pokiCommercialBreak, pokiRewardedBreak } from "./lib/poki-sdk";
 import {
   HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
@@ -90,9 +90,26 @@ function AppContent() {
 
   // Initialize Poki SDK and load characters
   useEffect(() => {
-    // Initialize Poki SDK
+    // Initialize Poki SDK first
     initPokiSDK().then(() => {
       console.log("[VibeRPG] Poki SDK initialized");
+      // Then load character and notify game loading finished
+      getCurrentCharacter().then((char) => {
+        if (char) {
+          const enrichedChar = {
+            ...char,
+            skills: char.skills || getInitialCharacterStats(char.class).skills,
+            inventory: char.inventory || getStarterItems(char.class),
+            completedQuests: char.completedQuests || []
+          };
+          setCharacter(enrichedChar);
+          setInventory(enrichedChar.inventory);
+          setCompletedQuests(enrichedChar.completedQuests);
+        }
+        setIsLoading(false);
+        // Notify Poki SDK that game loading has finished
+        pokiGameLoadingFinished();
+      });
     });
 
     // Load all characters
@@ -274,7 +291,7 @@ function AppContent() {
     setQuestState("result");
   };
 
-  const handleBattleVictory = (xp: number, gold: number) => {
+  const handleBattleVictory = async (xp: number, gold: number) => {
     if (!character || !selectedChoice) return;
 
     // Add battle rewards + quest bonus
@@ -335,9 +352,39 @@ function AppContent() {
     setActiveEnemy(null);
     // Notify Poki SDK that gameplay has stopped
     pokiGameplayStop();
+
+    // Show rewarded break after battle victory - offer bonus rewards
+    await pokiRewardedBreak(
+      {
+        size: 'medium',
+        onStart: () => {
+          audioManager.setMasterMute(true);
+        }
+      }
+    ).then((success) => {
+      if (success) {
+        // Player watched the ad - give bonus rewards
+        const bonusXp = Math.floor(xp * 0.5);
+        const bonusGold = Math.floor(gold * 0.5);
+        setCharacter(prev => prev ? {
+          ...prev,
+          xp: prev.xp + bonusXp,
+          gold: prev.gold + bonusGold
+        } : null);
+        setQuestResult(prev => prev ? {
+          ...prev,
+          message: prev.message + `\n\n🎁 Bonus: +${bonusXp} XP • +${bonusGold} Gold`,
+          xp: prev.xp + bonusXp,
+          gold: prev.gold + bonusGold
+        } : null);
+      }
+      if (isMusicEnabled) {
+        audioManager.setMasterMute(false);
+      }
+    });
   };
 
-  const handleBattleDefeat = () => {
+  const handleBattleDefeat = async () => {
     if (!character || !selectedChoice) return;
 
     // Take HP damage on defeat - restore half HP
@@ -365,6 +412,31 @@ function AppContent() {
     setActiveEnemy(null);
     // Notify Poki SDK that gameplay has stopped
     pokiGameplayStop();
+
+    // Show rewarded break after battle defeat - offer extra healing
+    await pokiRewardedBreak(
+      {
+        size: 'medium',
+        onStart: () => {
+          audioManager.setMasterMute(true);
+        }
+      }
+    ).then((success) => {
+      if (success) {
+        // Player watched the ad - give extra healing
+        setCharacter(prev => prev ? {
+          ...prev,
+          hp: prev.maxHp
+        } : null);
+        setQuestResult(prev => prev ? {
+          ...prev,
+          message: prev.message + `\n\n❤️ Full recovery from watching ad!`
+        } : null);
+      }
+      if (isMusicEnabled) {
+        audioManager.setMasterMute(false);
+      }
+    });
   };
 
   const handleBattleFlee = () => {
@@ -382,24 +454,6 @@ function AppContent() {
     setQuestResult(null);
   };
 
-  useEffect(() => {
-    getCurrentCharacter().then((char) => {
-      if (char) {
-        const enrichedChar = {
-          ...char,
-          skills: char.skills || getInitialCharacterStats(char.class).skills,
-          inventory: char.inventory || getStarterItems(char.class),
-          completedQuests: char.completedQuests || []
-        };
-        setCharacter(enrichedChar);
-        setInventory(enrichedChar.inventory);
-        setCompletedQuests(enrichedChar.completedQuests);
-      }
-      setIsLoading(false);
-      // Notify Poki SDK that game loading has finished
-      pokiGameLoadingFinished();
-    });
-  }, []);
 
   const handleToggleEquip = (item: InventoryItem) => {
     const newEquipped = !item.equipped;
@@ -855,6 +909,21 @@ function AppContent() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => {
+                        // Handle Poki SDK events on tab switch
+                        if (activeTab === "Quests" && questState === "battle" && tab !== "Quests") {
+                          // Leaving quest battle - stop gameplay
+                          pokiGameplayStop();
+                        } else if (tab === "Quests" && questState === "battle" && activeTab !== "Quests") {
+                          // Returning to quest battle - show commercial break then start gameplay
+                          pokiCommercialBreak(() => {
+                            audioManager.setMasterMute(true);
+                          }).then(() => {
+                            if (isMusicEnabled) {
+                              audioManager.setMasterMute(false);
+                            }
+                            pokiGameplayStart();
+                          });
+                        }
                         setActiveTab(tab);
                         audioManager.playSfx("click");
                       }}
