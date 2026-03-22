@@ -1,6 +1,6 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getTranslatedEnemy } from "./lib/game-data";
+import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
@@ -13,8 +13,6 @@ import {
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
   MapTabIcon, QuestTabIcon, InventoryTabIcon, ShopTabIcon, GuildTabIcon
 } from "./components/game/ui/GameIcons";
-import { I18nProvider, useI18n } from "./lib/i18n";
-import { LanguageSwitcher } from "./components/ui/LanguageSwitcher";
 
 const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
   mage: <ClassMageIcon size={20} />,
@@ -65,7 +63,6 @@ function statusBar(label: string, value: number, max: number, type: "hp" | "mp" 
 }
 
 function AppContent() {
-  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<Tab>("World Map");
   const [createName, setCreateName] = useState("");
   const [createClass, setCreateClass] = useState<CharacterClass>("mage");
@@ -169,9 +166,9 @@ function AppContent() {
     // Store the selected choice
     setSelectedChoice(choice);
 
-    // Get the enemy for this quest (translated)
+    // Get the enemy for this quest
     const enemyId = QUEST_ENEMIES[activeQuest.id];
-    const enemy = enemyId ? getTranslatedEnemy(enemyId, t) : null;
+    const enemy = enemyId ? getEnemy(enemyId) : null;
     if (enemy) {
       // Start battle!
       setActiveEnemy(enemy);
@@ -471,11 +468,11 @@ function AppContent() {
   };
 
   const tabConfig: { tab: Tab; icon: React.ReactNode; label: string }[] = [
-    { tab: "World Map", icon: <MapTabIcon />, label: t("tabs.worldMap") },
-    { tab: "Quests", icon: <QuestTabIcon />, label: t("tabs.quests") },
-    { tab: "Inventory", icon: <InventoryTabIcon />, label: t("tabs.inventory") },
-    { tab: "Shop", icon: <ShopTabIcon />, label: t("tabs.shop") },
-    { tab: "Guild", icon: <GuildTabIcon />, label: t("tabs.guild") },
+    { tab: "World Map", icon: <MapTabIcon />, label: "World Map" },
+    { tab: "Quests", icon: <QuestTabIcon />, label: "Quests" },
+    { tab: "Inventory", icon: <InventoryTabIcon />, label: "Inventory" },
+    { tab: "Shop", icon: <ShopTabIcon />, label: "Shop" },
+    { tab: "Guild", icon: <GuildTabIcon />, label: "Guild" },
   ];
 
   return (
@@ -484,7 +481,6 @@ function AppContent() {
       <header className="fantasy-header px-4 md:px-8 py-3 mb-6 relative">
         <div className="mx-auto max-w-7xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <LanguageSwitcher />
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
@@ -493,7 +489,7 @@ function AppContent() {
               <div className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">✨</div>
               <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-500 to-amber-700 uppercase"
                 style={{ fontFamily: "'Cinzel', serif" }}>
-                {t("app.title")}
+                VibeRPG
               </h1>
             </motion.div>
           </div>
@@ -525,7 +521,7 @@ function AppContent() {
             </motion.button>
             <span className={`text-[10px] font-black uppercase tracking-tighter hidden md:block transition-colors duration-500 ${isMusicEnabled ? "text-amber-400" : "text-slate-600"
               }`}>
-              {isMusicEnabled ? t("app.audioOn") : t("app.audioOff")}
+              {isMusicEnabled ? "Audio On" : "Audio Off"}
             </span>
           </div>
 
@@ -607,7 +603,7 @@ function AppContent() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>{t("app.selectCharacter")}</h2>
+                <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>Select Character</h2>
                 <button onClick={() => setShowCharacterSelect(false)} className="text-slate-500 hover:text-slate-300 text-xl transition-colors">✕</button>
               </div>
 
@@ -641,7 +637,7 @@ function AppContent() {
                           onClick={() => setShowDeleteConfirm(char.id)}
                           className="text-red-400 hover:text-red-300 text-sm font-medium border border-red-800/40 px-2 py-1 rounded hover:bg-red-950/50 transition-colors"
                         >
-                          {t("app.delete")}
+                          Delete
                         </button>
                       </div>
                     </div>
@@ -649,10 +645,10 @@ function AppContent() {
                 ))}
               </div>
 
-              <p className="text-xs text-slate-500 text-center mb-4">{t("app.createNewCharacter")}</p>
+              <p className="text-xs text-slate-500 text-center mb-4">Create a new character</p>
 
               <div className="border-t border-slate-700/50 pt-4">
-                <h3 className="font-semibold mb-2 text-amber-200/80" style={{ fontFamily: "'Cinzel', serif" }}>{t("app.createNewCharacter")}</h3>
+                <h3 className="font-semibold mb-2 text-amber-200/80" style={{ fontFamily: "'Cinzel', serif" }}>Create a new character</h3>
                 <form className="space-y-2" onSubmit={async (e) => {
                   e.preventDefault();
                   if (!createName.trim()) return;
@@ -680,7 +676,7 @@ function AppContent() {
                   <input
                     value={createName}
                     onChange={(e) => setCreateName(e.target.value)}
-                    placeholder={t("app.characterName")}
+                    placeholder="Character Name"
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-3 py-2 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-600/50"
                   />
                   <div className="flex gap-2">
@@ -695,7 +691,7 @@ function AppContent() {
                         </option>
                       ))}
                     </select>
-                    <button type="submit" className="btn-fantasy rounded-lg px-4 py-2 text-sm font-semibold">{t("app.create")}</button>
+                    <button type="submit" className="btn-fantasy rounded-lg px-4 py-2 text-sm font-semibold">Create</button>
                   </div>
                 </form>
               </div>
@@ -717,12 +713,12 @@ function AppContent() {
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="flex items-center justify-between mb-4">
-                      <h2 className="text-xl font-bold text-red-400">⚠️ {t("app.deleteCharacter")}</h2>
+                      <h2 className="text-xl font-bold text-red-400">⚠️ Delete Character</h2>
                       <button onClick={() => setShowDeleteConfirm(null)} className="text-slate-500 hover:text-slate-300 text-xl">✕</button>
                     </div>
 
                     <p className="text-sm text-slate-400 mb-4">
-                      {t("app.deleteConfirm")}
+                      Are you sure you want to delete this character? This action cannot be undone.
                     </p>
 
                     <div className="flex gap-2 justify-end">
@@ -730,13 +726,13 @@ function AppContent() {
                         onClick={() => setShowDeleteConfirm(null)}
                         className="px-4 py-2 text-slate-300 border border-slate-700 rounded-lg hover:bg-slate-800 transition-colors"
                       >
-                        {t("app.cancel")}
+                        Cancel
                       </button>
                       <button
                         onClick={() => handleDeleteCharacter(showDeleteConfirm)}
                         className="px-4 py-2 bg-red-800 text-white rounded-lg hover:bg-red-700 border border-red-700 transition-colors"
                       >
-                        {t("app.delete")}
+                        Delete
                       </button>
                     </div>
                   </motion.div>
@@ -758,7 +754,7 @@ function AppContent() {
               >
                 ⚙️
               </motion.div>
-              <span className="text-slate-300">{t("app.loading")}</span>
+              <span className="text-slate-300">Loading...</span>
             </div>
           </div>
         ) : !character ? (
@@ -777,22 +773,22 @@ function AppContent() {
                   ⚔️
                 </motion.div>
                 <h2 className="text-2xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
-                  {t("app.beginAdventure")}
+                  Begin Your Adventure
                 </h2>
-                <p className="text-sm text-slate-400">{t("app.createFirstHero")}</p>
+                <p className="text-sm text-slate-400">Create your first hero to start your journey</p>
               </div>
               <form className="space-y-4" onSubmit={submitCreate}>
                 <div>
-                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">{t("app.heroName")}</label>
+                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">Hero Name</label>
                   <input
                     value={createName}
                     onChange={(e) => setCreateName(e.target.value)}
-                    placeholder={t("app.enterHeroName")}
+                    placeholder="Enter Hero Name"
                     className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-600/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">{t("app.class")}</label>
+                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">Class</label>
                   <select
                     value={createClass}
                     onChange={(e) => setCreateClass(e.target.value as CharacterClass)}
@@ -810,7 +806,7 @@ function AppContent() {
                   className="btn-fantasy w-full py-3 rounded-lg font-bold tracking-wide"
                   style={{ fontFamily: "'Cinzel', serif" }}
                 >
-                  {t("app.createCharacter")}
+                  Create Character
                 </motion.button>
               </form>
             </motion.div>
@@ -844,13 +840,13 @@ function AppContent() {
 
               {/* Character Info */}
               <div className="fantasy-card rounded-xl p-4">
-                <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>{t("sidebar.heroStats")}</h3>
+                <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
                 <div className="space-y-4 pt-1">
-                  {statusBar(t("sidebar.hp"), character.hp, character.maxHp, "hp")}
-                  {statusBar(t("sidebar.mp"), character.mp, character.maxMp, "mp")}
-                  {statusBar(t("sidebar.xp"), character.xp, character.xpToNext, "xp")}
+                  {statusBar("HP", character.hp, character.maxHp, "hp")}
+                  {statusBar("MP", character.mp, character.maxMp, "mp")}
+                  {statusBar("XP", character.xp, character.xpToNext, "xp")}
                   <div className="h-px bg-slate-800/50 my-1"></div>
-                  {statusBar(t("sidebar.atkPower"), character.attack, character.attack + 20, "attack")}
+                  {statusBar("Attack Power", character.attack, character.attack + 20, "attack")}
                 </div>
               </div>
             </aside>
@@ -987,9 +983,5 @@ function AppContent() {
 }
 
 export default function App() {
-  return (
-    <I18nProvider>
-      <AppContent />
-    </I18nProvider>
-  );
+  return <AppContent />;
 }

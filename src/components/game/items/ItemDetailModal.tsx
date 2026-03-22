@@ -9,7 +9,6 @@ import { audioManager } from "../../../lib/audio";
 import { 
   SwordIcon, ShieldIcon, HealthIcon, ManaIcon, GoldIcon 
 } from "../ui/GameIcons";
-import { useI18n } from "../../../lib/i18n";
 
 const getRarityColor = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -38,7 +37,6 @@ interface ItemDetailModalProps {
 }
 
 export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, onSell }: ItemDetailModalProps) {
-  const { t } = useI18n();
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -86,7 +84,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
         <p className="text-sm text-slate-400 mb-4">{item.description}</p>
 
         <div className="space-y-2 mb-4 bg-slate-900/40 border border-slate-700/30 p-3 rounded-lg">
-          <h4 className="text-xs font-bold text-amber-200/60 uppercase">{item.type === "food" ? t("item.effects") : t("item.stats")}</h4>
+          <h4 className="text-xs font-bold text-amber-200/60 uppercase">{item.type === "food" ? "Effects" : "Stats"}</h4>
           {Object.entries(item.stats).map(([stat, value]) => value ? (
             <div key={stat} className="flex justify-between items-center text-sm py-0.5">
               <span className="text-slate-400 capitalize flex items-center gap-1.5">
@@ -94,7 +92,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
                 {stat === 'defense' && <ShieldIcon size={12} />}
                 {stat === 'hp' && <HealthIcon size={12} />}
                 {stat === 'mp' && <ManaIcon size={12} />}
-                {stat === 'magicPower' ? t("item.magicPower") : stat}
+                {stat === 'magicPower' ? "Magic Power" : stat}
               </span>
               <span className="font-bold text-emerald-400">+{value}</span>
             </div>
@@ -104,7 +102,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
               <span className="text-slate-400 capitalize flex items-center gap-1.5">
                 {stat === 'hp' && <HealthIcon size={12} />}
                 {stat === 'mp' && <ManaIcon size={12} />}
-                {t("item.restores", { stat: stat.toUpperCase() })}
+                Restores {stat.toUpperCase()}
               </span>
               <span className="font-bold text-emerald-400">+{value}</span>
             </div>
@@ -121,7 +119,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
             }}
             className="w-full py-3 rounded-lg font-bold bg-emerald-800 text-emerald-100 hover:bg-emerald-700 border border-emerald-700 transition-colors"
           >
-            {t("item.consume")}
+            Consume
           </motion.button>
         ) : (
           <motion.button
@@ -136,7 +134,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
                 : "btn-fantasy"
               }`}
           >
-            {item.equipped ? t("item.unequip") : t("item.equip")}
+            {item.equipped ? "Unequip" : "Equip"}
           </motion.button>
         ))}
 
@@ -150,7 +148,7 @@ export function ItemDetailModal({ item, onClose, onToggleEquip, onConsumeFood, o
             }}
             className="w-full py-2.5 rounded-lg text-xs font-bold bg-slate-800 hover:bg-slate-700 text-slate-400 border border-slate-700 transition-colors flex items-center justify-center gap-2"
           >
-            <span>{t("item.sell")}</span>
+            <span>Sell</span>
             <span className="text-amber-500 font-mono text-sm leading-none bg-amber-950/40 px-2.5 py-1.5 rounded-lg border border-amber-900/30 flex items-center gap-1.5 shadow-inner">
               <GoldIcon size={14} /> {Math.floor((item.price || 10) / 2)}
             </span>

@@ -12,7 +12,6 @@ import { FoodIcon } from "../items/FoodIcon";
 import { InventorySprite } from "./InventorySprite";
 import { InventoryTabIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon } from "../ui/GameIcons";
 import { toast } from "../../../hooks/use-toast";
-import { useI18n } from "../../../lib/i18n";
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -53,7 +52,6 @@ interface InventoryProps {
 }
 
 export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, onSellItem, characterClass, rank = 'F' }: InventoryProps) {
-  const { t } = useI18n();
   const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
@@ -81,14 +79,14 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
     // Show toast notification
     if (wasEquipped) {
       toast({
-        title: t("equipment.unequipped"),
-        description: `${item.name} ${t("equipment.hasBeenUnequipped")}`,
+        title: "Unequipped",
+        description: `${item.name} has been unequipped`,
         variant: "default",
       });
     } else {
       toast({
-        title: t("equipment.equipped"),
-        description: `${item.name} ${t("equipment.nowEquipped")}`,
+        title: "Equipped",
+        description: `${item.name} is now equipped`,
         variant: "default",
       });
     }
@@ -103,12 +101,12 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
       className="fantasy-card rounded-xl p-5"
     >
       <h2 className="text-xl font-bold mb-5 text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
-        <InventoryTabIcon size={28} /> {t("inventory.title")}
+        <InventoryTabIcon size={28} /> Inventory
       </h2>
 
       {/* Equipment Slots */}
       <div className="mb-6">
-        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">{t("inventory.currentlyEquipped")}</h3>
+        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">Currently Equipped</h3>
         <div className="grid grid-cols-3 grid-rows-3 gap-6 sm:gap-8 max-w-md mx-auto items-center justify-items-center bg-slate-900/40 p-6 sm:p-8 rounded-xl border border-slate-700/30">
           {/* Top: Hat */}
           <div className="col-start-2 row-start-1 flex justify-center">
@@ -169,7 +167,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
 
       {/* Equipments Grid */}
       <div className="mb-6">
-        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">{t("inventory.equipments")} ({equipments.length})</h3>
+        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">Equipments ({equipments.length})</h3>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
             {equipments.map((item, index) => (
@@ -203,7 +201,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                       animate={{ scale: 1 }}
                       className="text-xs bg-emerald-700 text-emerald-100 px-1.5 py-0.5 rounded font-bold"
                     >
-                      {t("inventory.equipped")}
+                      Equipped
                     </motion.span>
                   )}
                 </div>
@@ -227,9 +225,9 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
 
       {/* Bag / Food Grid */}
       <div>
-        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">{t("inventory.bag")} ({bagItems.length})</h3>
+        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">Bag ({bagItems.length})</h3>
         {bagItems.length === 0 ? (
-          <p className="text-sm text-slate-500 italic">{t("inventory.emptyBag")}</p>
+          <p className="text-sm text-slate-500 italic">Your bag is empty</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <AnimatePresence>

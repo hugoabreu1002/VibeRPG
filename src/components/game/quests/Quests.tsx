@@ -9,7 +9,6 @@ import {
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
   SwordIcon, ManaIcon, ShieldIcon, XPIcon, GoldIcon
 } from "../ui/GameIcons";
-import { useI18n } from "../../../lib/i18n";
 
 interface QuestsProps {
   character: Character;
@@ -41,7 +40,6 @@ export function Quests({
   onAttemptChoice,
   onResetQuest
 }: QuestsProps) {
-  const { t } = useI18n();
   const availableQuests = quests.filter(
     q => q.class === character.class && q.minLevel <= character.level && !completedQuests.includes(q.id)
   );
@@ -53,11 +51,11 @@ export function Quests({
       className="fantasy-card rounded-xl p-5"
     >
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🗺️ {t("tabs.quests")}</h2>
+        <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🗺️ Quests</h2>
         <div className="flex items-center gap-2">
           <span className="text-xs bg-indigo-950/50 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-700/30 font-medium">
             {CLASS_ICONS[character.class] || "⚔️"}
-            {' '}{t("class." + character.class)} {t("tabs.quests")}
+            {' '}{character.class.charAt(0).toUpperCase() + character.class.slice(1)} Quests
           </span>
         </div>
       </div>
@@ -76,8 +74,8 @@ export function Quests({
               >
                 🏆
               </motion.div>
-              <p className="text-xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>{t("quest.legendaryProgress")}</p>
-              <p className="text-sm text-slate-400 max-w-xs mx-auto">{t("quest.conqueredAll")}</p>
+              <p className="text-xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>Legendary Progress</p>
+              <p className="text-sm text-slate-400 max-w-xs mx-auto">You have conquered all quests for your class!</p>
             </div>
           ) : (
             availableQuests.map((quest) => (
@@ -113,7 +111,7 @@ export function Quests({
                     onClick={() => onStartQuest(quest)}
                     className="btn-fantasy px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider"
                   >
-                    {t("quest.embark")}
+                    Embark
                   </motion.button>
                 </div>
                 
@@ -144,7 +142,7 @@ export function Quests({
               onClick={onResetQuest}
               className="text-xs font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center gap-1 uppercase tracking-widest bg-slate-900/30 px-3 py-1.5 rounded-full border border-slate-800"
             >
-              {t("quest.retreat")}
+              Retreat
             </motion.button>
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -152,7 +150,7 @@ export function Quests({
               onClick={() => onStartQuest(activeQuest)}
               className="btn-fantasy px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider"
             >
-              {t("quest.startMap")}
+              Start Map
             </motion.button>
           </div>
 
@@ -164,7 +162,7 @@ export function Quests({
                </div>
                <div>
                   <h3 className="font-bold text-xl text-amber-50 text-shadow-sm" style={{ fontFamily: "'Cinzel', serif" }}>{activeQuest.title}</h3>
-                  <p className="text-xs text-slate-500 font-medium">{t("quest.region")} {activeQuest.region}</p>
+                  <p className="text-xs text-slate-500 font-medium">Region: {activeQuest.region}</p>
                </div>
             </div>
 
@@ -173,7 +171,7 @@ export function Quests({
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-2 mb-4">
                 <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent flex-1"></div>
-                <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-[0.2em]">{t("quest.selectPath")}</p>
+                <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-[0.2em]">Select Your Path</p>
                 <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent flex-1"></div>
               </div>
 
@@ -242,7 +240,7 @@ export function Quests({
 
             <h3 className={`text-lg font-bold mb-2 ${questResult.success ? "text-emerald-400" : "text-red-400"
               }`} style={{ fontFamily: "'Cinzel', serif" }}>
-              {questResult.success ? t("quest.complete") : t("quest.failed")}
+              {questResult.success ? 'Quest Complete!' : 'Quest Failed'}
             </h3>
 
             <p className="text-sm text-slate-400 mb-4">{questResult.message}</p>
@@ -277,7 +275,7 @@ export function Quests({
                     transition={{ delay: 0.2 }}
                     className="mt-4 p-4 rounded-xl bg-slate-900/60 border border-amber-500/30 max-w-xs mx-auto text-center"
                   >
-                    <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-3 leading-none">{t("quest.newEquipment")}</p>
+                    <p className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-3 leading-none">New Equipment</p>
                     <div className="flex items-center gap-3 justify-center">
                       <div className="w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner">
                         {questResult.rewardItem.type === "weapon" && <WeaponIcon weaponId={questResult.rewardItem.id} size="w-8 h-8" />}
@@ -301,14 +299,14 @@ export function Quests({
                     transition={{ delay: 0.3 }}
                     className="mt-4 p-4 rounded-xl bg-slate-900/60 border border-blue-500/30 max-w-xs mx-auto text-center"
                   >
-                    <p className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest mb-3 leading-none">{t("quest.newSkill")}</p>
+                    <p className="text-[10px] font-bold text-blue-400/60 uppercase tracking-widest mb-3 leading-none">New Skill</p>
                     <div className="flex items-center gap-3 justify-center">
                       <div className="w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner">
                         <SkillIcon skill={questResult.rewardSkill as any} className="w-8 h-8" />
                       </div>
                       <div className="text-left">
                         <p className="text-sm font-bold text-blue-100 leading-tight capitalize">{questResult.rewardSkill}</p>
-                        <p className="text-[10px] text-blue-400/80">{t("quest.skillUnlocked")}</p>
+                        <p className="text-[10px] text-blue-400/80">Skill Unlocked</p>
                       </div>
                     </div>
                   </motion.div>
@@ -324,7 +322,7 @@ export function Quests({
               className="btn-fantasy w-full py-3 rounded-lg font-bold"
               style={{ fontFamily: "'Cinzel', serif" }}
             >
-              {t("quest.continue")}
+              Continue
             </motion.button>
         </div>
       )}

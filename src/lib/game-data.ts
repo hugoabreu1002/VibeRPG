@@ -1,6 +1,5 @@
 import type { CharacterClass } from "./storage";
 import type { InventoryItem, Quest, Enemy } from "../types/game";
-import { useI18n } from "./i18n";
 
 export const CHARACTER_CLASSES: CharacterClass[] = ["mage", "warrior", "priest"];
 
@@ -1440,6 +1439,10 @@ export const QUEST_ENEMIES: Record<string, string> = {
 export function getQuestEnemy(questId: string): Enemy | null {
   const enemyId = QUEST_ENEMIES[questId];
   return enemyId ? ENEMIES[enemyId] : null;
+}
+
+export function getEnemy(enemyId: string): Enemy | null {
+  return ENEMIES[enemyId] || null;
 }
 
 // Function to get translated quests

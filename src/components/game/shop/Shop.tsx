@@ -10,7 +10,6 @@ import { audioManager } from "../../../lib/audio";
 import { 
   ShopTabIcon, GoldIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon 
 } from "../ui/GameIcons";
-import { useI18n } from "../../../lib/i18n";
 
 interface ShopProps {
   gold: number;
@@ -46,7 +45,7 @@ const getRarityLabel = (rarity: InventoryItem["rarity"]) => {
 };
 
 export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
-  const { t } = useI18n();
+  // const { t } = useI18n();
   const [purchasedItem, setPurchasedItem] = useState<string | null>(null);
 
   const handleBuy = (item: InventoryItem) => {
@@ -66,10 +65,10 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
     >
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
-          <ShopTabIcon size={28} /> {t("shop.title")}
+          <ShopTabIcon size={28} /> Shop
         </h2>
         <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30 flex items-center gap-2 shadow-inner">
-          <GoldIcon size={20} /> {gold} {t("stats.gold")}
+          <GoldIcon size={20} /> {gold} Gold
         </div>
       </div>
 
@@ -92,8 +91,8 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                   {item.type === "food" && <FoodIcon foodId={item.id} size="w-8 h-8" />}
                 </div>
                 <div className="flex-1">
-                  <span className="font-semibold text-slate-100 block text-sm leading-tight">{t(`items.${item.id}`)}</span>
-                  <span className={`text-xs capitalize ${getRarityLabel(item.rarity)}`}>{t(`rarity.${item.rarity}`)} {t(`type.${item.type}`)}</span>
+                  <span className="font-semibold text-slate-100 block text-sm leading-tight">{item.name}</span>
+                  <span className={`text-xs capitalize ${getRarityLabel(item.rarity)}`}>{item.rarity} {item.type}</span>
                 </div>
                 <div className="font-bold text-amber-400 bg-amber-950/40 px-2.5 py-1 rounded-lg text-sm border border-amber-800/20 flex items-center gap-1">
                   <GoldIcon size={14} /> {item.price}
@@ -101,7 +100,7 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
               </div>
               
               <p className="text-xs text-slate-400 mb-3 line-clamp-2 min-h-[32px]">
-                {t(`descriptions.${item.id}`)}
+                {item.description}
               </p>
 
               <div className="flex gap-1.5 flex-wrap mb-4">
@@ -143,11 +142,11 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                     exit={{ opacity: 0, y: -20 }}
                     className="absolute inset-0 flex items-center justify-center bg-emerald-600/90 text-white font-bold"
                   >
-                    {t("shop.purchased")}
+                    Purchased!
                   </motion.div>
                 )}
               </AnimatePresence>
-              {gold >= item.price ? t("shop.buy") : t("shop.notEnoughGold")}
+              {gold >= item.price ? "Buy" : "Not Enough Gold"}
             </motion.button>
           </motion.div>
         ))}
