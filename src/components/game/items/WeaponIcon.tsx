@@ -53,6 +53,35 @@ export function WeaponIcon({ weaponId, size = "w-6 h-6", large = false }: Weapon
     );
   }
 
+  if (weaponId.includes("staff")) {
+    return (
+      <svg viewBox="0 0 32 32" className={large ? "w-16 h-16" : size}>
+        <defs>
+          <linearGradient id="woodGrainBasic" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor="#6D4C2A" />
+            <stop offset="50%" stopColor="#8B5A2B" />
+            <stop offset="100%" stopColor="#6D4C2A" />
+          </linearGradient>
+        </defs>
+        {/* Main wooden shaft */}
+        <rect x="14" y="4" width="4" height="26" fill="url(#woodGrainBasic)" stroke="#4A3520" strokeWidth="0.5" />
+        {/* Wood grain detail lines */}
+        <line x1="15" y1="6" x2="15" y2="28" stroke="#4A3520" strokeWidth="0.3" opacity="0.5" />
+        <line x1="17" y1="8" x2="17" y2="26" stroke="#4A3520" strokeWidth="0.3" opacity="0.5" />
+        {/* Top orb - simple magical crystal */}
+        <circle cx="16" cy="4" r="4" fill="#9C27B0" stroke="#7B1FA2" strokeWidth="0.5" />
+        <circle cx="16" cy="3" r="2" fill="#CE93D8" />
+        <circle cx="15" cy="2.5" r="0.8" fill="#E1BEE7" opacity="0.8" />
+        {/* Metal binding at top */}
+        <rect x="13" y="7" width="6" height="2" fill="#607D8B" stroke="#455A64" strokeWidth="0.5" />
+        {/* Metal binding at bottom */}
+        <rect x="13" y="27" width="6" height="2" fill="#607D8B" stroke="#455A64" strokeWidth="0.5" />
+        {/* Simple wrap detail */}
+        <path d="M14 15 L18 15 M14 20 L18 20" stroke="#5D4037" strokeWidth="0.8" />
+      </svg>
+    );
+  }
+
   if (weaponId.includes("silver-dagger") || weaponId.includes("whispers")) {
     return (
       <svg viewBox="0 0 32 32" className={large ? "w-16 h-16" : size}>

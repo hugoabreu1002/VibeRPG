@@ -157,7 +157,7 @@ function App() {
 
   const startQuest = (quest: Quest) => {
     setActiveQuest(quest);
-    setQuestState("map");
+    setQuestState("active");
     setActiveTab("Quests");
   };
 
@@ -371,13 +371,18 @@ function App() {
   }, []);
 
   const handleToggleEquip = (item: InventoryItem) => {
+    const newEquipped = !item.equipped;
     setInventory(inventory.map(i =>
       i.id === item.id
-        ? { ...i, equipped: !i.equipped }
+        ? { ...i, equipped: newEquipped }
         : i.type === item.type
           ? { ...i, equipped: false }
           : i
     ));
+    // Update selectedItem to reflect the new equipped state
+    if (selectedItem?.id === item.id) {
+      setSelectedItem({ ...item, equipped: newEquipped });
+    }
   };
 
   const handleConsumeFood = (item: InventoryItem) => {
@@ -808,9 +813,7 @@ function App() {
           <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-12">
             {/* Sidebar */}
             <aside className="lg:col-span-2 space-y-4">
-              {/* Navigation */}
               <div className="fantasy-card rounded-xl p-4">
-                <h2 className="text-sm font-bold text-amber-200/70 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Navigation</h2>
                 <div className="flex flex-wrap lg:flex-col gap-2">
                   {tabConfig.map(({ tab, icon, label }) => (
                     <motion.button

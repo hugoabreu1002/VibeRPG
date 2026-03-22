@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { InventoryItem } from "../../../types/game";
 import { WeaponIcon } from "../items/WeaponIcon";
 import { ArmorIcon } from "../items/ArmorIcon";
@@ -13,6 +14,18 @@ interface EquipmentSlotProps {
 }
 
 export function EquipmentSlot({ type, item, items, onSelect }: EquipmentSlotProps) {
+  const [showFlash, setShowFlash] = useState(false);
+  const [prevItem, setPrevItem] = useState<InventoryItem | undefined>(item);
+
+  // Detect when item changes (equipped/unequipped)
+  useEffect(() => {
+    if (item?.id !== prevItem?.id) {
+      setShowFlash(true);
+      const timer = setTimeout(() => setShowFlash(false), 500);
+      setPrevItem(item);
+      return () => clearTimeout(timer);
+    }
+  }, [item, prevItem]);
   const getColors = () => {
     switch (type) {
       case "weapon": return { border: "amber-500", from: "amber-900", to: "slate-800" };
@@ -34,7 +47,18 @@ export function EquipmentSlot({ type, item, items, onSelect }: EquipmentSlotProp
         }
       }}
     >
-      <div className={`w-20 h-20 rounded-lg border-2 flex items-center justify-center ${
+      <AnimatePresence>
+        {showFlash && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1.2 }}
+            exit={{ opacity: 0, scale: 1.4 }}
+            transition={{ duration: 0.3 }}
+            className="absolute inset-0 rounded-lg bg-amber-400/30 z-10 pointer-events-none"
+          />
+        )}
+      </AnimatePresence>
+      <div className={`w-20 h-20 rounded-lg border-2 flex items-center justify-center relative ${
         item 
           ? `border-${colors.border} bg-gradient-to-br from-${colors.from}/40 to-${colors.to}` 
           : "border-dashed border-slate-400 bg-slate-800/50"

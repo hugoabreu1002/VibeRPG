@@ -123,18 +123,15 @@ export function InventorySprite({
       <circle cx="-3.5" cy="-13.5" r="0.4" fill="white" />
       <circle cx="4.5" cy="-13.5" r="0.4" fill="white" />
       
-      {/* Eyebrows */}
-      <path d="M-6 -16 Q-4 -17 -2 -16" stroke="#6D28D9" strokeWidth="0.8" fill="none" />
-      <path d="M2 -16 Q4 -17 6 -16" stroke="#6D28D9" strokeWidth="0.8" fill="none" />
+      {/* Eyebrows - serious/concerned */}
+      <path d="M-6 -16 L-2 -15" stroke="#6D28D9" strokeWidth="1" fill="none" />
+      <path d="M6 -16 L2 -15" stroke="#6D28D9" strokeWidth="1" fill="none" />
       
       {/* Nose */}
       <path d="M0 -10 L-1 -8 L1 -8" stroke="#D97706" strokeWidth="0.5" fill="none" />
       
-      {/* Mouth */}
-      <path d="M-3 -6 Q0 -4 3 -6" stroke="#BE123C" strokeWidth="0.8" fill="none" />
-      
-      {/* Goatee */}
-      <path d="M-2 -4 Q0 -2 2 -4" fill="#8B5CF6" opacity="0.7" />
+      {/* Mouth - neutral/serious line */}
+      <path d="M-3 -6 L3 -6" stroke="#92400E" strokeWidth="1" fill="none" />
       
       {/* Hat */}
       {equippedHat ? (
@@ -342,15 +339,15 @@ export function InventorySprite({
       <circle cx="-3.5" cy="-12" r="0.5" fill="white" />
       <circle cx="4.5" cy="-12" r="0.5" fill="white" />
       
-      {/* Gentle eyebrows */}
-      <path d="M-6 -14 Q-4 -15 -2 -14" stroke="#D97706" strokeWidth="0.6" fill="none" />
-      <path d="M2 -14 Q4 -15 6 -14" stroke="#D97706" strokeWidth="0.6" fill="none" />
+      {/* Serious eyebrows */}
+      <path d="M-6 -14 L-2 -13" stroke="#D97706" strokeWidth="0.8" fill="none" />
+      <path d="M6 -14 L2 -13" stroke="#D97706" strokeWidth="0.8" fill="none" />
       
       {/* Nose */}
       <path d="M0 -9 L-0.5 -7 L0.5 -7" stroke="#FCA5A5" strokeWidth="0.4" fill="none" />
       
-      {/* Gentle smile - youthful */}
-      <path d="M-2 -5 Q0 -3.5 2 -5" stroke="#F43F5E" strokeWidth="0.7" fill="none" />
+      {/* Neutral mouth - serious line */}
+      <path d="M-2 -5 L2 -5" stroke="#BE123C" strokeWidth="0.8" fill="none" />
       
       
       {/* Sleeves */}

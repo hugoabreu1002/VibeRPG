@@ -36,10 +36,10 @@ interface QuestMapProps {
 }
 
 const MapCanvas = memo(({ 
-  mapData, tileSize, playerPos, isWideView, viewScale, getIsoPos, onTileClick
+  mapData, tileSize, playerPos, viewScale, getIsoPos, onTileClick
 }: { 
   mapData: QuestMapData, tileSize: number, playerPos: { x: number, y: number },
-  isWideView: boolean, viewScale: number,
+  viewScale: number,
   getIsoPos: (x: number, y: number) => { x: number, y: number },
   onTileClick: (x: number, y: number) => void
 }) => {
@@ -65,7 +65,10 @@ const MapCanvas = memo(({
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left - dimensions.width / 2) / viewScale;
     const my = (e.clientY - rect.top - dimensions.height / 2) / viewScale;
-    const { x: camX, y: camY } = getIsoPos(playerPos.x, playerPos.y);
+    // Static camera centered on map center
+    const centerX = Math.floor(mapData.width / 2);
+    const centerY = Math.floor(mapData.height / 2);
+    const { x: camX, y: camY } = getIsoPos(centerX, centerY);
     const worldX = mx + camX;
     const worldY = my + camY;
     const xPlusY = worldY / (tileSize / 4);
@@ -94,13 +97,16 @@ const MapCanvas = memo(({
     ctx.translate(dimensions.width / 2, dimensions.height / 2);
     ctx.scale(viewScale, viewScale);
 
-    const { x: camX, y: camY } = getIsoPos(playerPos.x, playerPos.y);
+    // Static camera centered on map center
+    const centerX = Math.floor(mapData.width / 2);
+    const centerY = Math.floor(mapData.height / 2);
+    const { x: camX, y: camY } = getIsoPos(centerX, centerY);
     ctx.translate(-camX, -camY);
 
     // 2. Base Procedural Grid (Infinite feel)
     ctx.strokeStyle = "rgba(16, 185, 129, 0.05)";
     ctx.lineWidth = 1;
-    const gridRange = isWideView ? 40 : 25;
+    const gridRange = 25;
     for(let gx = playerPos.x - gridRange; gx <= playerPos.x + gridRange; gx++) {
       for(let gy = playerPos.y - gridRange; gy <= playerPos.y + gridRange; gy++) {
         const { x: ix, y: iy } = getIsoPos(gx, gy);
@@ -175,7 +181,7 @@ const MapCanvas = memo(({
       });
     });
     ctx.restore();
-  }, [mapData, tileSize, playerPos, isWideView, viewScale, getIsoPos, dimensions]);
+  }, [mapData, tileSize, playerPos, viewScale, getIsoPos, dimensions]);
 
   return (
     <canvas 
@@ -199,7 +205,6 @@ export function QuestMap({
   onNPCInteract, 
   onBack 
 }: QuestMapProps) {
-  const [isWideView, setIsWideView] = useState(false);
   const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
   const [dialogIndex, setDialogIndex] = useState(0);
   const [playerPos, setPlayerPos] = useState(mapData.playerStart);
@@ -208,8 +213,8 @@ export function QuestMap({
   useEffect(() => {
     setPlayerPos(mapData.playerStart);
   }, [mapData]);
-  const viewScale = isWideView ? 0.65 : 1.0;
-  const viewportHeight = (isWideView ? 10 : 7) * TILE_SIZE;
+  const viewScale = 1.0;
+  const viewportHeight = 10 * TILE_SIZE;
 
   const equippedWeapon = inventory?.find(i => i.type === "weapon" && i.equipped);
   const equippedHat = inventory?.find(i => i.type === "hat" && i.equipped);
@@ -277,14 +282,10 @@ export function QuestMap({
   }, [playerPos, selectedNPC, mapData, handleDialogAdvance]);
 
   const { x: isoPlayerX, y: isoPlayerY } = getIsoPos(playerPos.x, playerPos.y);
-  const targetCamX = isoPlayerX;
-  const targetCamY = isoPlayerY;
-
-  const [camPos, setCamPos] = useState({ x: targetCamX, y: targetCamY });
-
-  useEffect(() => {
-    setCamPos({ x: targetCamX, y: targetCamY });
-  }, [playerPos.x, playerPos.y, targetCamX, targetCamY, setCamPos]);
+  // Static camera - centered on map center (matching canvas rendering)
+  const centerX = Math.floor(mapData.width / 2);
+  const centerY = Math.floor(mapData.height / 2);
+  const camPos = getIsoPos(centerX, centerY);
 
   const handleTileClick = useCallback((x: number, y: number) => {
     const npc = mapData.npcs.find(n => n.position.x === x && n.position.y === y);
@@ -314,7 +315,6 @@ export function QuestMap({
         mapData={mapData}
         tileSize={TILE_SIZE}
         playerPos={playerPos}
-        isWideView={isWideView}
         viewScale={viewScale}
         getIsoPos={getIsoPos}
         onTileClick={handleTileClick}
@@ -423,20 +423,7 @@ export function QuestMap({
       <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-slate-950/40" />
       
       <div className="absolute top-6 right-6 pointer-events-none flex flex-col gap-3 items-end">
-        <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => setIsWideView(!isWideView)}
-          className="pointer-events-auto bg-slate-900/80 backdrop-blur-xl border border-white/10 px-4 py-2.5 rounded-xl shadow-2xl flex items-center gap-3 group transition-all hover:border-amber-500/40 hover:shadow-amber-500/10"
-        >
-          <div className="text-xl group-hover:rotate-12 transition-transform duration-300">
-            {isWideView ? "🔎" : "🔍"}
-          </div>
-          <div className="flex flex-col items-start leading-tight">
-            <span className="text-[10px] font-black text-amber-500/60 uppercase tracking-widest">Map View</span>
-            <span className="text-sm font-bold text-white uppercase">{isWideView ? "Standard" : "Wide View"}</span>
-          </div>
-        </motion.button>
+        {/* Controls removed */}
       </div>
 
       <div className="absolute top-6 left-6 pointer-events-none">

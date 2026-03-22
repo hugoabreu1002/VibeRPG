@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import type { InventoryItem } from "../../../types/game";
 import { WeaponIcon } from "../items/WeaponIcon";
 import { ArmorIcon } from "../items/ArmorIcon";
@@ -44,10 +45,21 @@ const getRarityLabel = (rarity: InventoryItem["rarity"]) => {
 };
 
 export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
+  const [purchasedItem, setPurchasedItem] = useState<string | null>(null);
+
+  const handleBuy = (item: InventoryItem) => {
+    onBuyItem(item);
+    audioManager.playSfx("click");
+    setPurchasedItem(item.id);
+    setTimeout(() => setPurchasedItem(null), 1000);
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
       className="fantasy-card rounded-xl p-5"
     >
       <div className="flex justify-between items-center mb-6">
@@ -113,17 +125,26 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                onBuyItem(item);
-                audioManager.playSfx("click");
-              }}
+              onClick={() => handleBuy(item)}
               disabled={gold < item.price}
-              className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all ${
+              className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all relative overflow-hidden ${
                 gold >= item.price 
                   ? "btn-fantasy"
                   : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700/30"
               }`}
             >
+              <AnimatePresence>
+                {purchasedItem === item.id && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    className="absolute inset-0 flex items-center justify-center bg-emerald-600/90 text-white font-bold"
+                  >
+                    ✓ Purchased!
+                  </motion.div>
+                )}
+              </AnimatePresence>
               {gold >= item.price ? "Buy" : "Not enough gold"}
             </motion.button>
           </motion.div>

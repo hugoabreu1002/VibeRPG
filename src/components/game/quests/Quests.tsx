@@ -136,13 +136,23 @@ export function Quests({
 
       {questState === "active" && activeQuest && (
         <div className="space-y-5">
-          <motion.button
-            whileHover={{ x: -2 }}
-            onClick={onResetQuest}
-            className="text-xs font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center gap-1 uppercase tracking-widest bg-slate-900/30 px-3 py-1.5 rounded-full border border-slate-800"
-          >
-            ← Retreat
-          </motion.button>
+          <div className="flex items-center gap-3">
+            <motion.button
+              whileHover={{ x: -2 }}
+              onClick={onResetQuest}
+              className="text-xs font-bold text-slate-500 hover:text-amber-300 transition-colors flex items-center gap-1 uppercase tracking-widest bg-slate-900/30 px-3 py-1.5 rounded-full border border-slate-800"
+            >
+              ← Retreat
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => onStartQuest(activeQuest)}
+              className="btn-fantasy px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider"
+            >
+              Start Quest Map
+            </motion.button>
+          </div>
 
           <div className="relative border border-amber-900/20 bg-slate-900/40 backdrop-blur-md rounded-2xl p-6 overflow-hidden">
             {/* Contextual Header */}

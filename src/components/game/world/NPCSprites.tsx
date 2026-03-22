@@ -21,10 +21,10 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
           <ellipse cx="37" cy="21" rx="2.5" ry="2" fill="#1E293B" />
           <circle cx="27.5" cy="20.5" r="0.8" fill="white" />
           <circle cx="37.5" cy="20.5" r="0.8" fill="white" />
-          <path d="M24 18 Q27 16 30 18" stroke="#9CA3AF" strokeWidth="1.5" fill="none" />
-          <path d="M34 18 Q37 16 40 18" stroke="#9CA3AF" strokeWidth="1.5" fill="none" />
+          <path d="M24 18 L30 18" stroke="#9CA3AF" strokeWidth="1.5" fill="none" />
+          <path d="M34 18 L40 18" stroke="#9CA3AF" strokeWidth="1.5" fill="none" />
           <path d="M32 22 L31 25 L33 25" stroke="#D97706" strokeWidth="0.8" fill="none" />
-          <path d="M28 28 Q32 31 36 28" stroke="#92400E" strokeWidth="1" fill="none" />
+          <path d="M28 28 L36 28" stroke="#92400E" strokeWidth="1" fill="none" />
           <path d="M18 20 Q32 8 46 20 L48 55 Q32 60 16 55 Z" fill="#4B5563" />
           <path d="M20 22 Q32 12 44 22 L46 53 Q32 57 18 53 Z" fill="#374151" />
           <path d="M22 20 Q32 14 42 20 L40 28 Q32 24 24 28 Z" fill="#1F2937" opacity="0.5" />
@@ -176,9 +176,9 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
           <ellipse cx="36" cy="21" rx="2" ry="1.5" fill="#1E293B" />
           <circle cx="28.5" cy="20.5" r="0.6" fill="white" />
           <circle cx="36.5" cy="20.5" r="0.6" fill="white" />
-          <path d="M26 20 Q28 19 30 20" stroke="#FCA5A5" strokeWidth="0.5" fill="none" />
-          <path d="M34 20 Q36 19 38 20" stroke="#FCA5A5" strokeWidth="0.5" fill="none" />
-          <path d="M29 26 Q32 28 35 26" stroke="#BE123C" strokeWidth="1" fill="none" />
+          <path d="M26 20 L30 20" stroke="#FCA5A5" strokeWidth="0.5" fill="none" />
+          <path d="M34 20 L38 20" stroke="#FCA5A5" strokeWidth="0.5" fill="none" />
+          <path d="M29 26 L35 26" stroke="#BE123C" strokeWidth="1" fill="none" />
           <path d="M32 22 L31 25 L33 25" stroke="#FCA5A5" strokeWidth="0.6" fill="none" />
           <path d="M20 32 Q32 28 44 32 L48 62 L16 62 Z" fill="#F8FAFC" />
           <path d="M22 34 Q32 30 42 34 L45 60 L19 60 Z" fill="#FEFEFE" />

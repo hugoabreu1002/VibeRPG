@@ -150,6 +150,7 @@ export function getInitialCharacterStats(charClass: CharacterClass) {
 }
 
 export const SHOP_ITEMS: InventoryItem[] = [
+  // ── FOOD ITEMS ─────────────────────────────────────────
   {
     id: "food-bread",
     name: "Stale Bread",
@@ -193,6 +194,184 @@ export const SHOP_ITEMS: InventoryItem[] = [
     restores: { hp: 20, mp: 20 },
     equipped: false,
     description: "A strong ale that vitalizes both body and mind."
+  },
+  {
+    id: "food-honey-cake",
+    name: "Honey Cake",
+    type: "food",
+    rarity: "uncommon",
+    price: 25,
+    stats: {},
+    restores: { hp: 35, mp: 15 },
+    equipped: false,
+    description: "A sweet treat baked with wild honey. Restores both health and mana."
+  },
+  {
+    id: "food-elixir-soup",
+    name: "Elixir Soup",
+    type: "food",
+    rarity: "uncommon",
+    price: 35,
+    stats: {},
+    restores: { hp: 50, mp: 30 },
+    equipped: false,
+    description: "A magical broth infused with rare herbs. Healers swear by its restorative properties."
+  },
+  {
+    id: "food-dragon-fruit",
+    name: "Dragon Fruit",
+    type: "food",
+    rarity: "rare",
+    price: 60,
+    stats: {},
+    restores: { hp: 80, mp: 50 },
+    equipped: false,
+    description: "A fiery fruit that burns with inner warmth. Consumed by adventurers seeking great restoration."
+  },
+  // ── POTIONS ────────────────────────────────────────────
+  {
+    id: "potion-health-minor",
+    name: "Minor Health Potion",
+    type: "food",
+    rarity: "common",
+    price: 12,
+    stats: {},
+    restores: { hp: 25 },
+    equipped: false,
+    description: "A basic red potion that mends small wounds."
+  },
+  {
+    id: "potion-health",
+    name: "Health Potion",
+    type: "food",
+    rarity: "uncommon",
+    price: 30,
+    stats: {},
+    restores: { hp: 60 },
+    equipped: false,
+    description: "A potent red potion that accelerates natural healing."
+  },
+  {
+    id: "potion-health-major",
+    name: "Major Health Potion",
+    type: "food",
+    rarity: "rare",
+    price: 75,
+    stats: {},
+    restores: { hp: 120 },
+    equipped: false,
+    description: "A powerful crimson elixir that can bring an adventurer back from the brink of death."
+  },
+  {
+    id: "potion-mana-minor",
+    name: "Minor Mana Potion",
+    type: "food",
+    rarity: "common",
+    price: 10,
+    stats: {},
+    restores: { mp: 25 },
+    equipped: false,
+    description: "A shimmering blue potion that replenishes magical energy."
+  },
+  {
+    id: "potion-mana",
+    name: "Mana Potion",
+    type: "food",
+    rarity: "uncommon",
+    price: 28,
+    stats: {},
+    restores: { mp: 55 },
+    equipped: false,
+    description: "A deep blue elixir that surges with arcane power."
+  },
+  {
+    id: "potion-mana-major",
+    name: "Major Mana Potion",
+    type: "food",
+    rarity: "rare",
+    price: 70,
+    stats: {},
+    restores: { mp: 110 },
+    equipped: false,
+    description: "A radiant azure draught that overflows with magical essence."
+  },
+  {
+    id: "potion-elixir-vitality",
+    name: "Elixir of Vitality",
+    type: "food",
+    rarity: "rare",
+    price: 100,
+    stats: {},
+    restores: { hp: 100, mp: 80 },
+    equipped: false,
+    description: "A legendary golden potion that restores both body and spirit to peak condition."
+  },
+  {
+    id: "potion-strength",
+    name: "Potion of Strength",
+    type: "food",
+    rarity: "uncommon",
+    price: 45,
+    stats: { attack: 5 },
+    restores: {},
+    equipped: false,
+    description: "A bubbling red concoction that temporarily boosts physical power."
+  },
+  {
+    id: "potion-defense",
+    name: "Potion of Iron Skin",
+    type: "food",
+    rarity: "uncommon",
+    price: 45,
+    stats: { defense: 5 },
+    restores: {},
+    equipped: false,
+    description: "A metallic potion that hardens the skin like iron."
+  },
+  {
+    id: "potion-magic",
+    name: "Potion of Arcane Power",
+    type: "food",
+    rarity: "uncommon",
+    price: 50,
+    stats: { magicPower: 8 },
+    restores: {},
+    equipped: false,
+    description: "A swirling purple elixir that amplifies magical abilities."
+  },
+  // ── SPECIAL CONSUMABLES ────────────────────────────────
+  {
+    id: "scroll-teleport",
+    name: "Scroll of Recall",
+    type: "food",
+    rarity: "uncommon",
+    price: 40,
+    stats: {},
+    restores: { hp: 30, mp: 30 },
+    equipped: false,
+    description: "A magical scroll that returns you to safety while mending minor injuries."
+  },
+  {
+    id: "crystal-healing",
+    name: "Healing Crystal",
+    type: "food",
+    rarity: "rare",
+    price: 85,
+    stats: {},
+    restores: { hp: 90 },
+    equipped: false,
+    description: "A glowing crystal that channels restorative energy when crushed."
+  },
+  {
+    id: "amulet-revival",
+    name: "Phoenix Feather",
+    type: "food",
+    rarity: "legendary",
+    price: 250,
+    stats: {},
+    restores: { hp: 200, mp: 150 },
+    equipped: false,
+    description: "A radiant feather from a phoenix. When used, it bestows incredible healing power."
   }
 ];
 
@@ -1000,6 +1179,233 @@ export const QUESTS: Quest[] = [
       }
     ]
   },
+  // ═══════════════════════════════════════════════════════════════
+  // GUILD SYSTEM - REPEATABLE GOLD FARMING QUESTS
+  // ═══════════════════════════════════════════════════════════════
+  {
+    id: "guild-bounty-slimes",
+    title: "Guild Bounty: Slime Infestation",
+    description: "The Adventurer's Guild has posted a bounty for clearing slimes from the eastern farmlands. A quick job for quick gold.",
+    class: "mage",
+    minLevel: 1,
+    region: "Eastern Farmlands",
+    choices: [
+      {
+        text: "Burn them with fire magic",
+        requiredStat: "magicPower",
+        difficulty: 8,
+        successMessage: "Your flames incinerate the slimes! The farmers pay handsomely.",
+        failureMessage: "The slimes resist your magic! You need a different approach.",
+        xpReward: 15,
+        goldReward: 35
+      },
+      {
+        text: "Scoop them into buckets",
+        requiredStat: "defense",
+        difficulty: 5,
+        successMessage: "You carefully collect the slimes. The alchemist pays extra for specimens!",
+        failureMessage: "The slime dissolves the bucket. What a mess!",
+        xpReward: 10,
+        goldReward: 25
+      }
+    ]
+  },
+  {
+    id: "guild-bounty-rats",
+    title: "Guild Bounty: Giant Rats",
+    description: "The tavern cellar is overrun with giant rats. The innkeeper will pay well for a clean sweep.",
+    class: "warrior",
+    minLevel: 1,
+    region: "Tavern Cellar",
+    choices: [
+      {
+        text: "Charge in and smash them all!",
+        requiredStat: "attack",
+        difficulty: 10,
+        successMessage: "You clear the cellar in minutes! The innkeeper rewards you generously.",
+        failureMessage: "There are too many rats! They overwhelm you!",
+        xpReward: 20,
+        goldReward: 40
+      },
+      {
+        text: "Set traps and wait",
+        requiredStat: "defense",
+        difficulty: 8,
+        successMessage: "Your traps work perfectly! The rats are caught one by one.",
+        failureMessage: "The rats are too clever for your traps!",
+        xpReward: 15,
+        goldReward: 30
+      }
+    ]
+  },
+  {
+    id: "guild-bounty-undead",
+    title: "Guild Bounty: Graveyard Shift",
+    description: "Skeletons have been spotted wandering the old graveyard at night. The church offers a bounty for their destruction.",
+    class: "priest",
+    minLevel: 2,
+    region: "Old Graveyard",
+    choices: [
+      {
+        text: "Purify the undead with holy light",
+        requiredStat: "magicPower",
+        difficulty: 15,
+        successMessage: "Your holy magic returns the skeletons to their graves! The priest pays well.",
+        failureMessage: "The undead resist your purification! They're too strong!",
+        xpReward: 35,
+        goldReward: 60
+      },
+      {
+        text: "Smash their bones with your mace",
+        requiredStat: "attack",
+        difficulty: 12,
+        successMessage: "You shatter the skeletons! The bones scatter across the graveyard.",
+        failureMessage: "The skeletons dodge your swings! They're surprisingly agile!",
+        xpReward: 25,
+        goldReward: 45
+      }
+    ]
+  },
+  {
+    id: "guild-escort-merchant",
+    title: "Guild Contract: Merchant Escort",
+    description: "A nervous merchant needs an escort through the forest. The guild guarantees payment upon safe arrival.",
+    class: "warrior",
+    minLevel: 2,
+    region: "Forest Path",
+    choices: [
+      {
+        text: "Walk ahead and clear the path",
+        requiredStat: "attack",
+        difficulty: 18,
+        successMessage: "You dispatch the bandits before they reach the merchant! Full payment received.",
+        failureMessage: "Bandits ambush from the trees! The merchant is robbed!",
+        xpReward: 45,
+        goldReward: 80
+      },
+      {
+        text: "Stay close and guard the merchant",
+        requiredStat: "defense",
+        difficulty: 15,
+        successMessage: "Your vigilant guard protects the merchant throughout the journey!",
+        failureMessage: "A thief slips past you and steals from the merchant's cart!",
+        xpReward: 35,
+        goldReward: 65
+      }
+    ]
+  },
+  {
+    id: "guild-herb-gathering",
+    title: "Guild Contract: Rare Herbs",
+    description: "The guild alchemist needs rare herbs from the dangerous swamps. Double pay for hazardous work.",
+    class: "priest",
+    minLevel: 2,
+    region: "Poison Swamp",
+    choices: [
+      {
+        text: "Use nature magic to find the herbs",
+        requiredStat: "magicPower",
+        difficulty: 16,
+        successMessage: "Your magic guides you to the rarest specimens! The alchemist is thrilled.",
+        failureMessage: "The swamp's toxic magic interferes with your senses!",
+        xpReward: 40,
+        goldReward: 70
+      },
+      {
+        text: "Brave the swamp creatures head-on",
+        requiredStat: "attack",
+        difficulty: 20,
+        successMessage: "You fight through the swamp creatures and gather the herbs!",
+        failureMessage: "A giant snake guards the herbs! You retreat wounded!",
+        xpReward: 50,
+        goldReward: 85
+      }
+    ]
+  },
+  {
+    id: "guild-treasure-hunt",
+    title: "Guild Contract: Lost Treasure",
+    description: "An old map shows buried treasure in the caves. The guild wants a cut for providing the map.",
+    class: "rogue",
+    minLevel: 3,
+    region: "Crystal Caverns",
+    choices: [
+      {
+        text: "Sneak past the cave guardians",
+        requiredStat: "defense",
+        difficulty: 22,
+        successMessage: "You slip past the guardians unnoticed! The treasure is yours!",
+        failureMessage: "The guardians spot you! You're forced to flee empty-handed!",
+        xpReward: 55,
+        goldReward: 120
+      },
+      {
+        text: "Fight your way to the treasure",
+        requiredStat: "attack",
+        difficulty: 28,
+        successMessage: "You defeat the guardians in combat! The treasure glitters in your torchlight!",
+        failureMessage: "The cave guardians are too powerful! You barely escape!",
+        xpReward: 70,
+        goldReward: 150
+      }
+    ]
+  },
+  {
+    id: "guild-monster-hunt",
+    title: "Guild Contract: Monster Hunt",
+    description: "A powerful beast has been terrorizing the mountain pass. The guild offers a massive bounty for its head.",
+    class: "warrior",
+    minLevel: 3,
+    region: "Mountain Pass",
+    choices: [
+      {
+        text: "Challenge the beast to single combat",
+        requiredStat: "attack",
+        difficulty: 30,
+        successMessage: "You slay the mighty beast! The guild rewards you handsomely!",
+        failureMessage: "The beast is too powerful! You retreat to fight another day!",
+        xpReward: 100,
+        goldReward: 200
+      },
+      {
+        text: "Set an elaborate trap",
+        requiredStat: "defense",
+        difficulty: 25,
+        successMessage: "Your trap catches the beast! A clean kill with minimal risk!",
+        failureMessage: "The beast avoids your trap and charges!",
+        xpReward: 75,
+        goldReward: 150
+      }
+    ]
+  },
+  {
+    id: "guild-arcane-research",
+    title: "Guild Contract: Arcane Research",
+    description: "The mage guild needs someone to collect magical essence from wild spirits. Dangerous but lucrative.",
+    class: "mage",
+    minLevel: 3,
+    region: "Mystic Grove",
+    choices: [
+      {
+        text: "Carefully extract the essence",
+        requiredStat: "magicPower",
+        difficulty: 28,
+        successMessage: "You extract pure magical essence! The mages pay a premium!",
+        failureMessage: "The essence explodes in your hands! The spirits are angered!",
+        xpReward: 90,
+        goldReward: 180
+      },
+      {
+        text: "Negotiate with the spirits",
+        requiredStat: "magicPower",
+        difficulty: 22,
+        successMessage: "The spirits gift you their essence willingly! A peaceful exchange.",
+        failureMessage: "The spirits don't trust you. They vanish into the mist!",
+        xpReward: 65,
+        goldReward: 120
+      }
+    ]
+  },
 ];
 
 // Map quests to their enemies
@@ -1019,6 +1425,15 @@ export const QUEST_ENEMIES: Record<string, string> = {
   "priest-blessing": "dark-corrupter",
   "priest-undead-crypt": "death-knight",
   "priest-demon-portal": "arch-demon",
+  // Guild quests
+  "guild-bounty-slimes": "green-slime",
+  "guild-bounty-rats": "giant-rat",
+  "guild-bounty-undead": "skeleton-soldier",
+  "guild-escort-merchant": "bandit-leader",
+  "guild-herb-gathering": "water-serpent",
+  "guild-treasure-hunt": "mimic",
+  "guild-monster-hunt": "dire-bear",
+  "guild-arcane-research": "storm-djinn",
 };
 
 export function getQuestEnemy(questId: string): Enemy | null {

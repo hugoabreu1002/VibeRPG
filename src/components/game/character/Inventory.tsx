@@ -11,6 +11,7 @@ import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
 import { InventorySprite } from "./InventorySprite";
 import { InventoryTabIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon } from "../ui/GameIcons";
+import { toast } from "../../../hooks/use-toast";
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -69,10 +70,34 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
     }
   };
 
+  const handleEquip = (item: InventoryItem) => {
+    const wasEquipped = item.equipped;
+    onToggleEquip(item);
+    setSpriteAnimation("spell");
+    setTimeout(() => setSpriteAnimation("idle"), 600);
+    
+    // Show toast notification
+    if (wasEquipped) {
+      toast({
+        title: "Equipment Unequipped",
+        description: `${item.name} has been unequipped`,
+        variant: "default",
+      });
+    } else {
+      toast({
+        title: "Equipment Equipped!",
+        description: `${item.name} is now equipped`,
+        variant: "default",
+      });
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.3 }}
       className="fantasy-card rounded-xl p-5"
     >
       <h2 className="text-xl font-bold mb-5 text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
@@ -247,10 +272,10 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
       {/* Item Detail Modal */}
       <AnimatePresence>
         {selectedItem && (
-          <ItemDetailModal
+            <ItemDetailModal
             item={selectedItem}
             onClose={() => onSelectItem(null)}
-            onToggleEquip={() => onToggleEquip(selectedItem)}
+            onToggleEquip={() => handleEquip(selectedItem)}
             onConsumeFood={onConsumeFood ? () => {
               handleConsume(selectedItem);
               onSelectItem(null);
