@@ -228,10 +228,10 @@ export function QuestMap({
       setDialogIndex(dialogIndex + 1);
       audioManager.playSfx("click");
     } else {
+      // Last dialog line - trigger NPC interaction
       onNPCInteract(selectedNPC);
       setSelectedNPC(null);
       setDialogIndex(0);
-      audioManager.playSfx("questAccept");
     }
   }, [selectedNPC, dialogIndex, onNPCInteract]);
 

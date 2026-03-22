@@ -6,3 +6,8 @@ export { QuestBattle } from "./quests/QuestBattle";
 export { QuestMap } from "./quests/QuestMap";
 export { Shop } from "./shop/Shop";
 export { WeaponIcon } from "./items/WeaponIcon";
+export { NPCSprite } from "./world/NPCSprites";
+
+// CrazyGames SDK Components
+export { default as CrazyGamesIntegration } from './CrazyGamesIntegration';
+export { default as BannerAdsManager } from './BannerAdsManager';

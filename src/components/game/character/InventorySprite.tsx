@@ -29,7 +29,7 @@ export function InventorySprite({
       setFrame((prev) => (prev + 1) % 20);
     }, 100);
     return () => clearInterval(interval);
-  }, [animationType]);
+  }, [animationType]); // Fixed: only depend on animationType, not frame
 
   const colors = getCharacterColors(characterClass);
   const rankVisuals = getRankVisuals(rank);

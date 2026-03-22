@@ -3,11 +3,13 @@ import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateChara
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
-import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
+import { Inventory, Quests, QuestBattle, QuestMap, Shop, NPCSprite } from "./components/game";
 import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
+import { CrazyGamesIntegration } from "./components/game/CrazyGamesIntegration";
+import BannerAdsManager from "./components/game/BannerAdsManager";
 import {
   HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
@@ -82,6 +84,10 @@ function AppContent() {
   const [allCharacters, setAllCharacters] = useState<Character[]>([]);
   const [selectedChoice, setSelectedChoice] = useState<QuestChoice | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
+  
+  // NPC Dialog state
+  const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
+  const [dialogIndex, setDialogIndex] = useState(0);
 
   // Load all characters
   useEffect(() => {
@@ -584,8 +590,6 @@ function AppContent() {
       </header>
 
       {/* Character Selection Modal */}
-
-      {/* Character Selection Modal */}
       <AnimatePresence>
         {showCharacterSelect && (
           <motion.div
@@ -813,7 +817,22 @@ function AppContent() {
           </main>
         ) : (
           <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-12">
-            {/* Sidebar */}
+            {/* Left Banner (Left of Side Tabs) */}
+            <aside className="lg:col-span-1 space-y-4">
+              <div className="fantasy-card rounded-xl p-4">
+                <BannerAdsManager
+                  enabled={true}
+                  containerId="left-banner-main"
+                  width={300}
+                  height={250}
+                  responsive={false}
+                  autoRefresh={true}
+                  refreshInterval={45000}
+                />
+              </div>
+            </aside>
+
+            {/* Left Sidebar (Side Tabs) */}
             <aside className="lg:col-span-2 space-y-4">
               <div className="fantasy-card rounded-xl p-4">
                 <div className="flex flex-wrap lg:flex-col gap-2">
@@ -851,20 +870,18 @@ function AppContent() {
               </div>
             </aside>
 
-            {/* Main Content */}
-            <section className="lg:col-span-10 space-y-4">
+            {/* Main Content Area */}
+            <main className="lg:col-span-8 space-y-4">
               {activeTab === "Inventory" && (
-                <div className="space-y-4">
-                  <Inventory
-                    inventory={inventory}
-                    selectedItem={selectedItem}
-                    onSelectItem={setSelectedItem}
-                    onToggleEquip={handleToggleEquip}
-                    onConsumeFood={handleConsumeFood}
-                    onSellItem={handleSellItem}
-                    characterClass={character.class}
-                  />
-                </div>
+                <Inventory
+                  inventory={inventory}
+                  selectedItem={selectedItem}
+                  onSelectItem={setSelectedItem}
+                  onToggleEquip={handleToggleEquip}
+                  onConsumeFood={handleConsumeFood}
+                  onSellItem={handleSellItem}
+                  characterClass={character.class}
+                />
               )}
 
               {activeTab === "Shop" && character && (
@@ -887,7 +904,7 @@ function AppContent() {
               )}
 
               {activeTab === "World Map" && character && (
-                <div className="space-y-4">
+                <>
                   {(() => {
                     const mapData = getQuestMap("Hub Town");
                     return mapData && (
@@ -896,11 +913,48 @@ function AppContent() {
                         playerClass={character.class}
                         inventory={inventory}
                         onNPCInteract={(npc: NPC) => {
-                          if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
+                          if (npc.questId) {
+                            // Check if quest is already completed
+                            if (completedQuests.includes(npc.questId)) {
+                              audioManager.playSfx("error");
+                              // Show completion message
+                              setSelectedNPC(npc);
+                              setDialogIndex(0);
+                              return;
+                            }
+                            
+                            // Check if quest is already active
+                            if (activeQuest?.id === npc.questId) {
+                              // Already active - show quest dialog
+                              setActiveTab("Quests");
+                              return;
+                            }
+                            
+                            // Find the quest
                             const quest = QUESTS.find(q => q.id === npc.questId);
-                            if (quest && quest.class === character.class && quest.minLevel <= character.level) {
+                            if (quest) {
+                              // Check class requirement
+                              if (quest.class !== character.class) {
+                                audioManager.playSfx("error");
+                                // Show class mismatch message
+                                setSelectedNPC(npc);
+                                setDialogIndex(0);
+                                return;
+                              }
+                              
+                              // Check level requirement
+                              if (quest.minLevel > character.level) {
+                                audioManager.playSfx("error");
+                                // Show level requirement message
+                                setSelectedNPC(npc);
+                                setDialogIndex(0);
+                                return;
+                              }
+                              
+                              // All requirements met - start the quest
                               startQuest(quest);
                               setActiveTab("Quests");
+                              audioManager.playSfx("questAccept");
                             }
                           }
                         }}
@@ -911,7 +965,20 @@ function AppContent() {
                       />
                     );
                   })()}
-                </div>
+                  
+                  {/* Bottom Banner */}
+                  <div className="mt-4">
+                    <BannerAdsManager
+                      enabled={true}
+                      containerId="bottom-banner-map"
+                      width={728}
+                      height={90}
+                      responsive={false}
+                      autoRefresh={true}
+                      refreshInterval={60000}
+                    />
+                  </div>
+                </>
               )}
 
               {activeTab === "Quests" && character && (
@@ -974,10 +1041,155 @@ function AppContent() {
                   )}
                 </>
               )}
-            </section>
+            </main>
+
+            {/* Right Sidebar - Bigger Banner */}
+            <aside className="lg:col-span-1 space-y-4">
+              <div className="fantasy-card rounded-xl p-4">
+                {/* Main Right Banner (Bigger) */}
+                <BannerAdsManager
+                  enabled={true}
+                  containerId="right-banner-main"
+                  width={300}
+                  height={250}
+                  responsive={false}
+                  autoRefresh={true}
+                  refreshInterval={30000}
+                  onBannerLoad={() => console.log('Right banner loaded')}
+                  onBannerError={(error) => console.error('Right banner error:', error)}
+                />
+              </div>
+            </aside>
           </div>
         )}
       </div>
+
+      {/* NPC Dialog Overlay */}
+      <AnimatePresence>
+        {selectedNPC && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-end justify-center z-50 p-4"
+            onClick={() => {
+              setSelectedNPC(null);
+              setDialogIndex(0);
+            }}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 60, opacity: 0 }}
+              className="w-full max-w-lg mb-8"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="fantasy-card rounded-xl p-5">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800/50 border border-slate-700/50 shadow-inner overflow-hidden uppercase">
+                    <NPCSprite type={selectedNPC.sprite} className="w-10 h-10" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>
+                      {selectedNPC.name}
+                    </h3>
+                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest font-bold">NPC ({selectedNPC.sprite})</p>
+                  </div>
+                </div>
+
+                <motion.p
+                  key={dialogIndex}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="text-sm text-slate-300 leading-relaxed mb-4 min-h-[48px]"
+                >
+                  {selectedNPC.dialog[dialogIndex]}
+                </motion.p>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500">
+                    {dialogIndex + 1} / {selectedNPC.dialog.length}
+                  </span>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => {
+                      if (dialogIndex < selectedNPC.dialog.length - 1) {
+                        setDialogIndex(dialogIndex + 1);
+                        audioManager.playSfx("click");
+                      } else {
+                        // Last dialog line - trigger NPC interaction
+                        if (selectedNPC.questId) {
+                          // Check if quest is already completed
+                          if (completedQuests.includes(selectedNPC.questId)) {
+                            audioManager.playSfx("error");
+                            setSelectedNPC(null);
+                            setDialogIndex(0);
+                            return;
+                          }
+                          
+                          // Check if quest is already active
+                          if (activeQuest?.id === selectedNPC.questId) {
+                            // Already active - show quest dialog
+                            setActiveTab("Quests");
+                            setSelectedNPC(null);
+                            setDialogIndex(0);
+                            return;
+                          }
+                          
+                          // Find the quest
+                          const quest = QUESTS.find(q => q.id === selectedNPC.questId);
+                          if (quest) {
+                            // Check class requirement
+                            if (quest.class !== character.class) {
+                              audioManager.playSfx("error");
+                              setSelectedNPC(null);
+                              setDialogIndex(0);
+                              return;
+                            }
+                            
+                            // Check level requirement
+                            if (quest.minLevel > character.level) {
+                              audioManager.playSfx("error");
+                              setSelectedNPC(null);
+                              setDialogIndex(0);
+                              return;
+                            }
+                            
+                            // All requirements met - start the quest
+                            startQuest(quest);
+                            setActiveTab("Quests");
+                            audioManager.playSfx("questAccept");
+                          }
+                        }
+                        setSelectedNPC(null);
+                        setDialogIndex(0);
+                      }
+                    }}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold ${
+                      dialogIndex < selectedNPC.dialog.length - 1
+                        ? "bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700"
+                        : "btn-fantasy"
+                    }`}
+                  >
+                    {dialogIndex < selectedNPC.dialog.length - 1 
+                      ? "Continue (Enter) ▶" 
+                      : selectedNPC.questId 
+                        ? (() => {
+                            if (completedQuests.includes(selectedNPC.questId)) return "Close (Enter) ✕";
+                            const questData = QUESTS.find(q => q.id === selectedNPC.questId);
+                            if (questData && questData.class !== character.class) return "Wait (Enter) ...";
+                            if (questData && questData.minLevel > character.level) return "Wait (Enter) ...";
+                            return "Accept Quest (Enter) ⚔️";
+                          })()
+                        : "Close (Enter) ✕"}
+                  </motion.button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

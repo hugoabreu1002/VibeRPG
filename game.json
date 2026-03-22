@@ -1,0 +1,54 @@
+{
+  "title": "VibeRPG - Fantasy Adventure",
+  "description": "An epic browser-based RPG with turn-based combat, quests, and exploration. Join the adventure and become a legendary hero!",
+  "version": "1.0.0",
+  "width": 1280,
+  "height": 720,
+  "aspectRatio": "16:9",
+  "minAspectRatio": "1.5",
+  "maxAspectRatio": "2.0",
+  "tags": [
+    "rpg",
+    "fantasy",
+    "adventure",
+    "turn-based",
+    "quest",
+    "exploration",
+    "indie"
+  ],
+  "category": "rpg",
+  "author": "VibeRPG Team",
+  "authorUrl": "https://github.com/hugoabreu1002/VibeRPG",
+  "releaseDate": "2024-03-22",
+  "language": "en",
+  "controls": {
+    "description": "Mouse and Keyboard controls",
+    "mouse": "Click to interact, move, and battle",
+    "keyboard": "Arrow keys to move, Enter to confirm actions"
+  },
+  "gameplay": {
+    "description": "Turn-based RPG with exploration and quest system",
+    "duration": "15-30 minutes per session",
+    "difficulty": "Easy to Medium",
+    "progression": "Level-based character progression with skill unlocks"
+  },
+  "assets": {
+    "coverLandscape": "demo/cover_landscape.png",
+    "coverPortrait": "demo/cover_portrait.png", 
+    "coverSquare": "demo/cover_square.png",
+    "gameplay": "demo/gameplay_landing.png"
+  },
+  "requirements": {
+    "browserSupport": "Modern browsers with WebGL support",
+    "minimumResolution": "800x600",
+    "recommendedResolution": "1280x720"
+  },
+  "crazyGames": {
+    "sdkVersion": "1.0.0",
+    "gameUrl": "index.html",
+    "loadingScreen": true,
+    "pauseResume": true,
+    "gameOver": true,
+    "scoreReporting": true
+  }
+}
