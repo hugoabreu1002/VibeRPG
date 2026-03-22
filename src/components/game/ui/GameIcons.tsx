@@ -67,23 +67,23 @@ export function GoldIcon({ className, size = 24 }: IconProps) {
 }
 
 export function ShieldIcon({ className, size = 24 }: IconProps) {
-    return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" fill="#312E81" stroke="#4F46E5" strokeWidth="1.5" />
-        <path d="M12 2v19" stroke="#4F46E5" strokeWidth="1" strokeDasharray="2 2" />
-      </svg>
-    );
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z" fill="#312E81" stroke="#4F46E5" strokeWidth="1.5" />
+      <path d="M12 2v19" stroke="#4F46E5" strokeWidth="1" strokeDasharray="2 2" />
+    </svg>
+  );
 }
 
 export function SwordIcon({ className, size = 24 }: IconProps) {
-    return (
-      <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14.5 9l-1 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        <path d="M18 4l2 2-11 11-2 5 5-2 11-11 2-2z" fill="#94A3B8" />
-        <path d="M18 4l2 2" stroke="#64748B" strokeWidth="2" />
-        <path d="M7 17l2 2" stroke="#64748B" strokeWidth="3" />
-      </svg>
-    );
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M14.5 9l-1 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      <path d="M18 4l2 2-11 11-2 5 5-2 11-11 2-2z" fill="#94A3B8" />
+      <path d="M18 4l2 2" stroke="#64748B" strokeWidth="2" />
+      <path d="M7 17l2 2" stroke="#64748B" strokeWidth="3" />
+    </svg>
+  );
 }
 
 // --- TAB ICONS ---
@@ -120,6 +120,22 @@ export function ShopTabIcon({ className, size = 24 }: IconProps) {
   );
 }
 
+export function GuildTabIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L2 7v10l10 5 10-5V7L12 2z" fill="url(#guildGradient)" stroke="#B45309" strokeWidth="1" />
+      <path d="M12 6l-5 2.5v5L12 16l5-2.5v-5L12 6z" fill="#FDE68A" />
+      <path d="M12 2v19M2 7l10 5 10-5" stroke="#B45309" strokeWidth="1" opacity="0.5" />
+      <defs>
+        <linearGradient id="guildGradient" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#F59E0B" />
+          <stop offset="1" stopColor="#B45309" />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 // --- CLASS ICONS ---
 
 export function ClassWarriorIcon({ className, size = 24 }: IconProps) {
@@ -134,8 +150,8 @@ export function ClassWarriorIcon({ className, size = 24 }: IconProps) {
 export function ClassMageIcon({ className, size = 24 }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <motion.circle 
-        cx="12" cy="12" r="4" fill="#8B5CF6" 
+      <motion.circle
+        cx="12" cy="12" r="4" fill="#8B5CF6"
         animate={{ filter: ["blur(0px)", "blur(2px)", "blur(0px)"] }}
         transition={{ repeat: Infinity, duration: 2 }}
       />
@@ -164,79 +180,221 @@ export function ClassRogueIcon({ className, size = 24 }: IconProps) {
 
 export function TileTreeIcon({ className, size = 32 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2L4 14h16L12 2z" fill="#065F46" />
-      <path d="M12 8l-6 10h12L12 8z" fill="#047857" />
-      <rect x="11" y="18" width="2" height="4" fill="#78350F" />
+    <svg viewBox="0 0 32 32" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="treeGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#065F46" />
+          <stop offset="100%" stopColor="#022C22" />
+        </linearGradient>
+        <linearGradient id="trunkGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#78350F" />
+          <stop offset="50%" stopColor="#92400E" />
+          <stop offset="100%" stopColor="#78350F" />
+        </linearGradient>
+      </defs>
+      {/* Tree trunk with bark texture */}
+      <rect x="14" y="20" width="4" height="10" fill="url(#trunkGrad)" stroke="#451A03" strokeWidth="0.5" />
+      <line x1="15" y1="22" x2="15" y2="28" stroke="#451A03" strokeWidth="0.3" opacity="0.5" />
+      <line x1="17" y1="21" x2="17" y2="27" stroke="#451A03" strokeWidth="0.3" opacity="0.5" />
+      {/* Tree foliage layers */}
+      <path d="M16 2 L6 14 L10 14 L4 20 L12 20 L8 26 L24 26 L20 20 L28 20 L22 14 L26 14 Z" fill="url(#treeGrad)" stroke="#064E3B" strokeWidth="0.5" />
+      {/* Foliage highlights */}
+      <path d="M16 4 L10 12 L14 12 L10 16 L16 16 L12 22 L20 22 L16 16 L22 16 L18 12 L22 12 Z" fill="#047857" opacity="0.6" />
+      {/* Leaf details */}
+      <circle cx="12" cy="10" r="1" fill="#10B981" opacity="0.5" />
+      <circle cx="20" cy="12" r="1" fill="#10B981" opacity="0.5" />
+      <circle cx="14" cy="18" r="1" fill="#10B981" opacity="0.5" />
+      <circle cx="18" cy="16" r="1" fill="#10B981" opacity="0.5" />
     </svg>
   );
 }
 
 export function TileWaterIcon({ className, size = 32 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <motion.path 
-        d="M2 12c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7.5 0" 
-        stroke="#60A5FA" 
-        strokeWidth="2" 
-        strokeLinecap="round"
-        animate={{ x: [-2, 2, -2] }}
+    <svg viewBox="0 0 32 32" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="waterGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#60A5FA" />
+          <stop offset="50%" stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#1E40AF" />
+        </linearGradient>
+        <linearGradient id="waterHighlight" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="#93C5FD" stopOpacity="0.6" />
+          <stop offset="100%" stopColor="#60A5FA" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {/* Water base */}
+      <rect x="2" y="8" width="28" height="22" rx="2" fill="url(#waterGrad)" />
+      {/* Animated waves */}
+      <motion.path
+        d="M2 12c3-4 6-4 9 0s6 4 9 0 6-4 9 0v2c-3-4-6-4-9 0s-6 4-9 0-6-4-9 0z"
+        fill="url(#waterHighlight)"
+        animate={{ x: [-3, 3, -3] }}
         transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
       />
-      <motion.path 
-        d="M2 16c2.5-3 5-3 7.5 0s5 3 7.5 0 5-3 7.5 0" 
-        stroke="#3B82F6" 
-        strokeWidth="2" 
-        strokeLinecap="round"
-        animate={{ x: [2, -2, 2] }}
+      <motion.path
+        d="M2 18c3-3 6-3 9 0s6 3 9 0 6-3 9 0v2c-3-3-6-3-9 0s-6 3-9 0-6-3-9 0z"
+        fill="url(#waterHighlight)"
+        animate={{ x: [3, -3, 3] }}
         transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
       />
+      <motion.path
+        d="M2 24c3-3 6-3 9 0s6 3 9 0 6-3 9 0v2c-3-3-6-3-9 0s-6 3-9 0-6-3-9 0z"
+        fill="url(#waterHighlight)"
+        animate={{ x: [-2, 2, -2] }}
+        transition={{ repeat: Infinity, duration: 3.5, ease: "easeInOut" }}
+      />
+      {/* Light sparkles */}
+      <motion.circle cx="8" cy="14" r="1" fill="white" opacity="0.6" animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ repeat: Infinity, duration: 2 }} />
+      <motion.circle cx="20" cy="20" r="1" fill="white" opacity="0.6" animate={{ opacity: [0.4, 1, 0.4] }} transition={{ repeat: Infinity, duration: 2.5 }} />
+      <motion.circle cx="14" cy="26" r="0.8" fill="white" opacity="0.5" animate={{ opacity: [0.3, 0.7, 0.3] }} transition={{ repeat: Infinity, duration: 1.8 }} />
     </svg>
   );
 }
 
 export function TileMountainIcon({ className, size = 32 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 4l-8 16h16L12 4z" fill="#4B5563" />
-      <path d="M12 4l-3 6 3 2 3-2-3-6z" fill="#F3F4F6" opacity="0.8" />
-      <path d="M12 10l-4 10h8l-4-10z" fill="#374151" />
+    <svg viewBox="0 0 32 32" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mountainGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#6B7280" />
+          <stop offset="50%" stopColor="#4B5563" />
+          <stop offset="100%" stopColor="#374151" />
+        </linearGradient>
+        <linearGradient id="snowGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FFFFFF" />
+          <stop offset="100%" stopColor="#E5E7EB" />
+        </linearGradient>
+      </defs>
+      {/* Back mountain */}
+      <path d="M4 28 L14 8 L24 28 Z" fill="#374151" stroke="#1F2937" strokeWidth="0.5" />
+      {/* Front mountain */}
+      <path d="M8 28 L18 6 L28 28 Z" fill="url(#mountainGrad)" stroke="#374151" strokeWidth="0.5" />
+      {/* Snow cap */}
+      <path d="M18 6 L14 12 L16 11 L18 14 L20 11 L22 12 Z" fill="url(#snowGrad)" stroke="#D1D5DB" strokeWidth="0.3" />
+      {/* Rock details */}
+      <path d="M12 20 L14 16 L16 20" fill="#4B5563" stroke="#374151" strokeWidth="0.3" />
+      <path d="M20 22 L22 18 L24 22" fill="#4B5563" stroke="#374151" strokeWidth="0.3" />
+      {/* Mountain ridge line */}
+      <path d="M18 6 L14 12 L12 16 L10 20 L8 28" stroke="#6B7280" strokeWidth="0.5" opacity="0.5" />
+      <path d="M18 6 L22 12 L24 18 L26 24 L28 28" stroke="#6B7280" strokeWidth="0.5" opacity="0.5" />
     </svg>
   );
 }
 
 export function TileHouseIcon({ className, size = 32 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 3L4 10v11h16V10l-8-7z" fill="#92400E" />
-      <path d="M12 3L4 10h16L12 3z" fill="#78350F" />
-      <rect x="10" y="14" width="4" height="7" fill="#451A03" />
-      <rect x="7" y="12" width="3" height="3" fill="#FDE68A" opacity="0.6" />
-      <rect x="14" y="12" width="3" height="3" fill="#FDE68A" opacity="0.6" />
+    <svg viewBox="0 0 32 32" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="wallGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#FDE68A" />
+          <stop offset="100%" stopColor="#FCD34D" />
+        </linearGradient>
+        <linearGradient id="roofGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#92400E" />
+          <stop offset="100%" stopColor="#78350F" />
+        </linearGradient>
+      </defs>
+      {/* House base/walls */}
+      <rect x="6" y="16" width="20" height="14" fill="url(#wallGrad)" stroke="#B45309" strokeWidth="0.5" />
+      {/* Roof */}
+      <path d="M4 16 L16 6 L28 16 Z" fill="url(#roofGrad)" stroke="#451A03" strokeWidth="0.5" />
+      {/* Roof texture */}
+      <path d="M6 16 L16 8 L26 16" stroke="#92400E" strokeWidth="0.5" opacity="0.5" />
+      <path d="M8 16 L16 10 L24 16" stroke="#92400E" strokeWidth="0.5" opacity="0.5" />
+      {/* Door */}
+      <rect x="13" y="22" width="6" height="8" fill="#78350F" stroke="#451A03" strokeWidth="0.5" />
+      <circle cx="17.5" cy="26" r="0.8" fill="#F59E0B" />
+      {/* Windows */}
+      <rect x="8" y="19" width="4" height="4" fill="#60A5FA" stroke="#3B82F6" strokeWidth="0.5" />
+      <rect x="20" y="19" width="4" height="4" fill="#60A5FA" stroke="#3B82F6" strokeWidth="0.5" />
+      {/* Window cross bars */}
+      <line x1="10" y1="19" x2="10" y2="23" stroke="#3B82F6" strokeWidth="0.3" />
+      <line x1="8" y1="21" x2="12" y2="21" stroke="#3B82F6" strokeWidth="0.3" />
+      <line x1="22" y1="19" x2="22" y2="23" stroke="#3B82F6" strokeWidth="0.3" />
+      <line x1="20" y1="21" x2="24" y2="21" stroke="#3B82F6" strokeWidth="0.3" />
+      {/* Window glow */}
+      <motion.rect x="8" y="19" width="4" height="4" fill="#FDE68A" opacity="0.3" animate={{ opacity: [0.2, 0.5, 0.2] }} transition={{ repeat: Infinity, duration: 3 }} />
+      <motion.rect x="20" y="19" width="4" height="4" fill="#FDE68A" opacity="0.3" animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ repeat: Infinity, duration: 3, delay: 0.5 }} />
+      {/* Chimney */}
+      <rect x="22" y="8" width="3" height="8" fill="#78350F" stroke="#451A03" strokeWidth="0.3" />
     </svg>
   );
 }
 
 export function TileCaveIcon({ className, size = 32 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M22 20s-2-12-10-12S2 20 2 20h20z" fill="#1F2937" />
-      <path d="M12 10c-4 0-6 10-6 10h12c0-10-2-10-6-10z" fill="#000000" />
+    <svg viewBox="0 0 32 32" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="caveGrad" cx="50%" cy="80%" r="60%">
+          <stop offset="0%" stopColor="#000000" />
+          <stop offset="100%" stopColor="#1F2937" />
+        </radialGradient>
+        <linearGradient id="rockGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#4B5563" />
+          <stop offset="100%" stopColor="#1F2937" />
+        </linearGradient>
+      </defs>
+      {/* Rock formation */}
+      <path d="M2 30 L2 12 Q2 4 10 4 L16 2 L22 4 Q30 4 30 12 L30 30 Z" fill="url(#rockGrad)" stroke="#111827" strokeWidth="0.5" />
+      {/* Cave entrance */}
+      <ellipse cx="16" cy="22" rx="10" ry="8" fill="url(#caveGrad)" />
+      {/* Cave depth layers */}
+      <ellipse cx="16" cy="24" rx="7" ry="5" fill="#000000" />
+      <ellipse cx="16" cy="26" rx="4" ry="3" fill="#000000" />
+      {/* Rock textures */}
+      <path d="M4 10 L6 6 L10 8" stroke="#6B7280" strokeWidth="0.5" fill="none" />
+      <path d="M28 10 L26 6 L22 8" stroke="#6B7280" strokeWidth="0.5" fill="none" />
+      <circle cx="8" cy="14" r="1.5" fill="#374151" />
+      <circle cx="24" cy="12" r="1" fill="#374151" />
+      {/* Stalactites */}
+      <path d="M10 4 L11 8 L12 4" fill="#4B5563" />
+      <path d="M18 2 L19 7 L20 2" fill="#4B5563" />
+      <path d="M14 4 L14.5 6 L15 4" fill="#4B5563" />
+      {/* Glowing eyes in darkness */}
+      <motion.circle cx="14" cy="22" r="1" fill="#EF4444" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 2 }} />
+      <motion.circle cx="18" cy="22" r="1" fill="#EF4444" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ repeat: Infinity, duration: 2, delay: 0.3 }} />
     </svg>
   );
 }
 
 export function TileLavaIcon({ className, size = 32 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="24" height="24" fill="#7F1D1D" rx="2" />
-      <motion.path 
-        d="M4 12c2-2 4 2 6 0s4-2 6 0 4 2 6 0" 
-        stroke="#EF4444" 
-        strokeWidth="3" 
-        animate={{ scale: [1, 1.1, 1], opacity: [0.6, 1, 0.6] }}
-        transition={{ repeat: Infinity, duration: 2 }}
+    <svg viewBox="0 0 32 32" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="lavaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#EF4444" />
+          <stop offset="50%" stopColor="#DC2626" />
+          <stop offset="100%" stopColor="#7F1D1D" />
+        </linearGradient>
+        <radialGradient id="lavaGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stopColor="#FCD34D" />
+          <stop offset="50%" stopColor="#F59E0B" />
+          <stop offset="100%" stopColor="#EF4444" />
+        </radialGradient>
+      </defs>
+      {/* Lava base */}
+      <rect width="32" height="32" fill="url(#lavaGrad)" rx="2" />
+      {/* Lava surface texture */}
+      <motion.path
+        d="M0 8c4-2 8 2 12 0s8-2 12 0 8 2 8 0v4c-4 2-8-2-12 0s-8 2-12 0-8-2-8 0z"
+        fill="url(#lavaGlow)"
+        animate={{ y: [-2, 2, -2] }}
+        transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
       />
+      <motion.path
+        d="M0 18c4-2 8 2 12 0s8-2 12 0 8 2 8 0v4c-4 2-8-2-12 0s-8 2-12 0-8-2-8 0z"
+        fill="url(#lavaGlow)"
+        animate={{ y: [2, -2, 2] }}
+        transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+      />
+      {/* Bubbles */}
+      <motion.circle cx="8" cy="12" r="2" fill="#FCD34D" animate={{ scale: [0.8, 1.2, 0.8], opacity: [0.5, 1, 0.5] }} transition={{ repeat: Infinity, duration: 1.5 }} />
+      <motion.circle cx="22" cy="20" r="1.5" fill="#F59E0B" animate={{ scale: [1, 1.3, 1], opacity: [0.6, 1, 0.6] }} transition={{ repeat: Infinity, duration: 2, delay: 0.5 }} />
+      <motion.circle cx="14" cy="26" r="1" fill="#FCD34D" animate={{ scale: [0.9, 1.1, 0.9], opacity: [0.4, 0.8, 0.4] }} transition={{ repeat: Infinity, duration: 1.8, delay: 0.3 }} />
+      {/* Sparks */}
+      <motion.circle cx="6" cy="6" r="0.8" fill="#FBBF24" animate={{ y: [-4, 0, -4], opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 2 }} />
+      <motion.circle cx="26" cy="8" r="0.6" fill="#FBBF24" animate={{ y: [-3, 1, -3], opacity: [0, 1, 0] }} transition={{ repeat: Infinity, duration: 1.8, delay: 0.5 }} />
     </svg>
   );
 }

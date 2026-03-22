@@ -141,11 +141,11 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
 export function getInitialCharacterStats(charClass: CharacterClass) {
   switch (charClass) {
     case "mage":
-      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, skills: ["bolt", "defend", "flee"] };
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, rank: "F" as const, skills: ["bolt", "defend", "flee"] };
     case "warrior":
-      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, skills: ["slash", "defend", "flee"] };
+      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, rank: "F" as const, skills: ["slash", "defend", "flee"] };
     case "priest":
-      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, skills: ["smite", "defend", "flee"] };
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, rank: "F" as const, skills: ["smite", "defend", "flee"] };
   }
 }
 

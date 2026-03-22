@@ -4,13 +4,15 @@ import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, S
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
+import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { getQuestEnemy } from "./lib/game-data";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
-import { 
+import { RANKS } from "./lib/rank-utils";
+import {
   HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
-  MapTabIcon, QuestTabIcon, InventoryTabIcon, ShopTabIcon
+  MapTabIcon, QuestTabIcon, InventoryTabIcon, ShopTabIcon, GuildTabIcon
 } from "./components/game/ui/GameIcons";
 
 const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
@@ -70,7 +72,7 @@ function App() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isMusicEnabled, setIsMusicEnabled] = useState(false);
-  
+
   // Quest state
   const [questState, setQuestState] = useState<QuestState>("list");
   const [activeQuest, setActiveQuest] = useState<Quest | null>(null);
@@ -93,7 +95,7 @@ function App() {
   useEffect(() => {
     // Synchronize master mute with our local state
     audioManager.setMasterMute(!isMusicEnabled);
-    
+
     if (isMusicEnabled) {
       audioManager.start();
       if (activeTab === "World Map" || activeTab === "Inventory" || activeTab === "Shop") {
@@ -110,7 +112,7 @@ function App() {
   const toggleMusic = () => {
     const nextState = !isMusicEnabled;
     setIsMusicEnabled(nextState);
-    
+
     if (nextState) {
       audioManager.start();
       audioManager.setMasterMute(false);
@@ -132,9 +134,9 @@ function App() {
 
   const handleDeleteCharacter = async (characterId: number) => {
     if (!character) return;
-    
+
     await deleteCharacter(characterId);
-    
+
     // If we deleted the current character, switch to another one or clear state
     if (character.id === characterId) {
       const remainingChars = allCharacters.filter(c => c.id !== characterId);
@@ -147,7 +149,7 @@ function App() {
         setInventory([]);
       }
     }
-    
+
     // Update the list
     setAllCharacters(allCharacters.filter(c => c.id !== characterId));
     setShowDeleteConfirm(null);
@@ -161,10 +163,10 @@ function App() {
 
   const attemptQuestChoice = (choice: QuestChoice) => {
     if (!character || !activeQuest) return;
-    
+
     // Store the selected choice
     setSelectedChoice(choice);
-    
+
     // Get the enemy for this quest
     const enemy = getQuestEnemy(activeQuest.id);
     if (enemy) {
@@ -179,14 +181,14 @@ function App() {
 
   const resolveQuest = (choice: QuestChoice, success: boolean, battleMessage?: string) => {
     if (!character || !activeQuest) return;
-    
+
     let message = battleMessage || "";
-    
+
     if (success) {
       message += choice.successMessage;
       const newXp = character.xp + choice.xpReward;
       const newGold = character.gold + choice.goldReward;
-      
+
       // Handle item reward
       let rewardedItem: InventoryItem | undefined;
       if (choice.rewardItemId) {
@@ -221,7 +223,7 @@ function App() {
           defense: character.defense + 1,
         } : {})
       });
-      
+
       setQuestResult({
         success: true,
         message,
@@ -239,23 +241,23 @@ function App() {
         gold: 0
       });
     }
-    
+
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
       const newCompleted = [...completedQuests, activeQuest.id];
       setCompletedQuests(newCompleted);
       if (character) setCharacter({ ...character, completedQuests: newCompleted });
     }
-    
+
     setQuestState("result");
   };
 
   const handleBattleVictory = (xp: number, gold: number) => {
     if (!character || !selectedChoice) return;
-    
+
     // Add battle rewards + quest bonus
     const newXp = character.xp + xp + selectedChoice.xpReward;
     const newGold = character.gold + gold + selectedChoice.goldReward;
-    
+
     // Handle item reward
     let rewardedItem: InventoryItem | undefined;
     if (selectedChoice.rewardItemId) {
@@ -290,7 +292,7 @@ function App() {
         defense: character.defense + 1,
       } : {})
     });
-    
+
     setQuestResult({
       success: true,
       message: `🎉 Victory! ${selectedChoice.successMessage}\n\n+${xp + selectedChoice.xpReward} XP • +${gold + selectedChoice.goldReward} Gold`,
@@ -299,41 +301,41 @@ function App() {
       rewardItem: rewardedItem,
       rewardSkill: selectedChoice.rewardSkill
     });
-    
+
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
       const newCompleted = [...completedQuests, activeQuest.id];
       setCompletedQuests(newCompleted);
       if (character) setCharacter({ ...character, completedQuests: newCompleted });
     }
-    
+
     setQuestState("result");
     setActiveEnemy(null);
   };
 
   const handleBattleDefeat = () => {
     if (!character || !selectedChoice) return;
-    
+
     // Take HP damage on defeat - restore half HP
     const newHp = Math.max(1, Math.floor(character.maxHp / 2));
-    
+
     setCharacter({
       ...character,
       hp: newHp
     });
-    
+
     setQuestResult({
       success: false,
       message: `💀 ${selectedChoice.failureMessage}\n\nYou were injured in battle and need to recover.`,
       xp: 0,
       gold: 0
     });
-    
+
     if (activeQuest && !completedQuests.includes(activeQuest.id)) {
       const newCompleted = [...completedQuests, activeQuest.id];
       setCompletedQuests(newCompleted);
       if (character) setCharacter({ ...character, completedQuests: newCompleted });
     }
-    
+
     setQuestState("result");
     setActiveEnemy(null);
   };
@@ -369,10 +371,10 @@ function App() {
   }, []);
 
   const handleToggleEquip = (item: InventoryItem) => {
-    setInventory(inventory.map(i => 
-      i.id === item.id 
+    setInventory(inventory.map(i =>
+      i.id === item.id
         ? { ...i, equipped: !i.equipped }
-        : i.type === item.type 
+        : i.type === item.type
           ? { ...i, equipped: false }
           : i
     ));
@@ -380,7 +382,7 @@ function App() {
 
   const handleConsumeFood = (item: InventoryItem) => {
     if (!character || item.type !== "food" || !item.restores) return;
-    
+
     // Remove one instance of this food from inventory
     const newInventory = [...inventory];
     const index = newInventory.findIndex(i => i.id === item.id);
@@ -388,11 +390,11 @@ function App() {
       newInventory.splice(index, 1);
       setInventory(newInventory);
     }
-    
+
     // Apply stats
     const restoreHp = item.restores.hp || 0;
     const restoreMp = item.restores.mp || 0;
-    
+
     setCharacter({
       ...character,
       hp: Math.min(character.maxHp, character.hp + restoreHp),
@@ -402,28 +404,28 @@ function App() {
 
   const handleBuyItem = (item: InventoryItem) => {
     if (!character || character.gold < item.price) return;
-    
+
     // Deduct gold
     setCharacter({
       ...character,
       gold: character.gold - item.price
     });
-    
+
     // Add item to inventory with a unique ID
     const newItem = {
       ...item,
       id: `${item.id}-${Date.now()}`
     };
-    
+
     setInventory([...inventory, newItem]);
   };
 
   const handleSellItem = (item: InventoryItem) => {
     if (!character) return;
-    
+
     // Calculate sell price (50% of original price)
     const sellPrice = Math.floor((item.price || 10) / 2);
-    
+
     // Add gold
     const newGold = character.gold + sellPrice;
     setCharacter({
@@ -431,7 +433,7 @@ function App() {
       gold: newGold,
       inventory: inventory.filter(i => i.id !== item.id) // Also update character.inventory
     });
-    
+
     // Remove from inventory state
     setInventory(prev => prev.filter(i => i.id !== item.id));
   };
@@ -451,6 +453,7 @@ function App() {
       inventory: getStarterItems(createClass),
       skills: getInitialCharacterStats(createClass).skills,
       completedQuests: [],
+      rank: "F" as const,
       ...stats,
     };
 
@@ -464,6 +467,7 @@ function App() {
     { tab: "Quests", icon: <QuestTabIcon />, label: "Quest Log" },
     { tab: "Inventory", icon: <InventoryTabIcon />, label: "Inventory" },
     { tab: "Shop", icon: <ShopTabIcon />, label: "Shop" },
+    { tab: "Guild", icon: <GuildTabIcon />, label: "Guild" },
   ];
 
   return (
@@ -489,19 +493,18 @@ function App() {
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleMusic}
-              className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${
-                isMusicEnabled 
-                  ? "bg-gradient-to-br from-amber-400/30 to-amber-600/40 border-amber-400/60 text-amber-100 shadow-amber-500/30 animate-pulse-slow" 
-                  : "bg-slate-900/60 border-slate-700/50 text-slate-500 grayscale opacity-70"
-              }`}
+              className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${isMusicEnabled
+                ? "bg-gradient-to-br from-amber-400/30 to-amber-600/40 border-amber-400/60 text-amber-100 shadow-amber-500/30 animate-pulse-slow"
+                : "bg-slate-900/60 border-slate-700/50 text-slate-500 grayscale opacity-70"
+                }`}
               title={isMusicEnabled ? "Mute All Sounds" : "Unmute All Sounds"}
             >
               <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(251,191,36,0.4)]">
                 {isMusicEnabled ? "🔊" : "🔇"}
               </span>
-              
+
               {isMusicEnabled && (
-                <motion.div 
+                <motion.div
                   layoutId="sound-glow"
                   className="absolute inset-0 rounded-2xl bg-amber-400/10 blur-md -z-10"
                   animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
@@ -509,9 +512,8 @@ function App() {
                 />
               )}
             </motion.button>
-            <span className={`text-[10px] font-black uppercase tracking-tighter hidden md:block transition-colors duration-500 ${
-              isMusicEnabled ? "text-amber-400" : "text-slate-600"
-            }`}>
+            <span className={`text-[10px] font-black uppercase tracking-tighter hidden md:block transition-colors duration-500 ${isMusicEnabled ? "text-amber-400" : "text-slate-600"
+              }`}>
               {isMusicEnabled ? "Audio ON" : "Audio OFF"}
             </span>
           </div>
@@ -523,6 +525,16 @@ function App() {
                 animate={{ opacity: 1, x: 0 }}
                 className="hidden sm:flex items-center gap-4 bg-slate-900/40 backdrop-blur-sm px-4 py-2 rounded-xl border border-amber-500/10 shadow-inner"
               >
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-none mb-1">Rank</span>
+                  <span
+                    className="text-xl font-black leading-none"
+                    style={{ color: RANKS.find(r => r.rank === character.rank)?.color || "#94A3B8" }}
+                  >
+                    {character.rank}
+                  </span>
+                </div>
+                <div className="w-px h-8 bg-slate-800"></div>
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest leading-none mb-1">Level</span>
                   <span className="text-xl font-bold text-amber-100 leading-none">{character.level}</span>
@@ -587,20 +599,19 @@ function App() {
                 <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>Select Character</h2>
                 <button onClick={() => setShowCharacterSelect(false)} className="text-slate-500 hover:text-slate-300 text-xl transition-colors">✕</button>
               </div>
-              
+
               <div className="space-y-3 mb-4">
                 {allCharacters.map((char) => (
                   <motion.div
                     key={char.id}
                     whileHover={{ scale: 1.02 }}
-                    className={`p-3 rounded-lg border-2 transition-colors ${
-                      character?.id === char.id
-                        ? "border-amber-500/50 bg-amber-950/30"
-                        : "border-slate-700/50 hover:border-amber-600/30 bg-slate-800/40"
-                    }`}
+                    className={`p-3 rounded-lg border-2 transition-colors ${character?.id === char.id
+                      ? "border-amber-500/50 bg-amber-950/30"
+                      : "border-slate-700/50 hover:border-amber-600/30 bg-slate-800/40"
+                      }`}
                   >
                     <div className="flex items-center justify-between">
-                      <div 
+                      <div
                         className="flex-1 cursor-pointer"
                         onClick={() => {
                           setCharacter(char);
@@ -645,6 +656,7 @@ function App() {
                     inventory: getStarterItems(createClass),
                     skills: getInitialCharacterStats(createClass).skills,
                     completedQuests: [],
+                    rank: "F" as const,
                     ...stats,
                   };
                   const created = await dbCreateCharacter(newCharacter);
@@ -697,11 +709,11 @@ function App() {
                       <h2 className="text-xl font-bold text-red-400">⚠️ Delete Character</h2>
                       <button onClick={() => setShowDeleteConfirm(null)} className="text-slate-500 hover:text-slate-300 text-xl">✕</button>
                     </div>
-                    
+
                     <p className="text-sm text-slate-400 mb-4">
                       Are you sure you want to delete this character? This action cannot be undone.
                     </p>
-                    
+
                     <div className="flex gap-2 justify-end">
                       <button
                         onClick={() => setShowDeleteConfirm(null)}
@@ -809,11 +821,10 @@ function App() {
                         setActiveTab(tab);
                         audioManager.playSfx("click");
                       }}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-                        activeTab === tab
-                          ? "btn-fantasy"
-                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                      }`}
+                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${activeTab === tab
+                        ? "btn-fantasy"
+                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                        }`}
                     >
                       <span>{icon}</span>
                       <span>{label}</span>
@@ -823,16 +834,16 @@ function App() {
               </div>
 
               {/* Character Info */}
-               <div className="fantasy-card rounded-xl p-4">
-                 <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
-                 <div className="space-y-4 pt-1">
-                   {statusBar("HP", character.hp, character.maxHp, "hp")}
-                   {statusBar("MP", character.mp, character.maxMp, "mp")}
-                   {statusBar("XP", character.xp, character.xpToNext, "xp")}
-                   <div className="h-px bg-slate-800/50 my-1"></div>
-                   {statusBar("ATK Power", character.attack, character.attack + 20, "attack")}
-                 </div>
-               </div>
+              <div className="fantasy-card rounded-xl p-4">
+                <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
+                <div className="space-y-4 pt-1">
+                  {statusBar("HP", character.hp, character.maxHp, "hp")}
+                  {statusBar("MP", character.mp, character.maxMp, "mp")}
+                  {statusBar("XP", character.xp, character.xpToNext, "xp")}
+                  <div className="h-px bg-slate-800/50 my-1"></div>
+                  {statusBar("ATK Power", character.attack, character.attack + 20, "attack")}
+                </div>
+              </div>
             </aside>
 
             {/* Main Content */}
@@ -852,10 +863,21 @@ function App() {
               )}
 
               {activeTab === "Shop" && character && (
-                <Shop 
+                <Shop
                   gold={character.gold}
                   shopItems={SHOP_ITEMS}
                   onBuyItem={handleBuyItem}
+                />
+              )}
+
+              {activeTab === "Guild" && character && (
+                <GuildEvolution
+                  character={character}
+                  onEvolve={(updatedCharacter) => {
+                    setCharacter(updatedCharacter);
+                    audioManager.playSfx("victory");
+                  }}
+                  onClose={() => setActiveTab("World Map")}
                 />
               )}
 
@@ -880,7 +902,7 @@ function App() {
                         completedQuests={completedQuests}
                         activeQuestId={activeQuest?.id}
                         allQuests={QUESTS}
-                        onBack={() => {}}
+                        onBack={() => { }}
                       />
                     );
                   })()}

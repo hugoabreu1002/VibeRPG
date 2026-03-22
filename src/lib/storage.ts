@@ -18,6 +18,7 @@ export interface Character {
   attack: number;
   defense: number;
   magicPower: number;
+  rank: "F" | "E" | "D" | "C" | "B" | "A" | "S";
   skills: string[];
   inventory: InventoryItem[];
   completedQuests: string[];

@@ -16,6 +16,7 @@ interface BattleSpriteProps {
   hp?: number;
   maxHp?: number;
   inventory?: InventoryItem[];
+  rank?: string;
   battleTheme?: string;
 }
 
@@ -29,6 +30,7 @@ export function BattleSprite({
   hp,
   maxHp,
   inventory,
+  rank = 'F',
   battleTheme,
 }: BattleSpriteProps) {
   const [frame, setFrame] = useState(0);
@@ -196,6 +198,7 @@ export function BattleSprite({
         {isPlayerCharacter ? (
           <InventorySprite
             characterClass={characterClass}
+            rank={rank}
             animationType={animationType === 'spell' ? 'spell' : 'idle'}
             equippedWeapon={inventory?.find(i => i.type === 'weapon' && i.equipped)}
             equippedHat={inventory?.find(i => i.type === 'hat' && i.equipped)}

@@ -1,7 +1,7 @@
 import type { CharacterClass } from "../lib/storage";
 export type { CharacterClass };
 
-export type Tab = "Inventory" | "World Map" | "Quests" | "Shop";
+export type Tab = "Inventory" | "World Map" | "Quests" | "Shop" | "Guild";
 
 export type QuestState = "list" | "map" | "active" | "battle" | "result";
 
@@ -99,6 +99,7 @@ export interface Character {
   defense: number;
   magicPower: number;
   xpToNext: number;
+  rank: "F" | "E" | "D" | "C" | "B" | "A" | "S";
   skills: string[];
   inventory: InventoryItem[];
   completedQuests: string[];

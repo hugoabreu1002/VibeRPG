@@ -52,6 +52,9 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
         dialog: ["I sense great potential in you.", "Magical anomalies have been detected in the Whispering Woods.", "Mages who seek knowledge should talk to me."],
         questId: "mage-apprentice",
       },
+      { id: "guild-master", name: "Guild Master", position: { x: 15, y: 7 }, sprite: "knight",
+        dialog: ["Greetings, adventurer! You look like you've seen some battles.", "The Adventurer's Guild is always looking for talent.", "With enough gold and experience, I can help you reach a new rank!"],
+      },
     ],
   },
   "Northern Village": {

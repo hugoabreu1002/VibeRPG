@@ -26,6 +26,7 @@ interface QuestMapProps {
   quest?: Quest;
   mapData: QuestMapData;
   playerClass?: CharacterClass;
+  playerRank?: string;
   inventory?: InventoryItem[];
   completedQuests?: string[];
   activeQuestId?: string;
@@ -190,6 +191,7 @@ export function QuestMap({
   quest, 
   mapData, 
   playerClass = "warrior", 
+  playerRank = "F",
   inventory = [], 
   completedQuests = [],
   activeQuestId,
@@ -399,6 +401,7 @@ export function QuestMap({
             <div className="relative z-10 scale-125 translate-y-[-36px] filter drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]">
                <InventorySprite
                  characterClass={playerClass}
+                 rank={playerRank}
                  equippedWeapon={equippedWeapon}
                  equippedHat={equippedHat}
                  equippedArmor={equippedArmor}

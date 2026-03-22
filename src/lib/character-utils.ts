@@ -44,3 +44,15 @@ export const getCharacterColors = (characterClass: CharacterClass) => {
       };
   }
 };
+
+export const getRankVisuals = (rank: string) => {
+  switch (rank) {
+    case 'E': return { aura: 'rgba(16, 185, 129, 0.1)', border: 'rgba(16, 185, 129, 0.3)', scale: 1.02 };
+    case 'D': return { aura: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.4)', scale: 1.04 };
+    case 'C': return { aura: 'rgba(139, 92, 246, 0.2)', border: 'rgba(139, 92, 246, 0.5)', scale: 1.06 };
+    case 'B': return { aura: 'rgba(236, 72, 153, 0.25)', border: 'rgba(236, 72, 153, 0.6)', scale: 1.08 };
+    case 'A': return { aura: 'rgba(245, 158, 11, 0.3)', border: 'rgba(245, 158, 11, 0.7)', scale: 1.1 };
+    case 'S': return { aura: 'rgba(239, 68, 68, 0.4)', border: 'rgba(239, 68, 68, 0.9)', scale: 1.15, pulse: true };
+    default: return { aura: 'transparent', border: 'transparent', scale: 1 };
+  }
+};

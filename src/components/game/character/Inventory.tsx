@@ -47,9 +47,10 @@ interface InventoryProps {
   onConsumeFood?: (item: InventoryItem) => void;
   onSellItem?: (item: InventoryItem) => void;
   characterClass?: CharacterClass;
+  rank?: string;
 }
 
-export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, onSellItem, characterClass }: InventoryProps) {
+export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, onSellItem, characterClass, rank = 'F' }: InventoryProps) {
   const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
@@ -107,6 +108,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
             {characterClass && (
               <InventorySprite
                 characterClass={characterClass}
+                rank={rank}
                 animationType={spriteAnimation as any}
                 equippedWeapon={equippedWeapon}
                 equippedArmor={equippedArmor}
