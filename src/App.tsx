@@ -1,11 +1,10 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS } from "./lib/game-data";
+import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getTranslatedEnemy } from "./lib/game-data";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
 import { GuildEvolution } from "./components/game/ui/GuildEvolution";
-import { getTranslatedEnemy } from "./lib/game-data";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
