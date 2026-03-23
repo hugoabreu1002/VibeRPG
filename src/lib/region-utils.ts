@@ -36,7 +36,7 @@ export const REGIONS: Record<string, Region> = {
     id: "Whispering Woods",
     name: "Whispering Woods",
     description: "Ancient forest filled with magical creatures and hidden dangers.",
-    unlockedBy: ["mage-apprentice"],
+    unlockedBy: ["mage-apprentice", "warrior-village", "priest-plague"],
     availableQuests: ["mage-apprentice"],
     nextRegions: ["Crystal Caverns", "Shadow Tower"]
   },
@@ -44,7 +44,7 @@ export const REGIONS: Record<string, Region> = {
     id: "Mountain Pass",
     name: "Mountain Pass",
     description: "Treacherous mountain path guarded by earth elementals.",
-    unlockedBy: ["mage-elemental"],
+    unlockedBy: ["mage-elemental", "warrior-village", "priest-plague"],
     availableQuests: ["mage-elemental"],
     nextRegions: ["Dragon Peak"]
   },
@@ -52,7 +52,7 @@ export const REGIONS: Record<string, Region> = {
     id: "Trade Route",
     name: "Trade Route",
     description: "Dangerous road plagued by wolf packs and bandits.",
-    unlockedBy: ["warrior-monster"],
+    unlockedBy: ["warrior-monster", "mage-library", "priest-plague"],
     availableQuests: ["warrior-monster"],
     nextRegions: []
   },
@@ -60,7 +60,7 @@ export const REGIONS: Record<string, Region> = {
     id: "Training Grounds",
     name: "Training Grounds",
     description: "Arena where warriors test their skills against honorable opponents.",
-    unlockedBy: ["warrior-duel"],
+    unlockedBy: ["warrior-duel", "mage-library", "priest-plague"],
     availableQuests: ["warrior-duel"],
     nextRegions: []
   },
@@ -68,7 +68,7 @@ export const REGIONS: Record<string, Region> = {
     id: "Dark Forest",
     name: "Dark Forest",
     description: "Foreboding woods where orcs have set up their war camp.",
-    unlockedBy: ["warrior-orc-camp"],
+    unlockedBy: ["warrior-orc-camp", "mage-library", "priest-plague"],
     availableQuests: ["warrior-orc-camp"],
     nextRegions: []
   },
@@ -246,38 +246,6 @@ export function getAvailableQuestsForRegion(regionId: string, character: Charact
   });
 }
 
-export function getAvailableQuestsForCharacter(character: Character): string[] {
-  const availableRegions = getAvailableRegions(character);
-  const allQuests: string[] = [];
-
-  availableRegions.forEach(region => {
-    const regionQuests = getAvailableQuestsForRegion(region.id, character);
-    allQuests.push(...regionQuests);
-  });
-
-  return allQuests;
-}
-
-export function canProgressToNextRegion(character: Character): boolean {
-  const currentRegion = getCurrentRegion(character);
-  const availableQuests = getAvailableQuestsForRegion(currentRegion.id, character);
-
-  // If there are no available quests in current region, check if we can unlock new regions
-  if (availableQuests.length === 0) {
-    // Check if completing quests in current region would unlock new regions
-    const regionQuests = currentRegion.availableQuests;
-    const completedRegionQuests = regionQuests.filter(questId => character.completedQuests.includes(questId));
-
-    // Find regions that could be unlocked
-    const potentialNewRegions = Object.values(REGIONS).filter(region =>
-      region.unlockedBy.some(questId => regionQuests.includes(questId) && !character.completedQuests.includes(questId))
-    );
-
-    return potentialNewRegions.length > 0;
-  }
-
-  return false;
-}
 
 export function getNextAvailableRegions(character: Character): Region[] {
   const currentRegion = getCurrentRegion(character);
@@ -290,8 +258,9 @@ export function getNextAvailableRegions(character: Character): Region[] {
     const region = REGIONS[regionId];
     if (!region) return;
 
-    // Check if all required quests are completed
-    const isUnlocked = region.unlockedBy.every(questId => completedQuests.includes(questId));
+    // Check if ANY required quest is completed (OR logic for class-specific quests)
+    const isUnlocked = region.unlockedBy.length === 0 ||
+      region.unlockedBy.some(questId => completedQuests.includes(questId));
 
     if (isUnlocked) {
       nextRegions.push(region);
@@ -321,26 +290,6 @@ export function getRegionMapData(regionId: string) {
   return getQuestMap(regionId);
 }
 
-export function getRegionCompletionStatus(character: Character): {
-  completed: number;
-  required: number;
-  canAdvance: boolean;
-  nextRegions: Region[];
-} {
-  const currentRegion = getCurrentRegion(character);
-  const completedRegionQuests = currentRegion.availableQuests.filter(
-    questId => character.completedQuests.includes(questId)
-  );
-  const requiredCount = currentRegion.requiredQuestsToComplete ?? currentRegion.availableQuests.length;
-  const nextRegions = getNextAvailableRegions(character);
-
-  return {
-    completed: completedRegionQuests.length,
-    required: requiredCount,
-    canAdvance: completedRegionQuests.length >= requiredCount && nextRegions.length > 0,
-    nextRegions
-  };
-}
 
 export function getRegionProgress(character: Character): { current: number; total: number; percentage: number } {
   const currentRegion = getCurrentRegion(character);

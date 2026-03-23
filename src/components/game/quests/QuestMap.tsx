@@ -364,6 +364,14 @@ export function QuestMap({
 
         {/* NPCs */}
         {mapData.npcs.map((npc) => {
+          // Hide NPCs for quests of other classes
+          if (npc.questId) {
+            const questData = allQuests.find(q => q.id === npc.questId);
+            if (questData && questData.class !== playerClass) {
+              return null;
+            }
+          }
+
           const { x: ix, y: iy } = getIsoPos(npc.position.x, npc.position.y);
           return (
             <motion.div
@@ -386,20 +394,14 @@ export function QuestMap({
                 {/* Ground Shadow */}
                 <div className="absolute bottom-2 w-12 h-5 bg-black/40 rounded-full blur-[6px] -z-10" />
 
-                {/* Quest Indicator */}
+                {/* Quest Indicator - Only red or green */}
                 {npc.questId && (
                   <motion.div
                     animate={{ y: [-10, 0, -10] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className={`absolute -top-20 left-1/2 -translate-x-1/2 ${(() => {
-                      if (completedQuests.includes(npc.questId)) return "text-emerald-400 drop-shadow-[0_0_15px_#10B981]";
-                      if (activeQuestId === npc.questId) return "text-amber-400 drop-shadow-[0_0_15px_#F59E0B]";
-
-                      const questData = allQuests.find(q => q.id === npc.questId);
-                      if (questData && questData.class !== playerClass) return "text-slate-500 opacity-40";
-
-                      return "text-red-500 drop-shadow-[0_0_15px_#EF4444]";
-                    })()
+                    className={`absolute -top-20 left-1/2 -translate-x-1/2 ${completedQuests.includes(npc.questId)
+                      ? "text-emerald-400 drop-shadow-[0_0_15px_#10B981]"
+                      : "text-red-500 drop-shadow-[0_0_15px_#EF4444]"
                       }`}
                   >
                     <ExclamationIndicator size={32} />
@@ -432,7 +434,7 @@ export function QuestMap({
                 equippedArmor={equippedArmor}
                 equippedBoot={equippedBoot}
               />
-            </div>
+              kp okfgł            </div>
 
             {/* Ground Shadow */}
             <div className="absolute bottom-2 w-16 h-6 bg-amber-500/20 rounded-full blur-[8px] -z-10 animate-pulse" />

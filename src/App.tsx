@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
-import { acceptQuestFromNPC, completeQuestAfterBattle, attemptQuestChoice as attemptQuestChoiceLogic, resolveQuest as resolveQuestLogic, handleBattleVictory as handleBattleVictoryLogic, handleBattleDefeat as handleBattleDefeatLogic, handleBattleFlee as handleBattleFleeLogic, resetQuest as resetQuestLogic, getAvailableQuests, getActiveQuest } from "./lib/quest-logic";
+import { acceptQuestFromNPC, completeQuestAfterBattle } from "./lib/quest-logic";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop, MapSelection, MapControls } from "./components/game";
@@ -10,11 +10,11 @@ import { CelebrationOverlay, QuickToast } from "./components/game/ui/Celebration
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
-import { getCurrentRegion, getAvailableRegions, getNextAvailableRegions, shouldAutoAdvanceRegion, getRegionMapData, getRegionProgress } from "./lib/region-utils";
+import { getRegionMapData } from "./lib/region-utils";
 import {
-  HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon, ShieldIcon,
+  HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon,
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
-  MapTabIcon, QuestTabIcon, InventoryTabIcon, ShopTabIcon, GuildTabIcon
+  MapTabIcon, InventoryTabIcon, ShopTabIcon, GuildTabIcon
 } from "./components/game/ui/GameIcons";
 
 const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
@@ -187,48 +187,25 @@ function AppContent() {
     }
   };
 
-  const completeQuestAfterBattle = (success: boolean, xpReward: number, goldReward: number, rewardItem?: InventoryItem, rewardSkill?: string) => {
+  const handleCompleteQuestAfterBattle = async (success: boolean, xpReward: number, goldReward: number, rewardItem?: InventoryItem, rewardSkill?: string) => {
     if (!character || !activeQuest) return;
 
-    // Add quest to completedQuests if not already there
-    const newCompletedQuests = completedQuests.includes(activeQuest.id)
-      ? completedQuests
-      : [...completedQuests, activeQuest.id];
+    // Use centralized quest completion function
+    const result = await completeQuestAfterBattle(
+      character,
+      activeQuest,
+      success,
+      xpReward,
+      goldReward,
+      rewardItem,
+      rewardSkill
+    );
 
-    // Update character with rewards and clear active quest
-    const updatedCharacter = {
-      ...character,
-      xp: character.xp + xpReward,
-      gold: character.gold + goldReward,
-      completedQuests: newCompletedQuests,
-      acceptedQuests: character.acceptedQuests?.filter(id => id !== activeQuest.id) || [],
-      activeQuestId: undefined,
-      questState: "list" as QuestState,
-      ...(rewardItem && { inventory: [...character.inventory, rewardItem] }),
-      ...(rewardSkill && !character.skills.includes(rewardSkill) && { skills: [...character.skills, rewardSkill] })
-    };
-
-    // Check for level up
-    let leveledUp = false;
-    if (updatedCharacter.xp >= updatedCharacter.xpToNext) {
-      updatedCharacter.level += 1;
-      updatedCharacter.xp -= updatedCharacter.xpToNext;
-      updatedCharacter.xpToNext = Math.floor(updatedCharacter.xpToNext * 1.5);
-      updatedCharacter.maxHp += 10;
-      updatedCharacter.hp = updatedCharacter.maxHp;
-      updatedCharacter.maxMp += 5;
-      updatedCharacter.mp = updatedCharacter.maxMp;
-      updatedCharacter.attack += 2;
-      updatedCharacter.defense += 1;
-      leveledUp = true;
+    // Update local state with the result
+    if (result.updatedCharacter) {
+      setCharacter(result.updatedCharacter);
+      setCompletedQuests(result.updatedCharacter.completedQuests);
     }
-
-    // Update character in state and storage
-    setCharacter(updatedCharacter);
-    dbUpdateCharacter(updatedCharacter);
-
-    // Update completed quests state
-    setCompletedQuests(newCompletedQuests);
 
     // Clear active quest and reset state
     setActiveQuest(null);
@@ -238,33 +215,33 @@ function AppContent() {
     setActiveTab("World Map");
 
     // Show completion toast
-    if (success) {
-      setQuestToast({
-        message: `Quest Complete! +${xpReward} XP, +${goldReward} Gold`,
-        icon: "🏆"
-      });
-      audioManager.playSfx("victory");
-    } else {
-      setQuestToast({
-        message: `Quest Failed`,
-        icon: "💀"
-      });
-      audioManager.playSfx("defeat");
-    }
+    setQuestToast({
+      message: result.message,
+      icon: success ? "🏆" : "💀"
+    });
 
     // Show level up celebration if leveled up
-    if (leveledUp) {
+    if (result.leveledUp) {
       setCelebration({
         type: "level-up",
         title: "Level Up!",
-        subtitle: `You reached Level ${updatedCharacter.level}! Your stats have increased.`
+        subtitle: `You reached Level ${result.updatedCharacter?.level}! Your stats have increased.`
       });
-      audioManager.playSfx("victory");
+    }
+
+    // Handle redirect to shop on defeat
+    if (result.redirectToShop) {
+      setActiveTab("Shop");
+      setQuestToast({
+        message: "Defeated! Visit the shop to buy healing items, then try the quest again.",
+        icon: "💀"
+      });
     }
   };
 
   const startQuest = (quest: Quest) => {
-    acceptQuestFromNPC(quest);
+    if (!character) return;
+    acceptQuestFromNPC(character, quest);
   };
 
   const attemptQuestChoice = (choice: QuestChoice) => {
@@ -358,7 +335,7 @@ function AppContent() {
     setQuestState("result");
   };
 
-  const handleBattleVictory = (xp: number, gold: number) => {
+  const handleBattleVictory = async (xp: number, gold: number) => {
     if (!character || !selectedChoice) return;
 
     // Handle item reward
@@ -371,7 +348,7 @@ function AppContent() {
     }
 
     // Use centralized quest completion function
-    completeQuestAfterBattle(
+    await handleCompleteQuestAfterBattle(
       true,
       xp + selectedChoice.xpReward,
       gold + selectedChoice.goldReward,
@@ -388,15 +365,25 @@ function AppContent() {
     // Take HP damage on defeat - restore half HP
     const newHp = Math.max(1, Math.floor(character.maxHp / 2));
 
+    // Reset quest state instead of completing it - quest can be attempted again
     setCharacter({
       ...character,
-      hp: newHp
+      hp: newHp,
+      questState: "list" as QuestState
     });
 
-    // Use centralized quest completion function (failure)
-    completeQuestAfterBattle(false, 0, 0);
-
+    // Clear quest state without marking quest as completed
+    setActiveQuest(null);
+    setQuestState("list");
     setActiveEnemy(null);
+    setSelectedChoice(null);
+
+    // Redirect to shop on defeat to allow buying healing items
+    setActiveTab("Shop");
+    setQuestToast({
+      message: "Defeated! Visit the shop to buy healing items, then try the quest again.",
+      icon: "💀"
+    });
   };
 
   const handleBattleFlee = () => {
@@ -567,7 +554,6 @@ function AppContent() {
 
   const tabConfig: { tab: Tab; icon: React.ReactNode; label: string }[] = [
     { tab: "World Map", icon: <MapTabIcon />, label: "World Map" },
-    { tab: "Quests", icon: <QuestTabIcon />, label: "Quests" },
     { tab: "Inventory", icon: <InventoryTabIcon />, label: "Inventory" },
     { tab: "Shop", icon: <ShopTabIcon />, label: "Shop" },
     { tab: "Guild", icon: <GuildTabIcon />, label: "Guild" },
@@ -1077,8 +1063,10 @@ function AppContent() {
                         onFlee={handleBattleFlee}
                         onUpdateCharacter={(updates) => setCharacter(prev => prev ? { ...prev, ...updates } : null)}
                         onBattleComplete={(result) => {
-                          // This is now handled by the battle victory/defeat callbacks
-                          // The battle completion is integrated through the quest service
+                          // Call handleBattleVictory with XP and gold from the battle result
+                          if (result.success) {
+                            handleBattleVictory(result.xp, result.gold);
+                          }
                         }}
                       />
                     ) : questState === "map" && activeQuest ? (

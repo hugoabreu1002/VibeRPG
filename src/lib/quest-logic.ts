@@ -11,6 +11,7 @@ export interface QuestLogicResult {
     leveledUp?: boolean;
     rewardItem?: InventoryItem;
     rewardSkill?: string;
+    redirectToShop?: boolean;
 }
 
 export async function acceptQuestFromNPC(
@@ -135,130 +136,6 @@ export async function completeQuestAfterBattle(
     };
 }
 
-export async function attemptQuestChoice(
-    character: Character,
-    activeQuest: Quest,
-    choice: QuestChoice
-): Promise<{ success: boolean; enemyId?: string }> {
-    // Get the enemy for this quest
-    const enemyId = (QUEST_ENEMIES as Record<string, string>)[activeQuest.id];
-
-    if (enemyId) {
-        return { success: true, enemyId };
-    }
-
-    // If no enemy found, return failure
-    return { success: false };
-}
-
-export async function resolveQuest(
-    character: Character,
-    activeQuest: Quest,
-    choice: QuestChoice,
-    success: boolean,
-    battleMessage?: string
-): Promise<QuestLogicResult> {
-    let message = battleMessage || "";
-
-    if (success) {
-        message += choice.successMessage;
-        const newXp = character.xp + choice.xpReward;
-        const newGold = character.gold + choice.goldReward;
-
-        // Handle item reward
-        let rewardedItem: InventoryItem | undefined;
-        if (choice.rewardItemId) {
-            const itemTemplate = ALL_ITEMS.find(i => i.id === choice.rewardItemId);
-            if (itemTemplate) {
-                rewardedItem = { ...itemTemplate, id: `${itemTemplate.id}-${Date.now()}` };
-            }
-        }
-
-        // Handle skill reward
-        const newSkills = [...character.skills];
-        if (choice.rewardSkill && !newSkills.includes(choice.rewardSkill)) {
-            newSkills.push(choice.rewardSkill);
-        }
-
-        // Add quest to completedQuests if not already there
-        const newCompletedQuests = character.completedQuests.includes(activeQuest.id)
-            ? character.completedQuests
-            : [...character.completedQuests, activeQuest.id];
-
-        const updatedCharacter: Character = {
-            ...character,
-            xp: newXp,
-            gold: newGold,
-            skills: newSkills,
-            completedQuests: newCompletedQuests,
-            acceptedQuests: character.acceptedQuests?.filter(id => id !== activeQuest.id) || [],
-            activeQuestId: undefined,
-            questState: "list" as QuestState,
-            ...(rewardedItem && { inventory: [...character.inventory, rewardedItem] })
-        };
-
-        // Check for level up
-        let leveledUp = false;
-        if (updatedCharacter.xp >= updatedCharacter.xpToNext) {
-            updatedCharacter.level += 1;
-            updatedCharacter.xp -= updatedCharacter.xpToNext;
-            updatedCharacter.xpToNext = Math.floor(updatedCharacter.xpToNext * 1.5);
-            updatedCharacter.maxHp += 10;
-            updatedCharacter.hp = updatedCharacter.maxHp;
-            updatedCharacter.maxMp += 5;
-            updatedCharacter.mp = updatedCharacter.maxMp;
-            updatedCharacter.attack += 2;
-            updatedCharacter.defense += 1;
-            leveledUp = true;
-        }
-
-        // Update character in storage
-        await updateCharacter(updatedCharacter);
-
-        // Play victory sound
-        audioManager.playSfx("victory");
-
-        if (leveledUp) {
-            audioManager.playSfx("victory");
-        }
-
-        return {
-            success: true,
-            message,
-            updatedCharacter,
-            leveledUp,
-            rewardItem: rewardedItem,
-            rewardSkill: choice.rewardSkill
-        };
-    } else {
-        message += choice.failureMessage;
-
-        // Add quest to completedQuests if not already there
-        const newCompletedQuests = character.completedQuests.includes(activeQuest.id)
-            ? character.completedQuests
-            : [...character.completedQuests, activeQuest.id];
-
-        const updatedCharacter: Character = {
-            ...character,
-            completedQuests: newCompletedQuests,
-            acceptedQuests: character.acceptedQuests?.filter(id => id !== activeQuest.id) || [],
-            activeQuestId: undefined,
-            questState: "list" as QuestState
-        };
-
-        // Update character in storage
-        await updateCharacter(updatedCharacter);
-
-        // Play defeat sound
-        audioManager.playSfx("defeat");
-
-        return {
-            success: false,
-            message,
-            updatedCharacter
-        };
-    }
-}
 
 export async function handleBattleVictory(
     character: Character,
@@ -301,13 +178,19 @@ export async function handleBattleDefeat(
     };
 
     // Use centralized quest completion function (failure)
-    return completeQuestAfterBattle(
+    const result = await completeQuestAfterBattle(
         updatedCharacter,
         activeQuest,
         false,
         0,
         0
     );
+
+    // Add redirect to shop flag for defeat
+    return {
+        ...result,
+        redirectToShop: true
+    };
 }
 
 export async function handleBattleFlee(
