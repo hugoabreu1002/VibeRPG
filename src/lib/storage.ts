@@ -22,7 +22,10 @@ export interface Character {
   skills: string[];
   inventory: InventoryItem[];
   completedQuests: string[];
+  acceptedQuests: string[];
   currentRegion: string;
+  activeQuestId?: string;
+  questState: "list" | "map" | "active" | "battle" | "result";
 }
 
 const STORAGE_KEY = "viberpg-characters";

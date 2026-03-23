@@ -5,6 +5,7 @@ import { ArmorIcon } from "../items/ArmorIcon";
 import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { SkillIcon } from "../battle/SkillIcons";
+import { questService } from "../../../lib/quest-service";
 import { 
   ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
   SwordIcon, ManaIcon, ShieldIcon, XPIcon, GoldIcon
@@ -40,9 +41,22 @@ export function Quests({
   onAttemptChoice,
   onResetQuest
 }: QuestsProps) {
+  // Only show quests that have been accepted from NPCs
+  // This ensures quests only appear after talking to NPCs
+  const acceptedQuests = character.acceptedQuests || [];
   const availableQuests = quests.filter(
-    q => q.class === character.class && q.minLevel <= character.level && !completedQuests.includes(q.id)
+    q => q.class === character.class && 
+         q.minLevel <= character.level && 
+         !completedQuests.includes(q.id) && 
+         acceptedQuests.includes(q.id)
   );
+
+  // Calculate progress: completed quests vs total available quests for this class and level
+  const totalAvailableQuests = quests.filter(
+    q => q.class === character.class && 
+         q.minLevel <= character.level
+  ).length;
+  const progressCount = `${completedQuests.length}/${totalAvailableQuests}`;
 
   return (
     <motion.div
@@ -51,7 +65,10 @@ export function Quests({
       className="fantasy-card rounded-xl p-5"
     >
       <div className="flex items-center justify-between mb-5">
-        <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🗺️ Quests</h2>
+        <div className="flex items-center gap-3">
+          <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>🗺️ Quests</h2>
+          <span className="text-sm text-slate-400 font-medium">Progress: {progressCount}</span>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-xs bg-indigo-950/50 text-indigo-300 px-3 py-1.5 rounded-lg border border-indigo-700/30 font-medium">
             {CLASS_ICONS[character.class] || "⚔️"}

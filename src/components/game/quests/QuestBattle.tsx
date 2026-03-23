@@ -5,6 +5,7 @@ import type { CharacterClass } from "../animations/types";
 import { BattleSprite } from "../battle/BattleSprite";
 import { SkillIcon } from "../battle/SkillIcons";
 import { audioManager } from "../../../lib/audio";
+import { questService } from "../../../lib/quest-service";
 import { 
   SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon, 
   HealthIcon, ManaIcon, GoldIcon, XPIcon,
@@ -21,6 +22,7 @@ interface QuestBattleProps {
   onDefeat: () => void;
   onFlee: () => void;
   onUpdateCharacter: (updates: Partial<Character>) => void;
+  onBattleComplete: (result: QuestResult) => void;
 }
 
 type BattleAction = "attack" | "spell" | "defend" | "flee";
@@ -92,6 +94,7 @@ export function QuestBattle({
   onDefeat,
   onFlee,
   onUpdateCharacter,
+  onBattleComplete,
 }: QuestBattleProps) {
   // const { t } = useI18n();
   const theme = BATTLE_THEMES[enemy.battleTheme || "grassland"] || BATTLE_THEMES.grassland;
@@ -144,14 +147,26 @@ export function QuestBattle({
       setPhase("victory");
       setLogs((prev) => [...prev, { message: `${enemy.name} defeated!`, type: "system", icon: "victory" }]);
       audioManager.playSfx("victory");
-      onVictory(enemy.xpReward, enemy.goldReward);
+      
+      // Create quest result for battle completion
+      const battleResult = {
+        success: true,
+        message: "You defeated the enemy!",
+        xp: enemy.xpReward,
+        gold: enemy.goldReward,
+        rewardItem: undefined,
+        rewardSkill: undefined
+      };
+      
+      // Complete the quest through the service
+      onBattleComplete(battleResult);
     } else if (playerHp <= 0 && phase !== "defeat") {
       setPhase("defeat");
       setLogs((prev) => [...prev, { message: `${enemy.name} defeated you!`, type: "system", icon: "defeat" }]);
       audioManager.playSfx("defeat");
       onDefeat();
     }
-  }, [enemyHp, playerHp, phase]);
+  }, [enemyHp, playerHp, phase, enemy.xpReward, enemy.goldReward, onBattleComplete]);
 
   // Enemy turn
   useEffect(() => {

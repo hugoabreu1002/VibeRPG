@@ -140,39 +140,33 @@ export function GuildTabIcon({ className, size = 24 }: IconProps) {
 
 export function ClassWarriorIcon({ className, size = 24 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M21 2l-2 2-9 9-2 5 5-2 9-9 2-2z" fill="#EF4444" />
-      <path d="M12 12l-5-5M7 17l5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <span className={className} style={{ fontSize: size, lineHeight: 1 }}>
+      ⚔️
+    </span>
   );
 }
 
 export function ClassMageIcon({ className, size = 24 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <motion.circle
-        cx="12" cy="12" r="4" fill="#8B5CF6"
-        animate={{ filter: ["blur(0px)", "blur(2px)", "blur(0px)"] }}
-        transition={{ repeat: Infinity, duration: 2 }}
-      />
-      <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="#A78BFA" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <span className={className} style={{ fontSize: size, lineHeight: 1 }}>
+      🧙
+    </span>
   );
 }
 
 export function ClassPriestIcon({ className, size = 24 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2v20M5 7h14" stroke="#FBBF24" strokeWidth="4" strokeLinecap="round" />
-    </svg>
+    <span className={className} style={{ fontSize: size, lineHeight: 1 }}>
+      🙏
+    </span>
   );
 }
 
 export function ClassRogueIcon({ className, size = 24 }: IconProps) {
   return (
-    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M13.3 2.1l-1.4 1.4L4.8 10.6 2.1 13.3c-.4.4-.4 1 0 1.4l7.2 7.2c.4.4 1 .4 1.4 0l2.7-2.7 7.1-7.1 1.4-1.4c.4-.4.4-1 0-1.4l-7.2-7.2c-.4-.4-1-.4-1.4 0z" fill="#64748B" />
-    </svg>
+    <span className={className} style={{ fontSize: size, lineHeight: 1 }}>
+      🥷
+    </span>
   );
 }
 

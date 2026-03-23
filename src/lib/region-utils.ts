@@ -9,6 +9,7 @@ export interface Region {
   unlockedBy: string[]; // Quest IDs that unlock this region
   availableQuests: string[]; // Quest IDs available in this region
   nextRegions: string[]; // Region IDs that can be unlocked from this region
+  requiredQuestsToComplete?: number; // Number of quests needed to advance (default: all)
 }
 
 // Define region progression
@@ -18,8 +19,9 @@ export const REGIONS: Record<string, Region> = {
     name: "Hub Town",
     description: "The central town where adventurers gather. All classes start here.",
     unlockedBy: [],
-    availableQuests: [],
-    nextRegions: ["Northern Village", "Whispering Woods", "Mountain Pass"]
+    availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead"],
+    nextRegions: ["Northern Village", "Whispering Woods", "Mountain Pass"],
+    requiredQuestsToComplete: 1 // Tutorial region - quick progression
   },
   "Northern Village": {
     id: "Northern Village",
@@ -27,7 +29,8 @@ export const REGIONS: Record<string, Region> = {
     description: "A peaceful village under threat from bandits and monsters.",
     unlockedBy: ["mage-library", "warrior-village", "priest-plague"],
     availableQuests: ["mage-library", "warrior-village", "priest-plague"],
-    nextRegions: ["Trade Route", "Training Grounds", "Dark Forest"]
+    nextRegions: ["Trade Route", "Training Grounds", "Dark Forest"],
+    requiredQuestsToComplete: 2 // Complete 2 of 3 quests to advance
   },
   "Whispering Woods": {
     id: "Whispering Woods",
@@ -202,43 +205,43 @@ export function getCurrentRegion(character: Character): Region {
 export function getAvailableRegions(character: Character): Region[] {
   const completedQuests = character.completedQuests;
   const unlockedRegions: Region[] = [];
-  
+
   // Always include Hub Town
   unlockedRegions.push(REGIONS["Hub Town"]);
-  
+
   // Check each region to see if it's unlocked
   Object.values(REGIONS).forEach(region => {
     if (region.id === "Hub Town") return; // Already added
-    
+
     // Check if all required quests are completed
     const isUnlocked = region.unlockedBy.every(questId => completedQuests.includes(questId));
-    
+
     if (isUnlocked) {
       unlockedRegions.push(region);
     }
   });
-  
+
   return unlockedRegions;
 }
 
 export function getAvailableQuestsForRegion(regionId: string, character: Character): string[] {
   const region = REGIONS[regionId];
   if (!region) return [];
-  
+
   // Filter quests by class and level requirements
   return region.availableQuests.filter(questId => {
     const quest = QUESTS.find(q => q.id === questId);
     if (!quest) return false;
-    
+
     // Check class requirement
     if (quest.class !== character.class) return false;
-    
+
     // Check level requirement
     if (quest.minLevel > character.level) return false;
-    
+
     // Check if already completed
     if (character.completedQuests.includes(questId)) return false;
-    
+
     return true;
   });
 }
@@ -246,68 +249,71 @@ export function getAvailableQuestsForRegion(regionId: string, character: Charact
 export function getAvailableQuestsForCharacter(character: Character): string[] {
   const availableRegions = getAvailableRegions(character);
   const allQuests: string[] = [];
-  
+
   availableRegions.forEach(region => {
     const regionQuests = getAvailableQuestsForRegion(region.id, character);
     allQuests.push(...regionQuests);
   });
-  
+
   return allQuests;
 }
 
 export function canProgressToNextRegion(character: Character): boolean {
   const currentRegion = getCurrentRegion(character);
   const availableQuests = getAvailableQuestsForRegion(currentRegion.id, character);
-  
+
   // If there are no available quests in current region, check if we can unlock new regions
   if (availableQuests.length === 0) {
     // Check if completing quests in current region would unlock new regions
     const regionQuests = currentRegion.availableQuests;
     const completedRegionQuests = regionQuests.filter(questId => character.completedQuests.includes(questId));
-    
+
     // Find regions that could be unlocked
-    const potentialNewRegions = Object.values(REGIONS).filter(region => 
+    const potentialNewRegions = Object.values(REGIONS).filter(region =>
       region.unlockedBy.some(questId => regionQuests.includes(questId) && !character.completedQuests.includes(questId))
     );
-    
+
     return potentialNewRegions.length > 0;
   }
-  
+
   return false;
 }
 
 export function getNextAvailableRegions(character: Character): Region[] {
   const currentRegion = getCurrentRegion(character);
   const completedQuests = character.completedQuests;
-  
+
   // Find regions that can be unlocked from current region
   const nextRegions: Region[] = [];
-  
+
   currentRegion.nextRegions.forEach(regionId => {
     const region = REGIONS[regionId];
     if (!region) return;
-    
+
     // Check if all required quests are completed
     const isUnlocked = region.unlockedBy.every(questId => completedQuests.includes(questId));
-    
+
     if (isUnlocked) {
       nextRegions.push(region);
     }
   });
-  
+
   return nextRegions;
 }
 
 export function shouldAutoAdvanceRegion(character: Character): boolean {
   const currentRegion = getCurrentRegion(character);
-  const availableQuests = getAvailableQuestsForRegion(currentRegion.id, character);
-  
-  // If no quests available in current region and there are next regions available, auto-advance
-  if (availableQuests.length === 0) {
+  const completedRegionQuests = currentRegion.availableQuests.filter(
+    questId => character.completedQuests.includes(questId)
+  );
+  const requiredCount = currentRegion.requiredQuestsToComplete ?? currentRegion.availableQuests.length;
+
+  // Check if player has completed enough quests to advance
+  if (completedRegionQuests.length >= requiredCount) {
     const nextRegions = getNextAvailableRegions(character);
     return nextRegions.length > 0;
   }
-  
+
   return false;
 }
 
@@ -315,16 +321,51 @@ export function getRegionMapData(regionId: string) {
   return getQuestMap(regionId);
 }
 
+export function getRegionCompletionStatus(character: Character): {
+  completed: number;
+  required: number;
+  canAdvance: boolean;
+  nextRegions: Region[];
+} {
+  const currentRegion = getCurrentRegion(character);
+  const completedRegionQuests = currentRegion.availableQuests.filter(
+    questId => character.completedQuests.includes(questId)
+  );
+  const requiredCount = currentRegion.requiredQuestsToComplete ?? currentRegion.availableQuests.length;
+  const nextRegions = getNextAvailableRegions(character);
+
+  return {
+    completed: completedRegionQuests.length,
+    required: requiredCount,
+    canAdvance: completedRegionQuests.length >= requiredCount && nextRegions.length > 0,
+    nextRegions
+  };
+}
+
 export function getRegionProgress(character: Character): { current: number; total: number; percentage: number } {
   const currentRegion = getCurrentRegion(character);
-  const availableQuests = getAvailableQuestsForRegion(currentRegion.id, character);
+  const allRegionQuests = currentRegion.availableQuests;
   const completedQuests = character.completedQuests;
-  
-  const completedInRegion = availableQuests.filter(questId => completedQuests.includes(questId)).length;
-  
+
+  // Count all quests in the region that match the character's class and level
+  const validQuests = allRegionQuests.filter(questId => {
+    const quest = QUESTS.find(q => q.id === questId);
+    if (!quest) return false;
+
+    // Check class requirement
+    if (quest.class !== character.class) return false;
+
+    // Check level requirement
+    if (quest.minLevel > character.level) return false;
+
+    return true;
+  });
+
+  const completedInRegion = validQuests.filter(questId => completedQuests.includes(questId)).length;
+
   return {
     current: completedInRegion,
-    total: availableQuests.length,
-    percentage: availableQuests.length > 0 ? Math.round((completedInRegion / availableQuests.length) * 100) : 0
+    total: validQuests.length,
+    percentage: validQuests.length > 0 ? Math.round((completedInRegion / validQuests.length) * 100) : 0
   };
 }

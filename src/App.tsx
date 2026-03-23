@@ -1,10 +1,12 @@
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
+import { acceptQuestFromNPC, completeQuestAfterBattle, attemptQuestChoice as attemptQuestChoiceLogic, resolveQuest as resolveQuestLogic, handleBattleVictory as handleBattleVictoryLogic, handleBattleDefeat as handleBattleDefeatLogic, handleBattleFlee as handleBattleFleeLogic, resetQuest as resetQuestLogic, getAvailableQuests, getActiveQuest } from "./lib/quest-logic";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
-import { Inventory, Quests, QuestBattle, QuestMap, Shop } from "./components/game";
+import { Inventory, Quests, QuestBattle, QuestMap, Shop, MapSelection, MapControls } from "./components/game";
 import { GuildEvolution } from "./components/game/ui/GuildEvolution";
+import { CelebrationOverlay, QuickToast } from "./components/game/ui/CelebrationOverlay";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
 import { RANKS } from "./lib/rank-utils";
@@ -84,6 +86,20 @@ function AppContent() {
   const [selectedChoice, setSelectedChoice] = useState<QuestChoice | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
+
+  // Celebration state
+  const [celebration, setCelebration] = useState<{
+    type: "quest-complete" | "level-up" | "item-obtained" | "first-victory";
+    title: string;
+    subtitle?: string;
+  } | null>(null);
+
+  const [toast, setToast] = useState<{ message: string; icon: string } | null>(null);
+  const [questToast, setQuestToast] = useState<{ message: string; icon: string } | null>(null);
+
+  // Track previous level for level-up detection
+  const [previousLevel, setPreviousLevel] = useState<number | null>(null);
+
   // Load all characters
   useEffect(() => {
     getAllCharacters().then(chars => {
@@ -155,10 +171,100 @@ function AppContent() {
     setShowDeleteConfirm(null);
   };
 
+  const handleAcceptQuestFromNPC = async (quest: Quest) => {
+    if (!character) return;
+
+    const result = await acceptQuestFromNPC(character, quest);
+    if (result.success) {
+      setCharacter(result.updatedCharacter);
+      setActiveQuest(quest);
+      setQuestState("active");
+      setActiveTab("Quests");
+      setQuestToast({
+        message: `New Quest: ${quest.title}`,
+        icon: "⚔️"
+      });
+    }
+  };
+
+  const completeQuestAfterBattle = (success: boolean, xpReward: number, goldReward: number, rewardItem?: InventoryItem, rewardSkill?: string) => {
+    if (!character || !activeQuest) return;
+
+    // Add quest to completedQuests if not already there
+    const newCompletedQuests = completedQuests.includes(activeQuest.id)
+      ? completedQuests
+      : [...completedQuests, activeQuest.id];
+
+    // Update character with rewards and clear active quest
+    const updatedCharacter = {
+      ...character,
+      xp: character.xp + xpReward,
+      gold: character.gold + goldReward,
+      completedQuests: newCompletedQuests,
+      acceptedQuests: character.acceptedQuests?.filter(id => id !== activeQuest.id) || [],
+      activeQuestId: undefined,
+      questState: "list" as QuestState,
+      ...(rewardItem && { inventory: [...character.inventory, rewardItem] }),
+      ...(rewardSkill && !character.skills.includes(rewardSkill) && { skills: [...character.skills, rewardSkill] })
+    };
+
+    // Check for level up
+    let leveledUp = false;
+    if (updatedCharacter.xp >= updatedCharacter.xpToNext) {
+      updatedCharacter.level += 1;
+      updatedCharacter.xp -= updatedCharacter.xpToNext;
+      updatedCharacter.xpToNext = Math.floor(updatedCharacter.xpToNext * 1.5);
+      updatedCharacter.maxHp += 10;
+      updatedCharacter.hp = updatedCharacter.maxHp;
+      updatedCharacter.maxMp += 5;
+      updatedCharacter.mp = updatedCharacter.maxMp;
+      updatedCharacter.attack += 2;
+      updatedCharacter.defense += 1;
+      leveledUp = true;
+    }
+
+    // Update character in state and storage
+    setCharacter(updatedCharacter);
+    dbUpdateCharacter(updatedCharacter);
+
+    // Update completed quests state
+    setCompletedQuests(newCompletedQuests);
+
+    // Clear active quest and reset state
+    setActiveQuest(null);
+    setQuestState("list");
+
+    // Redirect to World Map
+    setActiveTab("World Map");
+
+    // Show completion toast
+    if (success) {
+      setQuestToast({
+        message: `Quest Complete! +${xpReward} XP, +${goldReward} Gold`,
+        icon: "🏆"
+      });
+      audioManager.playSfx("victory");
+    } else {
+      setQuestToast({
+        message: `Quest Failed`,
+        icon: "💀"
+      });
+      audioManager.playSfx("defeat");
+    }
+
+    // Show level up celebration if leveled up
+    if (leveledUp) {
+      setCelebration({
+        type: "level-up",
+        title: "Level Up!",
+        subtitle: `You reached Level ${updatedCharacter.level}! Your stats have increased.`
+      });
+      audioManager.playSfx("victory");
+    }
+  };
+
   const startQuest = (quest: Quest) => {
-    setActiveQuest(quest);
-    setQuestState("active");
-    setActiveTab("Quests");
+    acceptQuestFromNPC(quest);
   };
 
   const attemptQuestChoice = (choice: QuestChoice) => {
@@ -255,61 +361,24 @@ function AppContent() {
   const handleBattleVictory = (xp: number, gold: number) => {
     if (!character || !selectedChoice) return;
 
-    // Add battle rewards + quest bonus
-    const newXp = character.xp + xp + selectedChoice.xpReward;
-    const newGold = character.gold + gold + selectedChoice.goldReward;
-
     // Handle item reward
     let rewardedItem: InventoryItem | undefined;
     if (selectedChoice.rewardItemId) {
       const itemTemplate = ALL_ITEMS.find(i => i.id === selectedChoice.rewardItemId);
       if (itemTemplate) {
         rewardedItem = { ...itemTemplate, id: `${itemTemplate.id}-${Date.now()}` };
-        setInventory(prev => [...prev, rewardedItem!]);
       }
     }
 
-    // Handle skill reward
-    const newSkills = [...character.skills];
-    if (selectedChoice.rewardSkill && !newSkills.includes(selectedChoice.rewardSkill)) {
-      newSkills.push(selectedChoice.rewardSkill);
-    }
+    // Use centralized quest completion function
+    completeQuestAfterBattle(
+      true,
+      xp + selectedChoice.xpReward,
+      gold + selectedChoice.goldReward,
+      rewardedItem,
+      selectedChoice.rewardSkill
+    );
 
-    setCharacter({
-      ...character,
-      xp: newXp,
-      gold: newGold,
-      skills: newSkills,
-      inventory: rewardedItem ? [...inventory, rewardedItem] : inventory,
-      ...(newXp >= character.xpToNext ? {
-        level: character.level + 1,
-        xp: newXp - character.xpToNext,
-        xpToNext: Math.floor(character.xpToNext * 1.5),
-        maxHp: character.maxHp + 10,
-        hp: character.maxHp + 10,
-        maxMp: character.maxMp + 5,
-        mp: character.maxMp + 5,
-        attack: character.attack + 2,
-        defense: character.defense + 1,
-      } : {})
-    });
-
-    setQuestResult({
-      success: true,
-      message: `🎉 Victory! ${selectedChoice.successMessage}\n\n+${xp + selectedChoice.xpReward} XP • +${gold + selectedChoice.goldReward} Gold`,
-      xp: xp + selectedChoice.xpReward,
-      gold: gold + selectedChoice.goldReward,
-      rewardItem: rewardedItem,
-      rewardSkill: selectedChoice.rewardSkill
-    });
-
-    if (activeQuest && !completedQuests.includes(activeQuest.id)) {
-      const newCompleted = [...completedQuests, activeQuest.id];
-      setCompletedQuests(newCompleted);
-      if (character) setCharacter({ ...character, completedQuests: newCompleted });
-    }
-
-    setQuestState("result");
     setActiveEnemy(null);
   };
 
@@ -324,20 +393,9 @@ function AppContent() {
       hp: newHp
     });
 
-    setQuestResult({
-      success: false,
-      message: `💀 ${selectedChoice.failureMessage}\n\nYou were injured in battle and need to recover.`,
-      xp: 0,
-      gold: 0
-    });
+    // Use centralized quest completion function (failure)
+    completeQuestAfterBattle(false, 0, 0);
 
-    if (activeQuest && !completedQuests.includes(activeQuest.id)) {
-      const newCompleted = [...completedQuests, activeQuest.id];
-      setCompletedQuests(newCompleted);
-      if (character) setCharacter({ ...character, completedQuests: newCompleted });
-    }
-
-    setQuestState("result");
     setActiveEnemy(null);
   };
 
@@ -362,6 +420,7 @@ function AppContent() {
           skills: char.skills || getInitialCharacterStats(char.class).skills,
           inventory: char.inventory || getStarterItems(char.class),
           completedQuests: char.completedQuests || [],
+          acceptedQuests: char.acceptedQuests || [],
           currentRegion: char.currentRegion || "Hub Town"
         };
         setCharacter(enrichedChar);
@@ -372,21 +431,39 @@ function AppContent() {
     });
   }, []);
 
-  // Auto-advance region when all quests in current region are completed
+  // Map selection handler
+  const handleRegionChange = (regionId: string) => {
+    if (character) {
+      setCharacter({ ...character, currentRegion: regionId });
+      audioManager.playSfx("click");
+    }
+  };
+
+  // Celebration triggers for quest completion and level ups
   useEffect(() => {
     if (!character) return;
 
-    // Check if we should auto-advance to next region
-    if (shouldAutoAdvanceRegion(character)) {
-      const nextRegions = getNextAvailableRegions(character);
-      if (nextRegions.length > 0) {
-        // Auto-advance to the first available next region
-        const nextRegion = nextRegions[0];
-        setCharacter({ ...character, currentRegion: nextRegion.id });
-        audioManager.playSfx("victory");
-      }
+    // Detect level up
+    if (previousLevel !== null && character.level > previousLevel) {
+      setCelebration({
+        type: "level-up",
+        title: "Level Up!",
+        subtitle: `You reached Level ${character.level}! Your stats have increased.`
+      });
+      audioManager.playSfx("victory");
     }
-  }, [character, completedQuests]);
+    setPreviousLevel(character.level);
+  }, [character?.level]);
+
+  // Show toast for quest completion
+  useEffect(() => {
+    if (questState === "result" && questResult?.success) {
+      setToast({
+        message: `Quest Complete! +${questResult.xp} XP, +${questResult.gold} Gold`,
+        icon: "🏆"
+      });
+    }
+  }, [questState, questResult]);
 
   const handleToggleEquip = (item: InventoryItem) => {
     const newEquipped = !item.equipped;
@@ -476,7 +553,10 @@ function AppContent() {
       inventory: getStarterItems(createClass),
       skills: getInitialCharacterStats(createClass).skills,
       completedQuests: [],
+      acceptedQuests: [],
       rank: "F" as const,
+      activeQuestId: undefined,
+      questState: "list",
       ...stats,
     };
 
@@ -681,6 +761,8 @@ function AppContent() {
                     inventory: getStarterItems(createClass),
                     skills: getInitialCharacterStats(createClass).skills,
                     completedQuests: [],
+                    acceptedQuests: [],
+                    questState: "list",
                     rank: "F" as const,
                     ...stats,
                   };
@@ -705,7 +787,7 @@ function AppContent() {
                     >
                       {CHARACTER_CLASSES.map((c) => (
                         <option key={c} value={c}>
-                          {CLASS_ICONS[c]} {c}
+                          {c.charAt(0).toUpperCase() + c.slice(1)}
                         </option>
                       ))}
                     </select>
@@ -830,7 +912,7 @@ function AppContent() {
             </motion.div>
           </main>
         ) : (
-          <div className="mx-auto grid max-w-7xl gap-4 lg:grid-cols-12">
+          <div className="w-full grid gap-4 lg:grid-cols-12">
             {/* Sidebar */}
             <aside className="lg:col-span-2 space-y-4">
               <div className="fantasy-card rounded-xl p-4">
@@ -871,182 +953,220 @@ function AppContent() {
 
             {/* Main Content */}
             <section className="lg:col-span-10 space-y-4">
-              {activeTab === "Inventory" && (
-                <div className="space-y-4">
-                  <Inventory
-                    inventory={inventory}
-                    selectedItem={selectedItem}
-                    onSelectItem={setSelectedItem}
-                    onToggleEquip={handleToggleEquip}
-                    onConsumeFood={handleConsumeFood}
-                    onSellItem={handleSellItem}
-                    characterClass={character.class}
-                  />
-                </div>
-              )}
-
-              {activeTab === "Shop" && character && (
-                <Shop
-                  gold={character.gold}
-                  shopItems={SHOP_ITEMS}
-                  onBuyItem={handleBuyItem}
-                />
-              )}
-
-              {activeTab === "Guild" && character && (
-                <GuildEvolution
-                  character={character}
-                  onEvolve={(updatedCharacter) => {
-                    setCharacter(updatedCharacter);
-                    audioManager.playSfx("victory");
-                  }}
-                  onClose={() => setActiveTab("World Map")}
-                />
-              )}
-
-              {activeTab === "World Map" && character && (
-                <div className="space-y-4">
-                  {/* Region Header */}
-                  <motion.div 
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="fantasy-card rounded-xl p-4"
+              <AnimatePresence mode="wait">
+                {activeTab === "Inventory" && (
+                  <motion.div
+                    key="inventory"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="space-y-4"
                   >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="text-lg font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>
-                          🗺️ {getCurrentRegion(character).name}
-                        </h3>
-                        <p className="text-sm text-slate-400">{getCurrentRegion(character).description}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                          <span className="text-xs text-amber-500/60 uppercase tracking-widest font-bold">Region Progress</span>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className="w-24 bg-slate-800 rounded-full h-2">
-                              <div 
-                                className="h-2 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
-                                style={{ width: `${getRegionProgress(character).percentage}%` }}
-                              />
-                            </div>
-                            <span className="text-sm text-slate-300 font-mono">
-                              {getRegionProgress(character).current}/{getRegionProgress(character).total}
-                            </span>
-                          </div>
-                        </div>
-                        
-                        {/* Region Navigation */}
-                        <div className="flex gap-2">
-                          {getNextAvailableRegions(character).map(region => (
-                            <motion.button
-                              key={region.id}
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => {
-                                setCharacter({ ...character, currentRegion: region.id });
-                                audioManager.playSfx("click");
-                              }}
-                              className="btn-fantasy px-3 py-1.5 text-xs font-bold"
-                            >
-                              🚶‍♂️ {region.name}
-                            </motion.button>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+                    <Inventory
+                      inventory={inventory}
+                      selectedItem={selectedItem}
+                      onSelectItem={setSelectedItem}
+                      onToggleEquip={handleToggleEquip}
+                      onConsumeFood={handleConsumeFood}
+                      onSellItem={handleSellItem}
+                      characterClass={character.class}
+                    />
                   </motion.div>
+                )}
 
-                  {/* Map */}
-                  {(() => {
-                    const mapData = getRegionMapData(character.currentRegion);
-                    return mapData && (
-                      <QuestMap
-                        mapData={mapData}
-                        playerClass={character.class}
-                        inventory={inventory}
-                        onNPCInteract={(npc: NPC) => {
-                          if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
-                            const quest = QUESTS.find(q => q.id === npc.questId);
-                            if (quest && quest.class === character.class && quest.minLevel <= character.level) {
-                              startQuest(quest);
-                              setActiveTab("Quests");
-                            }
-                          }
-                        }}
-                        completedQuests={completedQuests}
-                        activeQuestId={activeQuest?.id}
-                        allQuests={QUESTS}
-                        onBack={() => { }}
-                      />
-                    );
-                  })()}
-                </div>
-              )}
-
-              {activeTab === "Quests" && character && (
-                <>
-                  {questState === "battle" && activeEnemy ? (
-                    <QuestBattle
-                      character={{ ...character, inventory }}
-                      enemy={activeEnemy}
-                      onVictory={handleBattleVictory}
-                      onDefeat={handleBattleDefeat}
-                      onFlee={handleBattleFlee}
-                      onUpdateCharacter={(updates) => setCharacter(prev => prev ? { ...prev, ...updates } : null)}
+                {activeTab === "Shop" && character && (
+                  <motion.div
+                    key="shop"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Shop
+                      gold={character.gold}
+                      shopItems={SHOP_ITEMS}
+                      onBuyItem={handleBuyItem}
                     />
-                  ) : questState === "map" && activeQuest ? (
-                    (() => {
-                      const mapData = getQuestMap(activeQuest.region);
-                      return mapData ? (
-                        <QuestMap
-                          quest={activeQuest}
-                          mapData={getQuestMap(activeQuest.region)}
-                          playerClass={character.class}
-                          inventory={inventory}
-                          completedQuests={completedQuests}
-                          activeQuestId={activeQuest?.id}
-                          allQuests={QUESTS}
-                          onNPCInteract={(npc: NPC) => {
-                            // If NPC on quest map has a quest, it must be the objective
-                            if (npc.questId === activeQuest?.id) {
-                              setQuestState("active");
-                            }
-                          }}
-                          onBack={resetQuest}
-                        />
-                      ) : (
-                        <Quests
-                          character={character}
-                          quests={QUESTS}
-                          questState="active"
-                          activeQuest={activeQuest}
-                          questResult={questResult}
-                          completedQuests={completedQuests}
-                          onStartQuest={startQuest}
-                          onAttemptChoice={attemptQuestChoice}
-                          onResetQuest={resetQuest}
-                        />
-                      );
-                    })()
-                  ) : (
-                    <Quests
+                  </motion.div>
+                )}
+
+                {activeTab === "Guild" && character && (
+                  <motion.div
+                    key="guild"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <GuildEvolution
                       character={character}
-                      quests={QUESTS}
-                      questState={questState}
-                      activeQuest={activeQuest}
-                      questResult={questResult}
-                      completedQuests={completedQuests}
-                      onStartQuest={startQuest}
-                      onAttemptChoice={attemptQuestChoice}
-                      onResetQuest={resetQuest}
+                      onEvolve={(updatedCharacter) => {
+                        setCharacter(updatedCharacter);
+                        audioManager.playSfx("victory");
+                      }}
+                      onClose={() => setActiveTab("World Map")}
                     />
-                  )}
-                </>
-              )}
+                  </motion.div>
+                )}
+
+                {activeTab === "World Map" && character && (
+                  <motion.div
+                    key="world-map"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                    className="grid grid-cols-1 lg:grid-cols-12 gap-4"
+                  >
+                    {/* Map - takes 8 columns on large screens for more space */}
+                    <div className="lg:col-span-8">
+                      {(() => {
+                        const mapData = getRegionMapData(character.currentRegion);
+                        return mapData && (
+                          <QuestMap
+                            mapData={mapData}
+                            character={character}
+                            playerClass={character.class}
+                            inventory={inventory}
+                            onNPCInteract={(npc: NPC) => {
+                              if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
+                                const quest = QUESTS.find(q => q.id === npc.questId);
+                                if (quest && quest.class === character.class && quest.minLevel <= character.level) {
+                                  handleAcceptQuestFromNPC(quest);
+                                }
+                              }
+                            }}
+                            onQuestAccepted={(quest: Quest) => {
+                              handleAcceptQuestFromNPC(quest);
+                            }}
+                            completedQuests={completedQuests}
+                            activeQuestId={activeQuest?.id}
+                            allQuests={QUESTS}
+                            onBack={() => { }}
+                          />
+                        );
+                      })()}
+                    </div>
+
+                    {/* Map Controls - takes 4 columns on large screens */}
+                    <aside className="lg:col-span-4 space-y-4">
+                      <MapControls
+                        character={character}
+                        currentRegion={character.currentRegion}
+                        onRegionChange={handleRegionChange}
+                      />
+                    </aside>
+                  </motion.div>
+                )}
+
+                {activeTab === "Quests" && character && (
+                  <motion.div
+                    key="quests"
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    {questState === "battle" && activeEnemy ? (
+                      <QuestBattle
+                        character={{ ...character, inventory }}
+                        enemy={activeEnemy}
+                        onVictory={handleBattleVictory}
+                        onDefeat={handleBattleDefeat}
+                        onFlee={handleBattleFlee}
+                        onUpdateCharacter={(updates) => setCharacter(prev => prev ? { ...prev, ...updates } : null)}
+                        onBattleComplete={(result) => {
+                          // This is now handled by the battle victory/defeat callbacks
+                          // The battle completion is integrated through the quest service
+                        }}
+                      />
+                    ) : questState === "map" && activeQuest ? (
+                      (() => {
+                        const mapData = getQuestMap(activeQuest.region);
+                        return mapData ? (
+                          <QuestMap
+                            quest={activeQuest}
+                            mapData={getQuestMap(activeQuest.region)}
+                            character={character}
+                            playerClass={character.class}
+                            inventory={inventory}
+                            completedQuests={completedQuests}
+                            activeQuestId={activeQuest?.id}
+                            allQuests={QUESTS}
+                            onNPCInteract={(npc: NPC) => {
+                              // If NPC on quest map has a quest, it must be the objective
+                              if (npc.questId === activeQuest?.id) {
+                                setQuestState("active");
+                              }
+                            }}
+                            onBack={resetQuest}
+                          />
+                        ) : (
+                          <Quests
+                            character={character}
+                            quests={QUESTS}
+                            questState="active"
+                            activeQuest={activeQuest}
+                            questResult={questResult}
+                            completedQuests={completedQuests}
+                            onStartQuest={startQuest}
+                            onAttemptChoice={attemptQuestChoice}
+                            onResetQuest={resetQuest}
+                          />
+                        );
+                      })()
+                    ) : (
+                      <Quests
+                        character={character}
+                        quests={QUESTS}
+                        questState={questState}
+                        activeQuest={activeQuest}
+                        questResult={questResult}
+                        completedQuests={completedQuests}
+                        onStartQuest={startQuest}
+                        onAttemptChoice={attemptQuestChoice}
+                        onResetQuest={resetQuest}
+                      />
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </section>
           </div>
         )}
       </div>
+
+
+      {/* Celebration Overlay */}
+      <AnimatePresence>
+        {celebration && (
+          <CelebrationOverlay
+            type={celebration.type}
+            title={celebration.title}
+            subtitle={celebration.subtitle}
+            onDismiss={() => setCelebration(null)}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Quick Toast */}
+      <AnimatePresence>
+        {toast && (
+          <QuickToast
+            message={toast.message}
+            icon={toast.icon}
+            onDismiss={() => setToast(null)}
+          />
+        )}
+        {questToast && (
+          <QuickToast
+            message={questToast.message}
+            icon={questToast.icon}
+            onDismiss={() => setQuestToast(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
