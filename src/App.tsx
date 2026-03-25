@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
 import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
-import { acceptQuestFromNPC, completeQuestAfterBattle } from "./lib/quest-logic";
+import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop, MapSelection, MapControls } from "./components/game";
@@ -205,6 +205,7 @@ function AppContent() {
     if (result.updatedCharacter) {
       setCharacter(result.updatedCharacter);
       setCompletedQuests(result.updatedCharacter.completedQuests);
+      setInventory(result.updatedCharacter.inventory || []);
     }
 
     // Clear active quest and reset state
@@ -392,6 +393,10 @@ function AppContent() {
     setActiveEnemy(null);
     setSelectedChoice(null);
   };
+
+  const handleUpdateCharacter = useCallback((updates: Partial<Character>) => {
+    setCharacter(prev => prev ? { ...prev, ...updates } : null);
+  }, []);
 
   const resetQuest = () => {
     setQuestState("list");
@@ -1018,7 +1023,7 @@ function AppContent() {
                             onNPCInteract={(npc: NPC) => {
                               if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
                                 const quest = QUESTS.find(q => q.id === npc.questId);
-                                if (quest && quest.class === character.class) {
+                                if (quest && (quest.class === character.class || hasFinishedMainStory(character))) {
                                   handleAcceptQuestFromNPC(quest);
                                 }
                               }
@@ -1062,7 +1067,7 @@ function AppContent() {
                         onVictory={handleBattleVictory}
                         onDefeat={handleBattleDefeat}
                         onFlee={handleBattleFlee}
-                        onUpdateCharacter={(updates) => setCharacter(prev => prev ? { ...prev, ...updates } : null)}
+                        onUpdateCharacter={handleUpdateCharacter}
                         onBattleComplete={(result) => {
                           // Call handleBattleVictory with XP and gold from the battle result
                           if (result.success) {

@@ -374,6 +374,78 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
       },
     ],
   },
+
+  "Capital City": {
+    name: "Capital City",
+    width: 12, height: 10,
+    tiles: makeGrid([
+      "FFFFCFFFFFFF",
+      "FCCCTTTCCCCF",
+      "FCTTTTTTTTTC",
+      "CCTTTTTTTTTC",
+      "CCTTTTHTTTTC",
+      "CCTTTTTTTTTC",
+      "FCTTTTTTTTTC",
+      "FCCCTTTCCCCF",
+      "FFFFCFFFFFFF",
+      "FFFFFFFFFFFF",
+    ]),
+    playerStart: { x: 5, y: 8 },
+    npcs: [
+      { id: "king-guard", name: "Captain", position: { x: 5, y: 2 }, sprite: "king",
+        dialog: ["The King's life is in danger!", "An assassin has breached the inner sanctum.", "Only a legendary warrior can stop them!"],
+        questId: "warrior-kings-guard",
+      },
+    ],
+  },
+
+  "Astral Observatory": {
+    name: "Astral Observatory",
+    width: 12, height: 10,
+    tiles: makeGrid([
+      "MMMMMMMMMMMM",
+      "MCCCTTTTCCCM",
+      "MCTHHTTHHTCM",
+      "MCTTTTTTTTCM",
+      "MCTTTTTTTTCM",
+      "MCTTTTTTTTCM",
+      "MCTHHTTHHTCM",
+      "MCCCTTTTCCCM",
+      "MMMMHMMHMMMM",
+      "MMMMMMMMMMMM",
+    ]),
+    playerStart: { x: 5, y: 8 },
+    npcs: [
+      { id: "astronomer", name: "Grand Astronomer", position: { x: 5, y: 3 }, sprite: "wizard",
+        dialog: ["The astral plane has torn open!", "We are being consumed by the void.", "You must close the rift!"],
+        questId: "mage-astral-plane",
+      },
+    ],
+  },
+
+  "Celestial Shrine": {
+    name: "Celestial Shrine",
+    width: 12, height: 10,
+    tiles: makeGrid([
+      "WWWWWWWWWWWW",
+      "WWTTTTTTTTWW",
+      "WWTHTTTTHTWW",
+      "WWTTTTTTTTWW",
+      "WWTTHHHHTTWW",
+      "WWTTHHHHTTWW",
+      "WWTTTTTTTTWW",
+      "WWTHTTTTHTWW",
+      "WWTTTWWTTTWW",
+      "WWWWWWWWWWWW",
+    ]),
+    playerStart: { x: 5, y: 8 },
+    npcs: [
+      { id: "prophet", name: "High Prophet", position: { x: 5, y: 3 }, sprite: "priest",
+        dialog: ["The celestial guardian has fallen to corruption.", "Our holy shrine is defiled.", "Purify the guardian and save our souls!"],
+        questId: "priest-celestial-shrine",
+      },
+    ],
+  },
 };
 
 export function getQuestMap(region: string): QuestMapData | null {

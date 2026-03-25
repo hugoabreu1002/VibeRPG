@@ -217,9 +217,16 @@ export async function resetQuest(
     return { success: true, updatedCharacter };
 }
 
+export function hasFinishedMainStory(character: Character): boolean {
+    if (character.class === "warrior") return character.completedQuests.includes("warrior-kings-guard");
+    if (character.class === "mage") return character.completedQuests.includes("mage-astral-plane");
+    if (character.class === "priest") return character.completedQuests.includes("priest-celestial-shrine");
+    return false;
+}
+
 export function getAvailableQuests(character: Character): Quest[] {
     return QUESTS.filter(q =>
-        q.class === character.class &&
+        (q.class === character.class || hasFinishedMainStory(character)) &&
         !character.completedQuests.includes(q.id) &&
         character.acceptedQuests?.includes(q.id)
     );

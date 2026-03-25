@@ -199,7 +199,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "food-honey-cake",
     name: "Honey Cake",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 25,
     stats: {},
     restores: { hp: 35, mp: 15 },
@@ -210,7 +210,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "food-elixir-soup",
     name: "Elixir Soup",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 35,
     stats: {},
     restores: { hp: 50, mp: 30 },
@@ -244,7 +244,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "potion-health",
     name: "Health Potion",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 30,
     stats: {},
     restores: { hp: 60 },
@@ -277,7 +277,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "potion-mana",
     name: "Mana Potion",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 28,
     stats: {},
     restores: { mp: 55 },
@@ -310,7 +310,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "potion-strength",
     name: "Potion of Strength",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 45,
     stats: { attack: 5 },
     restores: {},
@@ -321,7 +321,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "potion-defense",
     name: "Potion of Iron Skin",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 45,
     stats: { defense: 5 },
     restores: {},
@@ -332,7 +332,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "potion-magic",
     name: "Potion of Arcane Power",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 50,
     stats: { magicPower: 8 },
     restores: {},
@@ -344,7 +344,7 @@ export const SHOP_ITEMS: InventoryItem[] = [
     id: "scroll-teleport",
     name: "Scroll of Recall",
     type: "food",
-    rarity: "uncommon",
+    rarity: "common",
     price: 40,
     stats: {},
     restores: { hp: 30, mp: 30 },
@@ -372,10 +372,8 @@ export const SHOP_ITEMS: InventoryItem[] = [
     restores: { hp: 200, mp: 150 },
     equipped: false,
     description: "A radiant feather from a phoenix. When used, it bestows incredible healing power."
-  }
-];
-
-export const REWARD_ITEMS: InventoryItem[] = [
+  },
+  // ── FORMER REWARD ITEMS NOW PURCHASABLE ────────────────
   {
     id: "mystic-ring",
     name: "Amulet of Eternity",
@@ -449,7 +447,7 @@ export const REWARD_ITEMS: InventoryItem[] = [
 ];
 
 
-export const ALL_ITEMS = [...SHOP_ITEMS, ...REWARD_ITEMS];
+export const ALL_ITEMS = SHOP_ITEMS;
 
 // ============================================================
 // ENEMIES - 30+ unique enemies organized by category
@@ -678,6 +676,24 @@ export const ENEMIES: Record<string, Enemy> = {
     description: "A rogue sorcerer wielding forbidden magic.",
     sprite: "dark-mage", battleTheme: "undead"
   },
+  "royal-assassin": {
+    id: "royal-assassin", name: "Royal Assassin", hp: 120, maxHp: 120,
+    attack: 35, defense: 12, magicPower: 0, xpReward: 160, goldReward: 90,
+    description: "A highly trained killer targeting the King.",
+    sprite: "rogue", battleTheme: "boss"
+  },
+  "void-terror": {
+    id: "void-terror", name: "Void Terror", hp: 140, maxHp: 140,
+    attack: 15, defense: 28, magicPower: 40, xpReward: 180, goldReward: 100,
+    description: "An entity from the astral plane that consumes reality.",
+    sprite: "wraith", battleTheme: "boss"
+  },
+  "fallen-angel": {
+    id: "fallen-angel", name: "Fallen Angel", hp: 200, maxHp: 200,
+    attack: 25, defense: 20, magicPower: 25, xpReward: 170, goldReward: 95,
+    description: "A celestial being corrupted by ancient power.",
+    sprite: "priest", battleTheme: "boss"
+  },
   "bandit-leader": {
     id: "bandit-leader", name: "Bandit Leader", hp: 60, maxHp: 60,
     attack: 20, defense: 8, magicPower: 2, xpReward: 50, goldReward: 30,
@@ -736,8 +752,7 @@ export const QUESTS: Quest[] = [
         successMessage: "Your dispel magic works! The barrier shatters and the librarian is freed.",
         failureMessage: "Your magic fizzles against the barrier. The wild magic is too strong!",
         xpReward: 50,
-        goldReward: 25,
-        rewardItemId: "mystic-ring"
+        goldReward: 25
       },
       {
         text: "Use Sense Magic to find the source",
@@ -867,9 +882,8 @@ export const QUESTS: Quest[] = [
         difficulty: 30,
         successMessage: "Your superior magical knowledge wins the duel! The dark mage surrenders!",
         failureMessage: "The dark mage's forbidden spells prove too powerful!",
-        xpReward: 120,
-        goldReward: 70,
-        rewardItemId: "fire-staff"
+        xpReward: 80,
+        goldReward: 40
       },
       {
         text: "Dismantle the tower's magical defenses",
@@ -879,6 +893,34 @@ export const QUESTS: Quest[] = [
         failureMessage: "A trap spell triggers, blasting you backwards!",
         xpReward: 90,
         goldReward: 50
+      }
+    ]
+  },
+  {
+    id: "mage-astral-plane",
+    title: "The Astral Tear",
+    description: "A tear in the astral plane has opened in the Observatory. Close it before the Void Terror consumes our world.",
+    class: "mage",
+    minLevel: 4,
+    region: "Astral Observatory",
+    choices: [
+      {
+        text: "Perform the Ritual of Sealing",
+        requiredStat: "magicPower",
+        difficulty: 40,
+        successMessage: "Your magic binds the astral energies, closing the tear permanently!",
+        failureMessage: "The void energy overwhelms your spell! You must retreat!",
+        xpReward: 120,
+        goldReward: 60
+      },
+      {
+        text: "Overload the Rift with pure arcane energy",
+        requiredStat: "magicPower",
+        difficulty: 35,
+        successMessage: "The sheer arcane explosion collapses the rift into itself!",
+        failureMessage: "The rift absorbs your magic and grows larger!",
+        xpReward: 150,
+        goldReward: 80
       }
     ]
   },
@@ -897,9 +939,8 @@ export const QUESTS: Quest[] = [
         difficulty: 15,
         successMessage: "Your fierce fighting scares off the bandits! The village is safe.",
         failureMessage: "There are too many bandits! You hold them off but they pillage some houses.",
-        xpReward: 50,
-        goldReward: 25,
-        rewardItemId: "silver-dagger"
+        xpReward: 150,
+        goldReward: 80
       },
       {
         text: "Lead a charge to scatter them",
@@ -1011,9 +1052,8 @@ export const QUESTS: Quest[] = [
         difficulty: 32,
         successMessage: "Your blade finds the gap in the wyvern's scales! It falls defeated!",
         failureMessage: "The wyvern's flames nearly incinerate you! You retreat badly burned!",
-        xpReward: 130,
-        goldReward: 75,
-        rewardItemId: "knight-armor"
+        xpReward: 50,
+        goldReward: 25
       },
       {
         text: "Use the terrain to your advantage",
@@ -1023,6 +1063,34 @@ export const QUESTS: Quest[] = [
         failureMessage: "The wyvern is smarter than you expected. It corners you instead!",
         xpReward: 100,
         goldReward: 55
+      }
+    ]
+  },
+  {
+    id: "warrior-kings-guard",
+    title: "Defend the King",
+    description: "An elite royal assassin has infiltrated the Capital City. Find and eliminate the threat to the crown.",
+    class: "warrior",
+    minLevel: 4,
+    region: "Capital City",
+    choices: [
+      {
+        text: "Block the assassin's strike with your shield",
+        requiredStat: "defense",
+        difficulty: 35,
+        successMessage: "You perfectly deflect the killing blow, saving the King!",
+        failureMessage: "The assassin slips past your shield, wounding you heavily!",
+        xpReward: 80,
+        goldReward: 40
+      },
+      {
+        text: "Intercept the assassin with a mighty charge",
+        requiredStat: "attack",
+        difficulty: 40,
+        successMessage: "Your powerful charge pins the assassin before they can react!",
+        failureMessage: "You miss the charge, and the assassin counters quickly!",
+        xpReward: 220,
+        goldReward: 150
       }
     ]
   },
@@ -1041,9 +1109,8 @@ export const QUESTS: Quest[] = [
         difficulty: 15,
         successMessage: "Your holy magic cures the villagers! They recover quickly.",
         failureMessage: "The plague is stronger than your magic. More people fall ill!",
-        xpReward: 50,
-        goldReward: 25,
-        rewardItemId: "holy-relic"
+        xpReward: 120,
+        goldReward: 60
       },
       {
         text: "Search for medicinal herbs in the forest",
@@ -1164,9 +1231,8 @@ export const QUESTS: Quest[] = [
         difficulty: 30,
         successMessage: "With an explosion of holy light, you seal the portal forever!",
         failureMessage: "The demonic energy is overwhelming! The portal resists!",
-        xpReward: 130,
-        goldReward: 70,
-        rewardItemId: "divine-robes"
+        xpReward: 50,
+        goldReward: 25
       },
       {
         text: "Confront the demon gatekeeper",
@@ -1176,6 +1242,34 @@ export const QUESTS: Quest[] = [
         failureMessage: "The demon's dark power scorches your holy shields!",
         xpReward: 100,
         goldReward: 55
+      }
+    ]
+  },
+  {
+    id: "priest-celestial-shrine",
+    title: "The Fallen Angel",
+    description: "A corrupted celestial guardian has taken over the ancient shrine. Purify the guardian to restore peace.",
+    class: "priest",
+    minLevel: 4,
+    region: "Celestial Shrine",
+    choices: [
+      {
+        text: "Channel the Grand Purification",
+        requiredStat: "magicPower",
+        difficulty: 40,
+        successMessage: "The overwhelming holy light cleanses the corrupted angel!",
+        failureMessage: "The dark celestial energy shatters your holy ward!",
+        xpReward: 80,
+        goldReward: 40
+      },
+      {
+        text: "Sing the ancient hymn of serenity",
+        requiredStat: "defense",
+        difficulty: 35,
+        successMessage: "The ancient hymn soothes the guardian's troubled soul, ending the corruption.",
+        failureMessage: "The guardian's screams drown out your hymn!",
+        xpReward: 150,
+        goldReward: 80
       }
     ]
   },
@@ -1425,6 +1519,9 @@ export const QUEST_ENEMIES: Record<string, string> = {
   "priest-blessing": "dark-corrupter",
   "priest-undead-crypt": "death-knight",
   "priest-demon-portal": "arch-demon",
+  "mage-astral-plane": "void-terror",
+  "warrior-kings-guard": "royal-assassin",
+  "priest-celestial-shrine": "fallen-angel",
   // Guild quests
   "guild-bounty-slimes": "green-slime",
   "guild-bounty-rats": "giant-rat",
@@ -1464,8 +1561,7 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
           successMessage: t("quests.mage-library.success1"),
           failureMessage: t("quests.mage-library.failure1"),
           xpReward: 50,
-          goldReward: 25,
-          rewardItemId: "mystic-ring"
+          goldReward: 25
         },
         {
           text: t("quests.mage-library.choice2"),
@@ -1595,9 +1691,8 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
           difficulty: 30,
           successMessage: t("quests.mage-tower.success1"),
           failureMessage: t("quests.mage-tower.failure1"),
-          xpReward: 120,
-          goldReward: 70,
-          rewardItemId: "fire-staff"
+          xpReward: 80,
+          goldReward: 40
         },
         {
           text: t("quests.mage-tower.choice2"),
@@ -1625,9 +1720,8 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
           difficulty: 15,
           successMessage: t("quests.warrior-village.success1"),
           failureMessage: t("quests.warrior-village.failure1"),
-          xpReward: 50,
-          goldReward: 25,
-          rewardItemId: "silver-dagger"
+          xpReward: 150,
+          goldReward: 80
         },
         {
           text: t("quests.warrior-village.choice2"),
@@ -1733,16 +1827,15 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       minLevel: 3,
       region: "Dragon Peak",
       choices: [
-        {
-          text: t("quests.warrior-dragon-lair.choice1"),
-          requiredStat: "attack",
-          difficulty: 32,
-          successMessage: t("quests.warrior-dragon-lair.success1"),
-          failureMessage: t("quests.warrior-dragon-lair.failure1"),
-          xpReward: 130,
-          goldReward: 75,
-          rewardItemId: "knight-armor"
-        },
+      {
+        text: t("quests.warrior-dragon-lair.choice1"),
+        requiredStat: "attack",
+        difficulty: 32,
+        successMessage: t("quests.warrior-dragon-lair.success1"),
+        failureMessage: t("quests.warrior-dragon-lair.failure1"),
+        xpReward: 50,
+        goldReward: 25
+      },
         {
           text: t("quests.warrior-dragon-lair.choice2"),
           requiredStat: "defense",
@@ -1769,9 +1862,8 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
           difficulty: 15,
           successMessage: t("quests.priest-plague.success1"),
           failureMessage: t("quests.priest-plague.failure1"),
-          xpReward: 50,
-          goldReward: 25,
-          rewardItemId: "holy-relic"
+          xpReward: 120,
+          goldReward: 60
         },
         {
           text: t("quests.priest-plague.choice2"),
@@ -1892,9 +1984,8 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
           difficulty: 30,
           successMessage: t("quests.priest-demon-portal.success1"),
           failureMessage: t("quests.priest-demon-portal.failure1"),
-          xpReward: 130,
-          goldReward: 70,
-          rewardItemId: "divine-robes"
+          xpReward: 50,
+          goldReward: 25
         },
         {
           text: t("quests.priest-demon-portal.choice2"),

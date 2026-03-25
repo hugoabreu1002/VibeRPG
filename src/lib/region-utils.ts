@@ -1,6 +1,7 @@
 import type { Character } from "../types/game";
 import { QUESTS } from "./game-data";
 import { getQuestMap } from "./map-data";
+import { hasFinishedMainStory } from "./quest-logic";
 
 export interface Region {
   id: string;
@@ -83,7 +84,7 @@ export const REGIONS: Record<string, Region> = {
     description: "Mountain peak where a wyvern has made its lair.",
     unlockedBy: ["warrior-orc-camp"],
     availableQuests: ["warrior-dragon-lair"],
-    nextRegions: [],
+    nextRegions: ["Capital City"],
     requiredQuestsToComplete: 1
   },
   "Crystal Caverns": {
@@ -101,7 +102,7 @@ export const REGIONS: Record<string, Region> = {
     description: "Ancient watchtower corrupted by a rogue mage's dark experiments.",
     unlockedBy: ["mage-crystalcave"],
     availableQuests: ["mage-tower"],
-    nextRegions: [],
+    nextRegions: ["Astral Observatory"],
     requiredQuestsToComplete: 1
   },
   "Southern Village": {
@@ -137,6 +138,33 @@ export const REGIONS: Record<string, Region> = {
     description: "Ancient ruins where a demon portal has opened.",
     unlockedBy: ["priest-undead-crypt"],
     availableQuests: ["priest-demon-portal"],
+    nextRegions: ["Celestial Shrine"],
+    requiredQuestsToComplete: 1
+  },
+  "Capital City": {
+    id: "Capital City",
+    name: "Capital City",
+    description: "The grand capital of the realm, currently under threat from within.",
+    unlockedBy: ["warrior-dragon-lair"],
+    availableQuests: ["warrior-kings-guard"],
+    nextRegions: [],
+    requiredQuestsToComplete: 1
+  },
+  "Astral Observatory": {
+    id: "Astral Observatory",
+    name: "Astral Observatory",
+    description: "A high peak where mages study the stars and the planes beyond.",
+    unlockedBy: ["mage-tower"],
+    availableQuests: ["mage-astral-plane"],
+    nextRegions: [],
+    requiredQuestsToComplete: 1
+  },
+  "Celestial Shrine": {
+    id: "Celestial Shrine",
+    name: "Celestial Shrine",
+    description: "An ancient shrine dedicated to celestial beings of pure light.",
+    unlockedBy: ["priest-demon-portal"],
+    availableQuests: ["priest-celestial-shrine"],
     nextRegions: [],
     requiredQuestsToComplete: 1
   }
@@ -218,18 +246,29 @@ export function getAvailableRegions(character: Character): Region[] {
   const completedQuests = character.completedQuests;
   const unlockedRegions: Region[] = [];
 
-  // Always include Hub Town
-  unlockedRegions.push(REGIONS["Hub Town"]);
+  // Default unlocked areas based on class
+  if (character.class === "mage") unlockedRegions.push(REGIONS["Northern Village"]);
+  else if (character.class === "priest") unlockedRegions.push(REGIONS["Southern Village"]);
+  else unlockedRegions.push(REGIONS["Hub Town"]);
+
+  // If the player has finished the main story, unlock the intro towns for other classes
+  if (hasFinishedMainStory(character)) {
+    if (!unlockedRegions.some(r => r.id === "Hub Town")) unlockedRegions.push(REGIONS["Hub Town"]);
+    if (!unlockedRegions.some(r => r.id === "Northern Village")) unlockedRegions.push(REGIONS["Northern Village"]);
+    if (!unlockedRegions.some(r => r.id === "Southern Village")) unlockedRegions.push(REGIONS["Southern Village"]);
+  }
 
   // Check each region to see if it's unlocked
   Object.values(REGIONS).forEach(region => {
-    if (region.id === "Hub Town") return; // Already added
+    // Skip if already in the list
+    if (unlockedRegions.some(r => r.id === region.id)) return;
 
     // Check if all required quests are completed
-    const isUnlocked = region.unlockedBy.every(questId => completedQuests.includes(questId));
-
-    if (isUnlocked) {
-      unlockedRegions.push(region);
+    if (region.unlockedBy.length > 0) {
+      const isUnlocked = region.unlockedBy.every(questId => completedQuests.includes(questId));
+      if (isUnlocked) {
+        unlockedRegions.push(region);
+      }
     }
   });
 

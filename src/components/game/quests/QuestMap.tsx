@@ -4,7 +4,7 @@ import type { Quest, QuestMapData, NPC, TileType, InventoryItem, CharacterClass,
 import { NPCSprite } from "../world/NPCSprites";
 import { InventorySprite } from "../character/InventorySprite";
 import { audioManager } from "../../../lib/audio";
-import { acceptQuestFromNPC } from "../../../lib/quest-logic";
+import { acceptQuestFromNPC, hasFinishedMainStory } from "../../../lib/quest-logic";
 import {
   TileTreeIcon, TileWaterIcon, TileMountainIcon, TileHouseIcon,
   TileCaveIcon, TileLavaIcon, ExclamationIndicator
@@ -233,7 +233,7 @@ export function QuestMap({
     if (!npc) return [];
     if (npc.questId && completedQuests.includes(npc.questId)) {
       const nextQuest = allQuests
-        .filter(q => q.class === playerClass && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
+        .filter(q => (q.class === playerClass || hasFinishedMainStory(character)) && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
         .sort((a, b) => a.minLevel - b.minLevel)[0];
 
       if (nextQuest) {
@@ -263,7 +263,7 @@ export function QuestMap({
           setDialogIndex(0);
           
           const nextQuest = allQuests
-            .filter(q => q.class === playerClass && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
+            .filter(q => (q.class === playerClass || hasFinishedMainStory(character)) && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
             .sort((a, b) => a.minLevel - b.minLevel)[0];
             
           if (nextQuest && onNavigateToRegion && nextQuest.region !== character.currentRegion) {
