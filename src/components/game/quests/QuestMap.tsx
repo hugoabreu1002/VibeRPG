@@ -24,17 +24,18 @@ const TILE_COLORS: Record<TileType, { bg: string; border: string; accent: string
 };
 
 interface QuestMapProps {
-  quest?: Quest;
   mapData: QuestMapData;
   character: Character;
   playerClass?: CharacterClass;
   playerRank?: string;
   inventory?: InventoryItem[];
   completedQuests?: string[];
-  activeQuestId?: string;
-  allQuests?: Quest[];
+  activeQuestId?: string | null;
+  quest?: Quest; // For rendering active quest objectives
+  allQuests: Quest[];
   onNPCInteract: (npc: NPC) => void;
   onBack: () => void;
+  onNavigateToRegion?: (regionId: string) => void;
   onQuestAccepted?: (quest: Quest) => void;
 }
 
@@ -208,6 +209,7 @@ export function QuestMap({
   allQuests = [],
   onNPCInteract,
   onBack,
+  onNavigateToRegion,
   onQuestAccepted
 }: QuestMapProps) {
   // const { t } = useI18n();
@@ -227,9 +229,28 @@ export function QuestMap({
   const equippedArmor = inventory?.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory?.find(i => i.type === "boot" && i.equipped);
 
+  const getDialogsForNPC = useCallback((npc: NPC | null) => {
+    if (!npc) return [];
+    if (npc.questId && completedQuests.includes(npc.questId)) {
+      const nextQuest = allQuests
+        .filter(q => q.class === playerClass && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
+        .sort((a, b) => a.minLevel - b.minLevel)[0];
+
+      if (nextQuest) {
+        return [`You've finished your work with me. You should head to ${nextQuest.region} to continue your journey.`];
+      } else {
+        return ["You have become a legend. There are no more challenges for you right now."];
+      }
+    }
+    return npc.dialog;
+  }, [completedQuests, allQuests, playerClass]);
+
   const handleDialogAdvance = useCallback(async () => {
     if (!selectedNPC) return;
-    if (dialogIndex < selectedNPC.dialog.length - 1) {
+    
+    const dialogs = getDialogsForNPC(selectedNPC);
+    
+    if (dialogIndex < dialogs.length - 1) {
       setDialogIndex(dialogIndex + 1);
       audioManager.playSfx("click");
     } else {
@@ -237,10 +258,17 @@ export function QuestMap({
       if (selectedNPC.questId) {
         // Check if quest is already completed
         if (completedQuests.includes(selectedNPC.questId)) {
-          // Quest already completed, just close dialog
           audioManager.playSfx("click");
           setSelectedNPC(null);
           setDialogIndex(0);
+          
+          const nextQuest = allQuests
+            .filter(q => q.class === playerClass && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
+            .sort((a, b) => a.minLevel - b.minLevel)[0];
+            
+          if (nextQuest && onNavigateToRegion && nextQuest.region !== character.currentRegion) {
+            onNavigateToRegion(nextQuest.region);
+          }
           return;
         }
 
@@ -518,23 +546,23 @@ export function QuestMap({
                   animate={{ opacity: 1, x: 0 }}
                   className="text-sm text-slate-300 leading-relaxed mb-4 min-h-[48px]"
                 >
-                  {selectedNPC.dialog[dialogIndex]}
+                  {getDialogsForNPC(selectedNPC)[dialogIndex]}
                 </motion.p>
 
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-500">
-                    {dialogIndex + 1} / {selectedNPC.dialog.length}
+                    {dialogIndex + 1} / {getDialogsForNPC(selectedNPC).length}
                   </span>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleDialogAdvance}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold ${dialogIndex < selectedNPC.dialog.length - 1
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold ${dialogIndex < getDialogsForNPC(selectedNPC).length - 1
                       ? "bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700"
                       : "btn-fantasy"
                       }`}
                   >
-                    {dialogIndex < selectedNPC.dialog.length - 1
+                    {dialogIndex < getDialogsForNPC(selectedNPC).length - 1
                       ? "Continue (Enter) ▶"
                       : selectedNPC.questId
                         ? (() => {

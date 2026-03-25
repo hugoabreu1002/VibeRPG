@@ -76,6 +76,10 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
       { id: "merchant-nv", name: "Traveling Merchant", position: { x: 8, y: 3 }, sprite: "merchant",
         dialog: ["Greetings! I have wares if you're interested.", "Be careful out there — dark times ahead."],
       },
+      { id: "priest-nv", name: "Village Priest", position: { x: 5, y: 1 }, sprite: "priest",
+        dialog: ["The village needs protection from evil.", "A grand blessing ritual is required.", "Can you perform it?"],
+        questId: "priest-blessing",
+      },
     ],
   },
 

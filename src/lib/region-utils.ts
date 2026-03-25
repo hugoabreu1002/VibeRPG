@@ -19,82 +19,90 @@ export const REGIONS: Record<string, Region> = {
     name: "Hub Town",
     description: "The central town where adventurers gather. All classes start here.",
     unlockedBy: [],
-    availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead"],
-    nextRegions: ["Northern Village", "Whispering Woods", "Mountain Pass"],
+    availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead", "mage-apprentice", "warrior-village", "priest-plague"],
+    nextRegions: ["Whispering Woods", "Trade Route", "Abandoned Church"],
     requiredQuestsToComplete: 1 // Tutorial region - quick progression
   },
   "Northern Village": {
     id: "Northern Village",
     name: "Northern Village",
     description: "A peaceful village under threat from bandits and monsters.",
-    unlockedBy: ["mage-library", "warrior-village", "priest-plague"],
-    availableQuests: ["mage-library", "warrior-village", "priest-plague"],
-    nextRegions: ["Trade Route", "Training Grounds", "Dark Forest"],
-    requiredQuestsToComplete: 2 // Complete 2 of 3 quests to advance
+    unlockedBy: ["priest-ghost"], // Priest unlocks this after ghost. Warrior doesn't need to visit this for next quest, but can.
+    availableQuests: ["warrior-village", "priest-blessing"],
+    nextRegions: ["Trade Route", "Sacred Catacombs"],
+    requiredQuestsToComplete: 1
   },
   "Whispering Woods": {
     id: "Whispering Woods",
     name: "Whispering Woods",
     description: "Ancient forest filled with magical creatures and hidden dangers.",
-    unlockedBy: ["mage-apprentice", "warrior-village", "priest-plague"],
-    availableQuests: ["mage-apprentice"],
-    nextRegions: ["Crystal Caverns", "Shadow Tower"]
+    unlockedBy: ["mage-apprentice"],
+    availableQuests: ["mage-apprentice", "mage-library"],
+    nextRegions: ["Mountain Pass"],
+    requiredQuestsToComplete: 1
   },
   "Mountain Pass": {
     id: "Mountain Pass",
     name: "Mountain Pass",
     description: "Treacherous mountain path guarded by earth elementals.",
-    unlockedBy: ["mage-elemental", "warrior-village", "priest-plague"],
+    unlockedBy: ["mage-library"],
     availableQuests: ["mage-elemental"],
-    nextRegions: ["Dragon Peak"]
+    nextRegions: ["Crystal Caverns"],
+    requiredQuestsToComplete: 1
   },
   "Trade Route": {
     id: "Trade Route",
     name: "Trade Route",
     description: "Dangerous road plagued by wolf packs and bandits.",
-    unlockedBy: ["warrior-monster", "mage-library", "priest-plague"],
+    unlockedBy: ["warrior-village"],
     availableQuests: ["warrior-monster"],
-    nextRegions: []
+    nextRegions: ["Training Grounds"],
+    requiredQuestsToComplete: 1
   },
   "Training Grounds": {
     id: "Training Grounds",
     name: "Training Grounds",
     description: "Arena where warriors test their skills against honorable opponents.",
-    unlockedBy: ["warrior-duel", "mage-library", "priest-plague"],
+    unlockedBy: ["warrior-monster"],
     availableQuests: ["warrior-duel"],
-    nextRegions: []
+    nextRegions: ["Dark Forest"],
+    requiredQuestsToComplete: 1
   },
   "Dark Forest": {
     id: "Dark Forest",
     name: "Dark Forest",
     description: "Foreboding woods where orcs have set up their war camp.",
-    unlockedBy: ["warrior-orc-camp", "mage-library", "priest-plague"],
+    unlockedBy: ["warrior-duel"],
     availableQuests: ["warrior-orc-camp"],
-    nextRegions: []
+    nextRegions: ["Dragon Peak"],
+    requiredQuestsToComplete: 1
   },
   "Dragon Peak": {
     id: "Dragon Peak",
     name: "Dragon Peak",
     description: "Mountain peak where a wyvern has made its lair.",
-    unlockedBy: ["warrior-dragon-lair"],
+    unlockedBy: ["warrior-orc-camp"],
     availableQuests: ["warrior-dragon-lair"],
-    nextRegions: []
+    nextRegions: [],
+    requiredQuestsToComplete: 1
   },
   "Crystal Caverns": {
     id: "Crystal Caverns",
     name: "Crystal Caverns",
     description: "Ancient caves filled with magical crystals and dangerous creatures.",
-    unlockedBy: ["mage-crystalcave"],
+    unlockedBy: ["mage-elemental"],
     availableQuests: ["mage-crystalcave"],
-    nextRegions: []
+    nextRegions: ["Shadow Tower"],
+    requiredQuestsToComplete: 1
   },
   "Shadow Tower": {
     id: "Shadow Tower",
     name: "Shadow Tower",
     description: "Ancient watchtower corrupted by a rogue mage's dark experiments.",
-    unlockedBy: ["mage-tower"],
+    unlockedBy: ["mage-crystalcave"],
     availableQuests: ["mage-tower"],
-    nextRegions: []
+    nextRegions: [],
+    requiredQuestsToComplete: 1
   },
   "Southern Village": {
     id: "Southern Village",
@@ -102,31 +110,35 @@ export const REGIONS: Record<string, Region> = {
     description: "Village suffering from a mysterious plague.",
     unlockedBy: ["priest-plague"],
     availableQuests: ["priest-plague"],
-    nextRegions: ["Abandoned Church", "Sacred Catacombs", "Cursed Ruins"]
+    nextRegions: ["Abandoned Church"],
+    requiredQuestsToComplete: 1
   },
   "Abandoned Church": {
     id: "Abandoned Church",
     name: "Abandoned Church",
     description: "Old church haunted by a restless spirit.",
-    unlockedBy: ["priest-ghost"],
+    unlockedBy: ["priest-plague"],
     availableQuests: ["priest-ghost"],
-    nextRegions: []
+    nextRegions: ["Northern Village"],
+    requiredQuestsToComplete: 1
   },
   "Sacred Catacombs": {
     id: "Sacred Catacombs",
     name: "Sacred Catacombs",
     description: "Underground crypts where undead creatures have broken free.",
-    unlockedBy: ["priest-undead-crypt"],
+    unlockedBy: ["priest-blessing"],
     availableQuests: ["priest-undead-crypt"],
-    nextRegions: []
+    nextRegions: ["Cursed Ruins"],
+    requiredQuestsToComplete: 1
   },
   "Cursed Ruins": {
     id: "Cursed Ruins",
     name: "Cursed Ruins",
     description: "Ancient ruins where a demon portal has opened.",
-    unlockedBy: ["priest-demon-portal"],
+    unlockedBy: ["priest-undead-crypt"],
     availableQuests: ["priest-demon-portal"],
-    nextRegions: []
+    nextRegions: [],
+    requiredQuestsToComplete: 1
   }
 };
 
@@ -236,9 +248,6 @@ export function getAvailableQuestsForRegion(regionId: string, character: Charact
     // Check class requirement
     if (quest.class !== character.class) return false;
 
-    // Check level requirement
-    if (quest.minLevel > character.level) return false;
-
     // Check if already completed
     if (character.completedQuests.includes(questId)) return false;
 
@@ -303,9 +312,6 @@ export function getRegionProgress(character: Character): { current: number; tota
 
     // Check class requirement
     if (quest.class !== character.class) return false;
-
-    // Check level requirement
-    if (quest.minLevel > character.level) return false;
 
     return true;
   });

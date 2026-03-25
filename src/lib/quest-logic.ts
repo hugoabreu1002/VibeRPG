@@ -220,7 +220,6 @@ export async function resetQuest(
 export function getAvailableQuests(character: Character): Quest[] {
     return QUESTS.filter(q =>
         q.class === character.class &&
-        q.minLevel <= character.level &&
         !character.completedQuests.includes(q.id) &&
         character.acceptedQuests?.includes(q.id)
     );

@@ -1018,7 +1018,7 @@ function AppContent() {
                             onNPCInteract={(npc: NPC) => {
                               if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
                                 const quest = QUESTS.find(q => q.id === npc.questId);
-                                if (quest && quest.class === character.class && quest.minLevel <= character.level) {
+                                if (quest && quest.class === character.class) {
                                   handleAcceptQuestFromNPC(quest);
                                 }
                               }
@@ -1030,6 +1030,7 @@ function AppContent() {
                             activeQuestId={activeQuest?.id}
                             allQuests={QUESTS}
                             onBack={() => { }}
+                            onNavigateToRegion={handleRegionChange}
                           />
                         );
                       })()}
