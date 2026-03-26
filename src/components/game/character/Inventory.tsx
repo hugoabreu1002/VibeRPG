@@ -1,17 +1,17 @@
+import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { InventoryItem } from "../../../types/game";
+import { toast } from "../../../hooks/use-toast";
 import type { CharacterClass } from "../../../lib/storage";
-import { EquipmentSlot } from "./EquipmentSlot";
-import { ItemDetailModal } from "../items/ItemDetailModal";
-import { WeaponIcon } from "../items/WeaponIcon";
+import type { InventoryItem } from "../../../types/game";
 import { ArmorIcon } from "../items/ArmorIcon";
-import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
+import { HatIcon } from "../items/HatIcon";
+import { ItemDetailModal } from "../items/ItemDetailModal";
+import { WeaponIcon } from "../items/WeaponIcon";
+import { HealthIcon, ManaIcon, ShieldIcon, SwordIcon } from "../ui/GameIcons";
+import { EquipmentSlot } from "./EquipmentSlot";
 import { InventorySprite } from "./InventorySprite";
-import { InventoryTabIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon } from "../ui/GameIcons";
-import { toast } from "../../../hooks/use-toast";
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
   switch (rarity) {
@@ -75,7 +75,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
     onToggleEquip(item);
     setSpriteAnimation("spell");
     setTimeout(() => setSpriteAnimation("idle"), 600);
-    
+
     // Show toast notification
     if (wasEquipped) {
       toast({
@@ -100,179 +100,185 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
       transition={{ duration: 0.3 }}
       className="fantasy-card rounded-xl p-5"
     >
-      <h2 className="text-xl font-bold mb-5 text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
-        <InventoryTabIcon size={28} /> Inventory
-      </h2>
 
-      {/* Equipment Slots */}
-      <div className="mb-6">
-        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">Currently Equipped</h3>
-        <div className="grid grid-cols-3 grid-rows-3 gap-6 sm:gap-8 max-w-md mx-auto items-center justify-items-center bg-slate-900/40 p-6 sm:p-8 rounded-xl border border-slate-700/30">
-          {/* Top: Hat */}
-          <div className="col-start-2 row-start-1 flex justify-center">
-            <EquipmentSlot
-              type="hat"
-              item={equippedHat}
-              items={inventory.filter(i => i.type === "hat")}
-              onSelect={(item) => onSelectItem(item)}
-            />
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* Left Column: Currently Equipped */}
+        <div className="lg:w-1/3 space-y-4">
+          <div className="bg-slate-900/40 p-5 rounded-xl border border-slate-700/30">
+            <h3 className="text-[10px] font-bold mb-4 text-amber-200/60 uppercase tracking-wider text-center">Currently Equipped</h3>
+            <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[240px] mx-auto items-center justify-items-center">
+              {/* Top: Hat */}
+              <div className="col-start-2 row-start-1 flex justify-center">
+                <EquipmentSlot
+                  type="hat"
+                  item={equippedHat}
+                  items={inventory.filter(i => i.type === "hat")}
+                  onSelect={(item) => onSelectItem(item)}
+                />
+              </div>
+
+              {/* Left: Weapon */}
+              <div className="col-start-1 row-start-2 flex justify-center">
+                <EquipmentSlot
+                  type="weapon"
+                  item={equippedWeapon}
+                  items={inventory.filter(i => i.type === "weapon")}
+                  onSelect={(item) => onSelectItem(item)}
+                />
+              </div>
+
+              {/* Center: Character */}
+              <div className="col-start-2 row-start-2 flex justify-center min-w-[64px] min-h-[64px] scale-110">
+                {characterClass && (
+                  <InventorySprite
+                    characterClass={characterClass}
+                    rank={rank}
+                    animationType={spriteAnimation as any}
+                    equippedWeapon={equippedWeapon}
+                    equippedArmor={equippedArmor}
+                    equippedBoot={equippedBoot}
+                    equippedHat={equippedHat}
+                  />
+                )}
+              </div>
+
+              {/* Right: Armor */}
+              <div className="col-start-3 row-start-2 flex justify-center">
+                <EquipmentSlot
+                  type="armor"
+                  item={equippedArmor}
+                  items={inventory.filter(i => i.type === "armor")}
+                  onSelect={(item) => onSelectItem(item)}
+                />
+              </div>
+
+              {/* Bottom: Boots */}
+              <div className="col-start-2 row-start-3 flex justify-center">
+                <EquipmentSlot
+                  type="boot"
+                  item={equippedBoot}
+                  items={inventory.filter(i => i.type === "boot")}
+                  onSelect={(item) => onSelectItem(item)}
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-slate-700/30 space-y-2">
+              <div className="flex justify-between text-xs">
+                <span className="text-slate-400">Total Power</span>
+                <span className="text-amber-400 font-bold">
+                  {inventory.filter(i => i.equipped).reduce((sum, i) => sum + (i.stats.attack || 0) + (i.stats.defense || 0), 0)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column: Scrollable Lists */}
+        <div className="lg:w-2/3 space-y-8">
+          {/* Equipments Grid */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider flex justify-between items-center">
+              <span>Equipments ({equipments.length})</span>
+            </h3>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar content-start">
+              <AnimatePresence>
+                {equipments.map((item, index) => (
+                  <motion.div
+                    key={`${item.id}-${index}`}
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: index * 0.05 }}
+                    whileHover={{ scale: 1.02, y: -2 }}
+                    onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
+                    className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedItem?.id === item.id
+                      ? "border-amber-500/50 bg-amber-950/30"
+                      : item.equipped
+                        ? "border-emerald-500/40 bg-emerald-950/20"
+                        : `${getRarityBorder(item.rarity)} ${getRarityBg(item.rarity)}`
+                      }`}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-slate-900/60 border border-slate-700/30 flex items-center justify-center">
+                        {item.type === "weapon" && <WeaponIcon weaponId={item.id} size="w-6 h-6" />}
+                        {item.type === "armor" && <ArmorIcon armorId={item.id} size="w-6 h-6" />}
+                        {item.type === "hat" && <HatIcon hatId={item.id} size="w-6 h-6" />}
+                        {item.type === "boot" && <BootIcon bootId={item.id} size="w-6 h-6" />}
+                      </div>
+                      <div className="flex-1 overflow-hidden">
+                        <span className="font-semibold text-sm text-slate-100 block truncate">{item.name}</span>
+                      </div>
+                      {item.equipped && (
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full" />
+                      )}
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {Object.entries(item.stats).map(([stat, value]) => value ? (
+                        <span key={stat} className="text-[9px] bg-slate-800/60 border border-slate-700/30 px-1.5 py-0.5 rounded text-slate-300 flex items-center gap-1 uppercase">
+                          {stat === 'attack' && <SwordIcon size={10} />}
+                          {stat === 'defense' && <ShieldIcon size={10} />}
+                          <span className="font-bold">+{value}</span>
+                        </span>
+                      ) : null)}
+                    </div>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
           </div>
 
-          {/* Left: Weapon */}
-          <div className="col-start-1 row-start-2 flex justify-center">
-            <EquipmentSlot
-              type="weapon"
-              item={equippedWeapon}
-              items={inventory.filter(i => i.type === "weapon")}
-              onSelect={(item) => onSelectItem(item)}
-            />
-          </div>
-
-          {/* Center: Character */}
-          <div className="col-start-2 row-start-2 flex justify-center min-w-[64px] min-h-[64px]">
-            {characterClass && (
-              <InventorySprite
-                characterClass={characterClass}
-                rank={rank}
-                animationType={spriteAnimation as any}
-                equippedWeapon={equippedWeapon}
-                equippedArmor={equippedArmor}
-                equippedBoot={equippedBoot}
-                equippedHat={equippedHat}
-              />
+          {/* Bag / Food Grid */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider">Bag ({bagItems.length})</h3>
+            {bagItems.length === 0 ? (
+              <p className="text-sm text-slate-500 italic">Your bag is empty</p>
+            ) : (
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 max-h-[180px] overflow-y-auto pr-2 custom-scrollbar content-start">
+                <AnimatePresence>
+                  {bagItems.map((item, index) => (
+                    <motion.div
+                      key={`${item.id}-${index}`}
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: index * 0.05 }}
+                      whileHover={{ scale: 1.02, y: -2 }}
+                      onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
+                      className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedItem?.id === item.id
+                        ? "border-amber-500/50 bg-amber-950/30"
+                        : `${getRarityBorder(item.rarity)} ${getRarityBg(item.rarity)}`
+                        }`}
+                    >
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-8 h-8 rounded-lg bg-slate-900/60 border border-slate-700/30 flex items-center justify-center">
+                          <FoodIcon foodId={item.id} size="w-6 h-6" />
+                        </div>
+                        <div className="flex-1 overflow-hidden">
+                          <span className="font-semibold text-sm text-slate-100 block truncate">{item.name}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1.5 flex-wrap">
+                        {item.restores && Object.entries(item.restores).map(([stat, value]) => (
+                          <span key={`restores-${stat}`} className="text-[9px] bg-emerald-950/40 border border-emerald-800/30 px-2 py-0.5 rounded text-emerald-400 font-bold flex items-center gap-1 uppercase">
+                            {stat === 'hp' && <HealthIcon size={10} />}
+                            {stat === 'mp' && <ManaIcon size={10} />}
+                            <span>+{value}</span>
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+              </div>
             )}
           </div>
-
-          {/* Right: Armor */}
-          <div className="col-start-3 row-start-2 flex justify-center">
-            <EquipmentSlot
-              type="armor"
-              item={equippedArmor}
-              items={inventory.filter(i => i.type === "armor")}
-              onSelect={(item) => onSelectItem(item)}
-            />
-          </div>
-
-          {/* Bottom: Boots */}
-          <div className="col-start-2 row-start-3 flex justify-center">
-            <EquipmentSlot
-              type="boot"
-              item={equippedBoot}
-              items={inventory.filter(i => i.type === "boot")}
-              onSelect={(item) => onSelectItem(item)}
-            />
-          </div>
         </div>
-      </div>
-
-      {/* Equipments Grid */}
-      <div className="mb-6">
-        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">Equipments ({equipments.length})</h3>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <AnimatePresence>
-            {equipments.map((item, index) => (
-              <motion.div
-                key={`${item.id}-${index}`}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.05 }}
-                whileHover={{ scale: 1.02, y: -2 }}
-                onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
-                className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedItem?.id === item.id
-                  ? "border-amber-500/50 bg-amber-950/30"
-                  : item.equipped
-                    ? "border-emerald-500/40 bg-emerald-950/20"
-                    : `${getRarityBorder(item.rarity)} ${getRarityBg(item.rarity)}`
-                  }`}
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900/60 border border-slate-700/30 flex items-center justify-center">
-                    {item.type === "weapon" && <WeaponIcon weaponId={item.id} size="w-6 h-6" />}
-                    {item.type === "armor" && <ArmorIcon armorId={item.id} size="w-6 h-6" />}
-                    {item.type === "hat" && <HatIcon hatId={item.id} size="w-6 h-6" />}
-                    {item.type === "boot" && <BootIcon bootId={item.id} size="w-6 h-6" />}
-                  </div>
-                  <div className="flex-1">
-                    <span className="font-semibold text-sm text-slate-100">{item.name}</span>
-                  </div>
-                  {item.equipped && (
-                    <motion.span
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      className="text-xs bg-emerald-700 text-emerald-100 px-1.5 py-0.5 rounded font-bold"
-                    >
-                      Equipped
-                    </motion.span>
-                  )}
-                </div>
-                <div className={`text-xs capitalize mb-1 ${getRarityLabel(item.rarity)}`}>{item.rarity} {item.type}</div>
-                <div className="flex gap-1.5 flex-wrap">
-                  {Object.entries(item.stats).map(([stat, value]) => (
-                    <span key={stat} className="text-[10px] bg-slate-800/60 border border-slate-700/30 px-1.5 py-1 rounded text-slate-300 flex items-center gap-1">
-                      {stat === 'attack' && <SwordIcon size={10} />}
-                      {stat === 'defense' && <ShieldIcon size={10} />}
-                      {stat === 'hp' && <HealthIcon size={10} />}
-                      {stat === 'mp' && <ManaIcon size={10} />}
-                      <span className="font-bold">+{value}</span>
-                    </span>
-                  ))}
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      {/* Bag / Food Grid */}
-      <div>
-        <h3 className="text-xs font-bold mb-3 text-amber-200/60 uppercase tracking-wider">Bag ({bagItems.length})</h3>
-        {bagItems.length === 0 ? (
-          <p className="text-sm text-slate-500 italic">Your bag is empty</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <AnimatePresence>
-              {bagItems.map((item, index) => (
-                <motion.div
-                  key={`${item.id}-${index}`}
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.02, y: -2 }}
-                  onClick={() => onSelectItem(selectedItem?.id === item.id ? null : item)}
-                  className={`p-3 rounded-lg border-2 cursor-pointer transition-all ${selectedItem?.id === item.id
-                    ? "border-amber-500/50 bg-amber-950/30"
-                    : `${getRarityBorder(item.rarity)} ${getRarityBg(item.rarity)}`
-                    }`}
-                >
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-slate-900/60 border border-slate-700/30 flex items-center justify-center">
-                      <FoodIcon foodId={item.id} size="w-6 h-6" />
-                    </div>
-                    <div className="flex-1">
-                      <span className="font-semibold text-sm text-slate-100">{item.name}</span>
-                    </div>
-                  </div>
-                  <div className="text-xs text-slate-500 capitalize mb-1">{item.type}</div>
-                  <div className="flex gap-1.5 flex-wrap">
-                    {item.restores && Object.entries(item.restores).map(([stat, value]) => (
-                      <span key={`restores-${stat}`} className="text-[10px] bg-emerald-950/40 border border-emerald-800/30 px-2 py-1 rounded text-emerald-400 font-bold flex items-center gap-1.5 uppercase letter-spacing-1">
-                        {stat === 'hp' && <HealthIcon size={12} />}
-                        {stat === 'mp' && <ManaIcon size={12} />}
-                        <span>{stat}: {value}</span>
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        )}
       </div>
 
       {/* Item Detail Modal */}
       <AnimatePresence>
         {selectedItem && (
-            <ItemDetailModal
+          <ItemDetailModal
             item={selectedItem}
             onClose={() => onSelectItem(null)}
             onToggleEquip={() => handleEquip(selectedItem)}

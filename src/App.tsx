@@ -1,37 +1,38 @@
-import { useState, useEffect, useCallback, type FormEvent } from "react";
-import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
-import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
-import { Inventory, Quests, QuestBattle, QuestMap, Shop, MapSelection, MapControls } from "./components/game";
+import { AnimatePresence, motion } from "framer-motion";
 import {
-  Menu,
-  X,
-  ChevronRight,
-  ChevronLeft,
-  Map as MapIcon,
-  ShoppingBag,
-  Users,
-  Scroll,
   Gamepad2,
-  Trophy,
   Play,
   Square,
-  Pause
+  Trophy,
+  Users
 } from "lucide-react";
-import { GuildEvolution } from "./components/game/ui/GuildEvolution";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Inventory, MapControls, QuestBattle, QuestMap, Quests, Shop } from "./components/game";
 import { CelebrationOverlay, QuickToast } from "./components/game/ui/CelebrationOverlay";
-import { getQuestMap } from "./lib/map-data";
+import {
+  ClassMageIcon,
+  ClassPriestIcon, ClassRogueIcon,
+  ClassWarriorIcon,
+  GoldIcon,
+  GuildTabIcon,
+  HealthIcon,
+  InventoryTabIcon,
+  ManaIcon,
+  MapTabIcon,
+  ShopTabIcon,
+  SwordIcon,
+  XPIcon
+} from "./components/game/ui/GameIcons";
+import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { audioManager } from "./lib/audio";
+import { ALL_ITEMS, CHARACTER_CLASSES, getEnemy, getInitialCharacterStats, getStarterItems, QUEST_ENEMIES, QUESTS, SHOP_ITEMS } from "./lib/game-data";
+import { getQuestMap } from "./lib/map-data";
 import { pokiService } from "./lib/poki";
+import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
 import { RANKS } from "./lib/rank-utils";
 import { getRegionMapData } from "./lib/region-utils";
-import {
-  HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon,
-  ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
-  MapTabIcon, InventoryTabIcon, ShopTabIcon, GuildTabIcon
-} from "./components/game/ui/GameIcons";
+import { createCharacter as dbCreateCharacter, updateCharacter as dbUpdateCharacter, deleteCharacter, getAllCharacters, getCurrentCharacter, type CharacterClass } from "./lib/storage";
+import type { Character, Enemy, InventoryItem, NPC, Quest, QuestChoice, QuestResult, QuestState, Tab } from "./types/game";
 
 const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
   mage: <ClassMageIcon size={20} />,
@@ -116,6 +117,7 @@ function AppContent() {
   // Track previous level for level-up detection
   const [isMapControlsMinimized, setIsMapControlsMinimized] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
+  const [showReviveOverlay, setShowReviveOverlay] = useState(false);
 
   // Load all characters
   useEffect(() => {
@@ -157,7 +159,7 @@ function AppContent() {
   };
 
 
-  
+
   // Auto-save character
   useEffect(() => {
     if (character) {
@@ -392,26 +394,66 @@ function AppContent() {
   const handleBattleDefeat = () => {
     if (!character || !selectedChoice) return;
 
+    // Signal gameplay stop on defeat
+    pokiService.gameplayStop();
+
+    // Show Revive Overlay instead of direct defeat
+    setShowReviveOverlay(true);
+  };
+
+  const handleReviveWithAd = async () => {
+    if (!character) return;
+
+    const success = await pokiService.rewardedBreak({
+      onStart: () => audioManager.setAdMute(true)
+    });
+
+    audioManager.setAdMute(false);
+
+    if (success) {
+      // Revive with full HP/MP
+      setCharacter({
+        ...character,
+        hp: character.maxHp,
+        mp: character.maxMp
+      });
+      setShowReviveOverlay(false);
+      setQuestState("active"); // Resume quest
+      setActiveEnemy(null); // Clear enemy to allow retry/continue
+
+      // Signal gameplay start after revive
+      pokiService.gameplayStart();
+
+      setToast({
+        message: "Revived with full energy!",
+        icon: "✨"
+      });
+      audioManager.playSfx("victory");
+    }
+  };
+
+  const handleAcceptDefeat = () => {
+    if (!character) return;
+
     // Take HP damage on defeat - restore half HP
     const newHp = Math.max(1, Math.floor(character.maxHp / 2));
 
-    // Reset quest state instead of completing it - quest can be attempted again
     setCharacter({
       ...character,
       hp: newHp,
-      questState: "list" as QuestState
     });
 
-    // Clear quest state without marking quest as completed
+    // Clear quest state
     setActiveQuest(null);
     setQuestState("list");
     setActiveEnemy(null);
     setSelectedChoice(null);
+    setShowReviveOverlay(false);
 
-    // Redirect to shop on defeat to allow buying healing items
+    // Redirect to shop
     setActiveTab("Shop");
     setQuestToast({
-      message: "Defeated! Visit the shop to buy healing items, then try the quest again.",
+      message: "Defeated! Visit the shop to buy healing items.",
       icon: "💀"
     });
   };
@@ -458,7 +500,7 @@ function AppContent() {
     const success = await pokiService.rewardedBreak({
       onStart: () => audioManager.setAdMute(true)
     });
-    
+
     audioManager.setAdMute(false);
 
     if (success) {
@@ -472,9 +514,15 @@ function AppContent() {
     }
   };
 
-  const handleStartGame = () => {
+  const handleStartGame = async () => {
     console.log("Start Game Button Clicked");
     try {
+      // Show commercial break before starting game as per Poki recommendations
+      await pokiService.commercialBreak(() => {
+        audioManager.setAdMute(true);
+      });
+      audioManager.setAdMute(false);
+
       setGameStarted(true);
       audioManager.start();
       pokiService.gameplayStart();
@@ -492,8 +540,14 @@ function AppContent() {
   };
 
   // Map selection handler
-  const handleRegionChange = (regionId: string) => {
+  const handleRegionChange = async (regionId: string) => {
     if (character) {
+      // Signal commercial break on region change (natural transition)
+      await pokiService.commercialBreak(() => {
+        audioManager.setAdMute(true);
+      });
+      audioManager.setAdMute(false);
+
       setCharacter({ ...character, currentRegion: regionId });
       audioManager.playSfx("click");
     }
@@ -649,10 +703,10 @@ function AppContent() {
               <span className="text-amber-500 font-extralight opacity-50">/</span>
               <span className="text-slate-100 group-hover:text-white transition-colors">RPG</span>
             </h1>
-            
+
             {/* Poki STOP Button */}
             {gameStarted && (
-              <button 
+              <button
                 onClick={handleStopGame}
                 className="ml-4 flex items-center gap-1.5 bg-red-950/40 border border-red-900/40 px-3 py-1 rounded-lg text-red-400 text-xs font-bold hover:bg-red-900/30 transition-all active:scale-95"
               >
@@ -918,7 +972,7 @@ function AppContent() {
         <div className="fixed inset-0 z-[10000] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6">
           <div className="max-w-md w-full fantasy-card p-10 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
-            
+
             <div className="mb-8 relative">
               <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-3xl mx-auto flex items-center justify-center shadow-2xl shadow-amber-900/40 rotate-12 group-hover:rotate-0 transition-transform duration-500">
                 <Gamepad2 size={48} className="text-slate-950" />
@@ -929,7 +983,7 @@ function AppContent() {
             <h2 className="text-4xl font-bold mb-4 text-white uppercase tracking-widest" style={{ fontFamily: "var(--font-serif)" }}>
               Vibe <span className="text-amber-500">RPG</span>
             </h2>
-            
+
             <p className="text-slate-400 mb-10 text-lg leading-relaxed">
               Embark on a mythical journey where your choices shape destiny.
             </p>
@@ -941,7 +995,7 @@ function AppContent() {
               <Play fill="currentColor" size={24} />
               START JOURNEY
             </button>
-            
+
             <div className="mt-8 pt-8 border-t border-slate-800/50 flex justify-center gap-6 opacity-60">
               <div className="flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase tracking-tighter">
                 <Trophy size={14} className="text-gold" /> Epic Loot
@@ -1270,7 +1324,7 @@ function AppContent() {
           )}
         </div>
       )}
-      
+
       {/* Celebration Overlay */}
       <AnimatePresence>
         {celebration && (
@@ -1280,6 +1334,41 @@ function AppContent() {
             subtitle={celebration.subtitle}
             onDismiss={() => setCelebration(null)}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Revive Overlay */}
+      <AnimatePresence>
+        {showReviveOverlay && (
+          <div className="fixed inset-0 z-[10005] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-6">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="max-w-sm w-full fantasy-card p-8 text-center"
+            >
+              <div className="text-5xl mb-4">💀</div>
+              <h2 className="text-2xl font-bold text-red-400 mb-2" style={{ fontFamily: "var(--font-serif)" }}>Hero Defeated</h2>
+              <p className="text-slate-400 mb-8 text-sm">
+                You have fallen in battle. Would you like to watch a short vision to revive with full strength?
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  onClick={handleReviveWithAd}
+                  className="w-full btn-fantasy py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20"
+                >
+                  <span>🎬</span> Revive with Full HP/MP
+                </button>
+                <button
+                  onClick={handleAcceptDefeat}
+                  className="w-full py-3 rounded-xl font-semibold text-slate-400 hover:text-slate-200 transition-colors"
+                >
+                  Return to Town
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -1327,7 +1416,7 @@ function IframeScaleWrapper({ children }: { children: React.ReactNode }) {
       const v_h = window.innerHeight;
       // Only scale DOWN when the viewport is smaller than the minimum target.
       const s = parseFloat(Math.min(1, v_w / MIN_WIDTH, v_h / MIN_HEIGHT).toFixed(4));
-      
+
       // We want to avoid extreme aspect ratios (like 1800x450).
       // If the viewport is very wide/short, we'll cap the logical size and center it.
       const logicalW = Math.min(1200, Math.round(v_w / s));
