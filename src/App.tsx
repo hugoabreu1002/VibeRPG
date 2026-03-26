@@ -1,21 +1,30 @@
-import { useState, useEffect, useCallback, type FormEvent } from "react";
-import { getCurrentCharacter, getAllCharacters, createCharacter as dbCreateCharacter, deleteCharacter, updateCharacter as dbUpdateCharacter, type CharacterClass } from "./lib/storage";
-import { CHARACTER_CLASSES, getStarterItems, getInitialCharacterStats, QUESTS, SHOP_ITEMS, ALL_ITEMS, QUEST_ENEMIES, getEnemy } from "./lib/game-data";
-import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
-import { Inventory, Quests, QuestBattle, QuestMap, Shop, MapSelection, MapControls } from "./components/game";
-import { GuildEvolution } from "./components/game/ui/GuildEvolution";
+import { AnimatePresence, motion } from "framer-motion";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Inventory, MapControls, QuestBattle, QuestMap, Quests, Shop } from "./components/game";
 import { CelebrationOverlay, QuickToast } from "./components/game/ui/CelebrationOverlay";
-import { getQuestMap } from "./lib/map-data";
+import {
+  ClassMageIcon,
+  ClassPriestIcon, ClassRogueIcon,
+  ClassWarriorIcon,
+  GoldIcon,
+  GuildTabIcon,
+  HealthIcon,
+  InventoryTabIcon,
+  ManaIcon,
+  MapTabIcon,
+  ShopTabIcon,
+  SwordIcon,
+  XPIcon
+} from "./components/game/ui/GameIcons";
+import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { audioManager } from "./lib/audio";
+import { ALL_ITEMS, CHARACTER_CLASSES, getEnemy, getInitialCharacterStats, getStarterItems, QUEST_ENEMIES, QUESTS, SHOP_ITEMS } from "./lib/game-data";
+import { getQuestMap } from "./lib/map-data";
+import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
 import { RANKS } from "./lib/rank-utils";
 import { getRegionMapData } from "./lib/region-utils";
-import {
-  HealthIcon, ManaIcon, XPIcon, GoldIcon, SwordIcon,
-  ClassMageIcon, ClassWarriorIcon, ClassPriestIcon, ClassRogueIcon,
-  MapTabIcon, InventoryTabIcon, ShopTabIcon, GuildTabIcon
-} from "./components/game/ui/GameIcons";
+import { createCharacter as dbCreateCharacter, updateCharacter as dbUpdateCharacter, deleteCharacter, getAllCharacters, getCurrentCharacter, type CharacterClass } from "./lib/storage";
+import type { Character, Enemy, InventoryItem, NPC, Quest, QuestChoice, QuestResult, QuestState, Tab } from "./types/game";
 
 const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
   mage: <ClassMageIcon size={20} />,
@@ -1204,7 +1213,7 @@ function IframeScaleWrapper({ children }: { children: React.ReactNode }) {
       const v_h = window.innerHeight;
       // Only scale DOWN when the viewport is smaller than the minimum target.
       const s = parseFloat(Math.min(1, v_w / MIN_WIDTH, v_h / MIN_HEIGHT).toFixed(4));
-      
+
       // We want to avoid extreme aspect ratios (like 1800x450).
       // If the viewport is very wide/short, we'll cap the logical size and center it.
       const logicalW = Math.min(1200, Math.round(v_w / s));

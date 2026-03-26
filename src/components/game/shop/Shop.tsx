@@ -72,7 +72,7 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar content-start">
         {shopItems.map((item, index) => (
           <motion.div
             key={item.id}
@@ -90,7 +90,7 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                   {item.type === "boot" && <BootIcon bootId={item.id} size="w-8 h-8" />}
                   {item.type === "food" && <FoodIcon foodId={item.id} size="w-8 h-8" />}
                 </div>
-                <div className="flex-1">
+                <div className="flex-1 text-left">
                   <span className="font-semibold text-slate-100 block text-sm leading-tight">{item.name}</span>
                   <span className={`text-xs capitalize ${getRarityLabel(item.rarity)}`}>{item.rarity} {item.type}</span>
                 </div>
@@ -99,7 +99,7 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                 </div>
               </div>
               
-              <p className="text-xs text-slate-400 mb-3 line-clamp-2 min-h-[32px]">
+              <p className="text-xs text-slate-400 mb-3 line-clamp-2 min-h-[32px] text-left">
                 {item.description}
               </p>
 
