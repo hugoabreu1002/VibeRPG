@@ -98,6 +98,7 @@ function AppContent() {
   const [questToast, setQuestToast] = useState<{ message: string; icon: string } | null>(null);
 
   // Track previous level for level-up detection
+  const [isMapControlsMinimized, setIsMapControlsMinimized] = useState(false);
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
 
   // Load all characters
@@ -565,9 +566,9 @@ function AppContent() {
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground ambient-particles">
+    <div className="h-full flex flex-col overflow-y-auto bg-background text-foreground ambient-particles custom-scrollbar">
       {/* Fantasy Header */}
-      <header className="fantasy-header px-4 md:px-8 py-3 mb-6 relative">
+      <header className="fantasy-header px-4 py-1.5 relative shrink-0">
         <div className="mx-auto max-w-7xl flex items-center justify-between">
           <div className="flex items-center gap-3">
             <motion.div
@@ -576,7 +577,7 @@ function AppContent() {
               className="flex items-center gap-3"
             >
               <div className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">✨</div>
-              <h1 className="text-2xl md:text-3xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-500 to-amber-700 uppercase"
+              <h1 className="text-xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-500 to-amber-700 uppercase"
                 style={{ fontFamily: "'Cinzel', serif" }}>
                 VibeRPG
               </h1>
@@ -589,7 +590,7 @@ function AppContent() {
               whileHover={{ scale: 1.15 }}
               whileTap={{ scale: 0.9 }}
               onClick={toggleMusic}
-              className={`w-12 h-12 rounded-2xl flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${isMusicEnabled
+              className={`w-9 h-9 rounded-xl flex items-center justify-center border-2 shadow-lg transition-all duration-500 ${isMusicEnabled
                 ? "bg-gradient-to-br from-amber-400/30 to-amber-600/40 border-amber-400/60 text-amber-100 shadow-amber-500/30 animate-pulse-slow"
                 : "bg-slate-900/60 border-slate-700/50 text-slate-500 grayscale opacity-70"
                 }`}
@@ -834,7 +835,7 @@ function AppContent() {
         )}
       </AnimatePresence>
 
-      <div className="px-4 md:px-8">
+      <div className="flex-1 min-h-0 overflow-hidden px-3 py-2">
         {isLoading ? (
           <div className="mx-auto max-w-3xl fantasy-card rounded-xl p-6">
             <div className="flex items-center gap-3">
@@ -903,11 +904,11 @@ function AppContent() {
             </motion.div>
           </main>
         ) : (
-          <div className="w-full grid gap-4 lg:grid-cols-12">
+          <div className="w-full min-h-full grid gap-2 md:grid-cols-12">
             {/* Sidebar */}
-            <aside className="lg:col-span-2 space-y-4">
+            <aside className="md:col-span-3 flex flex-col gap-2 overflow-y-auto min-h-0">
               <div className="fantasy-card rounded-xl p-4">
-                <div className="flex flex-wrap lg:flex-col gap-2">
+                <div className="flex flex-wrap md:flex-col gap-1">
                   {tabConfig.map(({ tab, icon, label }) => (
                     <motion.button
                       key={tab}
@@ -917,7 +918,7 @@ function AppContent() {
                         setActiveTab(tab);
                         audioManager.playSfx("click");
                       }}
-                      className={`flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${activeTab === tab
+                      className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-all ${activeTab === tab
                         ? "btn-fantasy"
                         : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
                         }`}
@@ -930,9 +931,9 @@ function AppContent() {
               </div>
 
               {/* Character Info */}
-              <div className="fantasy-card rounded-xl p-4">
-                <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
-                <div className="space-y-4 pt-1">
+              <div className="fantasy-card rounded-xl p-3">
+                <h3 className="text-[10px] font-bold text-amber-200/60 uppercase tracking-wider mb-2" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
+                <div className="space-y-2">
                   {statusBar("HP", character.hp, character.maxHp, "hp")}
                   {statusBar("MP", character.mp, character.maxMp, "mp")}
                   {statusBar("XP", character.xp, character.xpToNext, "xp")}
@@ -943,7 +944,7 @@ function AppContent() {
             </aside>
 
             {/* Main Content */}
-            <section className="lg:col-span-10 space-y-4">
+            <section className="md:col-span-9 h-full flex flex-col min-h-[400px]">
               <AnimatePresence mode="wait">
                 {activeTab === "Inventory" && (
                   <motion.div
@@ -1008,10 +1009,17 @@ function AppContent() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="grid grid-cols-1 lg:grid-cols-12 gap-4"
+                    className="grid gap-2 h-full md:grid-cols-12 relative"
                   >
-                    {/* Map - takes 8 columns on large screens for more space */}
-                    <div className="lg:col-span-8">
+                    {/* Map - takes more columns when controls are minimized */}
+                    <div className={`${isMapControlsMinimized ? "md:col-span-12" : "md:col-span-8"} flex-1 md:h-full min-h-[50vh] md:min-h-0 overflow-hidden relative border border-amber-500/10 rounded-2xl`}>
+                      <button
+                        onClick={() => setIsMapControlsMinimized(!isMapControlsMinimized)}
+                        className="absolute top-4 right-4 z-[4000] px-3 py-1.5 bg-slate-900/90 backdrop-blur-md rounded-xl border border-amber-500/40 text-amber-200 hover:text-white transition-all shadow-xl pointer-events-auto flex items-center gap-2 text-xs font-bold"
+                        title={isMapControlsMinimized ? "Show Quests" : "Maximize Map"}
+                      >
+                        {isMapControlsMinimized ? "📜 Show Quests ◀" : "🗺️ Maximize Map ▶"}
+                      </button>
                       {(() => {
                         const mapData = getRegionMapData(character.currentRegion);
                         return mapData && (
@@ -1041,14 +1049,22 @@ function AppContent() {
                       })()}
                     </div>
 
-                    {/* Map Controls - takes 4 columns on large screens */}
-                    <aside className="lg:col-span-4 space-y-4">
-                      <MapControls
-                        character={character}
-                        currentRegion={character.currentRegion}
-                        onRegionChange={handleRegionChange}
-                      />
-                    </aside>
+                    {/* Map Controls - collapsible */}
+                    {!isMapControlsMinimized && (
+                      <motion.aside
+                        layout
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className="md:col-span-4 flex flex-col gap-2 min-h-0 overflow-y-auto"
+                      >
+                        <MapControls
+                          character={character}
+                          currentRegion={character.currentRegion}
+                          onRegionChange={handleRegionChange}
+                        />
+                      </motion.aside>
+                    )}
                   </motion.div>
                 )}
 
@@ -1165,6 +1181,77 @@ function AppContent() {
   );
 }
 
+const MIN_WIDTH = 800;
+const MIN_HEIGHT = 450;
+
+/**
+ * IframeScaleWrapper
+ * - On viewports >= 800×450: renders children at full viewport size (responsive).
+ * - On smaller viewports: scales down so the minimum 800×450 layout fits.
+ */
+function IframeScaleWrapper({ children }: { children: React.ReactNode }) {
+  const [{ scale, innerW, innerH, vw, vh }, setState] = useState({
+    scale: 1,
+    innerW: typeof window !== "undefined" ? window.innerWidth : MIN_WIDTH,
+    innerH: typeof window !== "undefined" ? window.innerHeight : MIN_HEIGHT,
+    vw: typeof window !== "undefined" ? window.innerWidth : MIN_WIDTH,
+    vh: typeof window !== "undefined" ? window.innerHeight : MIN_HEIGHT,
+  });
+
+  useEffect(() => {
+    function update() {
+      const v_w = window.innerWidth;
+      const v_h = window.innerHeight;
+      // Only scale DOWN when the viewport is smaller than the minimum target.
+      const s = parseFloat(Math.min(1, v_w / MIN_WIDTH, v_h / MIN_HEIGHT).toFixed(4));
+      
+      // We want to avoid extreme aspect ratios (like 1800x450).
+      // If the viewport is very wide/short, we'll cap the logical size and center it.
+      const logicalW = Math.min(1200, Math.round(v_w / s));
+      const logicalH = Math.min(900, Math.round(v_h / s));
+
+      setState({
+        scale: s,
+        innerW: logicalW,
+        innerH: logicalH,
+        vw: v_w,
+        vh: v_h
+      });
+    }
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  // Align top for portrait/landscape consistency
+  const left = scale < 1 ? (vw - innerW * scale) / 2 : (vw - innerW) / 2;
+  const top = 0; // Always start from top as requested
+
+  return (
+    <div style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", backgroundColor: "#020617" }}>
+      <div
+        style={{
+          width: innerW,
+          height: innerH,
+          position: "absolute",
+          left,
+          top,
+          transform: scale < 1 ? `scale(${scale})` : undefined,
+          transformOrigin: "top left",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+
+
 export default function App() {
-  return <AppContent />;
+  return (
+    <IframeScaleWrapper>
+      <AppContent />
+    </IframeScaleWrapper>
+  );
 }

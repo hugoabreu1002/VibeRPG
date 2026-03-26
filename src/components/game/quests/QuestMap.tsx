@@ -362,7 +362,7 @@ export function QuestMap({
   return (
     <div
       className="relative w-full overflow-hidden bg-slate-950 rounded-2xl border-4 border-slate-900 shadow-2xl focus:outline-none focus:ring-4 focus:ring-amber-500/50"
-      style={{ height: viewportHeight }}
+      style={{ height: "100%" }}
       tabIndex={0}
     >
       <MapCanvas
