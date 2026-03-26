@@ -30,6 +30,7 @@ class AudioManager {
   private bgmVolume: number = 0.5;
   private sfxVolume: number = 0.5;
   private isMuted: boolean = false;
+  private isAdMuted: boolean = false;
   private musicTracks: Record<MusicTrack, string> = {
     main: "https://www.soundjay.com/nature/sounds/river-1.mp3",
     battle: "https://www.soundjay.com/nature/sounds/rain-01.mp3",
@@ -103,8 +104,9 @@ class AudioManager {
 
   private updateBgmVolume() {
     if (this.currentBgm) {
-      this.currentBgm.volume = this.isMuted ? 0 : this.bgmVolume;
-      this.currentBgm.muted = this.isMuted;
+      const effectiveMute = this.isMuted || this.isAdMuted;
+      this.currentBgm.volume = effectiveMute ? 0 : this.bgmVolume;
+      this.currentBgm.muted = effectiveMute;
     }
   }
 
@@ -117,7 +119,7 @@ class AudioManager {
     this.updateBgmVolume();
     
     if (this.audioCtx) {
-      if (muted) {
+      if (this.isMuted || this.isAdMuted) {
         this.audioCtx.suspend();
       } else {
         this.audioCtx.resume();
@@ -125,9 +127,26 @@ class AudioManager {
     }
   }
 
+  setAdMute(muted: boolean) {
+    this.isAdMuted = muted;
+    this.updateBgmVolume();
+    
+    if (this.audioCtx) {
+      if (this.isMuted || this.isAdMuted) {
+        this.audioCtx.suspend();
+      } else {
+        this.audioCtx.resume();
+      }
+    }
+  }
+
+  isMutedByAd() {
+    return this.isAdMuted;
+  }
+
   // Synthesized Sound Effects (No assets needed!)
   playSfx(type: SoundEffect) {
-    if (this.isMuted) return;
+    if (this.isMuted || this.isAdMuted) return;
     this.initContext();
     if (!this.audioCtx) return;
 

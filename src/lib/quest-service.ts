@@ -1,5 +1,5 @@
 import type { Character, Quest, QuestChoice, QuestResult, QuestState, InventoryItem } from "../types/game";
-import { QUESTS, getQuestEnemy, ENEMIES, REWARD_ITEMS } from "./game-data";
+import { QUESTS, getQuestEnemy, ENEMIES, ALL_ITEMS } from "./game-data";
 import { updateCharacter } from "./storage";
 import { getAvailableRegions, getAvailableQuestsForRegion, getRegionProgress } from "./region-utils";
 import { QUEST_MAPS } from "./map-data";
@@ -250,7 +250,7 @@ class QuestServiceImpl implements QuestService {
 
   private getAllItems(): InventoryItem[] {
     // Return all reward items from game data
-    return REWARD_ITEMS;
+    return ALL_ITEMS;
   }
 
   private getQuestMapForRegion(regionId: string): any {
@@ -261,6 +261,3 @@ class QuestServiceImpl implements QuestService {
 
 // Export singleton instance
 export const questService = new QuestServiceImpl();
-
-// Export types for external use
-export type { QuestService };

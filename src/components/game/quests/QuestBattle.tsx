@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Character, Enemy } from "../../../types/game";
+import type { Character, Enemy, QuestResult } from "../../../types/game";
 import type { CharacterClass } from "../animations/types";
 import { BattleSprite } from "../battle/BattleSprite";
 import { SkillIcon } from "../battle/SkillIcons";

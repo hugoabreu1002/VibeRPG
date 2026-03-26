@@ -15,6 +15,7 @@ interface ShopProps {
   gold: number;
   shopItems: InventoryItem[];
   onBuyItem: (item: InventoryItem) => void;
+  onWatchAd: () => void;
 }
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
@@ -44,7 +45,7 @@ const getRarityLabel = (rarity: InventoryItem["rarity"]) => {
   }
 };
 
-export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
+export function Shop({ gold, shopItems, onBuyItem, onWatchAd }: ShopProps) {
   // const { t } = useI18n();
   const [purchasedItem, setPurchasedItem] = useState<string | null>(null);
 
@@ -63,12 +64,26 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
       transition={{ duration: 0.3 }}
       className="fantasy-card rounded-xl p-5"
     >
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <h2 className="text-xl font-bold text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
           <ShopTabIcon size={28} /> Shop
         </h2>
-        <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30 flex items-center gap-2 shadow-inner">
-          <GoldIcon size={20} /> {gold} Gold
+        
+        <div className="flex items-center gap-3">
+          {/* Rewarded Ad Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onWatchAd}
+            className="flex items-center gap-2 bg-gradient-to-br from-amber-500/20 to-yellow-600/30 border-2 border-amber-400/50 px-4 py-1.5 rounded-xl text-amber-200 font-bold text-sm shadow-lg shadow-amber-900/20 hover:from-amber-500/30 hover:to-yellow-600/40 transition-all group"
+          >
+            <span className="text-xl group-hover:animate-bounce">🎬</span>
+            <span>Watch for <span className="text-yellow-400">+50</span> Gold</span>
+          </motion.button>
+
+          <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-xl border border-amber-700/30 flex items-center gap-2 shadow-inner">
+            <GoldIcon size={20} /> {gold} Gold
+          </div>
         </div>
       </div>
 

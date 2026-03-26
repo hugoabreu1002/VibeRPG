@@ -5,10 +5,26 @@ import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } fr
 import { motion, AnimatePresence } from "framer-motion";
 import type { Character, InventoryItem, Quest, QuestChoice, QuestState, QuestResult, Tab, Enemy, NPC } from "./types/game";
 import { Inventory, Quests, QuestBattle, QuestMap, Shop, MapSelection, MapControls } from "./components/game";
+import {
+  Menu,
+  X,
+  ChevronRight,
+  ChevronLeft,
+  Map as MapIcon,
+  ShoppingBag,
+  Users,
+  Scroll,
+  Gamepad2,
+  Trophy,
+  Play,
+  Square,
+  Pause
+} from "lucide-react";
 import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { CelebrationOverlay, QuickToast } from "./components/game/ui/CelebrationOverlay";
 import { getQuestMap } from "./lib/map-data";
 import { audioManager } from "./lib/audio";
+import { pokiService } from "./lib/poki";
 import { RANKS } from "./lib/rank-utils";
 import { getRegionMapData } from "./lib/region-utils";
 import {
@@ -108,23 +124,23 @@ function AppContent() {
     });
   }, []);
 
+  // Poki Compliance States
+  const [gameStarted, setGameStarted] = useState(false);
+
   // Audio initialization and BGM control
   useEffect(() => {
     // Synchronize master mute with our local state
     audioManager.setMasterMute(!isMusicEnabled);
 
-    if (isMusicEnabled) {
+    if (isMusicEnabled && gameStarted) {
       audioManager.start();
       if (activeTab === "World Map" || activeTab === "Inventory" || activeTab === "Shop") {
         audioManager.playBgm("main");
-      } else if (activeTab === "Quests") {
-        // Handle battle bgm if quest is active? 
-        // For now just keep same logic
       }
     } else {
       audioManager.stopBgm();
     }
-  }, [isMusicEnabled, activeTab]);
+  }, [isMusicEnabled, activeTab, gameStarted]);
 
   const toggleMusic = () => {
     const nextState = !isMusicEnabled;
@@ -139,6 +155,9 @@ function AppContent() {
       audioManager.stopBgm();
     }
   };
+
+
+  
   // Auto-save character
   useEffect(() => {
     if (character) {
@@ -175,6 +194,12 @@ function AppContent() {
   const handleAcceptQuestFromNPC = async (quest: Quest) => {
     if (!character) return;
 
+    // Trigger commercial break before starting a quest
+    await pokiService.commercialBreak(() => {
+      audioManager.setAdMute(true);
+    });
+    audioManager.setAdMute(false);
+
     const result = await acceptQuestFromNPC(character, quest);
     if (result.success) {
       setCharacter(result.updatedCharacter);
@@ -185,6 +210,7 @@ function AppContent() {
         message: `New Quest: ${quest.title}`,
         icon: "⚔️"
       });
+      pokiService.gameplayStart();
     }
   };
 
@@ -201,6 +227,8 @@ function AppContent() {
       rewardItem,
       rewardSkill
     );
+
+    pokiService.gameplayStop();
 
     // Update local state with the result
     if (result.updatedCharacter) {
@@ -424,6 +452,45 @@ function AppContent() {
     });
   }, []);
 
+  const handleWatchAd = async () => {
+    if (!character) return;
+
+    const success = await pokiService.rewardedBreak({
+      onStart: () => audioManager.setAdMute(true)
+    });
+    
+    audioManager.setAdMute(false);
+
+    if (success) {
+      const newGold = character.gold + 50;
+      setCharacter({ ...character, gold: newGold });
+      setToast({
+        message: "Watched ad! +50 Gold awarded.",
+        icon: "💰"
+      });
+      audioManager.playSfx("victory");
+    }
+  };
+
+  const handleStartGame = () => {
+    console.log("Start Game Button Clicked");
+    try {
+      setGameStarted(true);
+      audioManager.start();
+      pokiService.gameplayStart();
+    } catch (err) {
+      console.error("Error starting game:", err);
+      // Ensure we still try to start even if SDK/Audio fails
+      setGameStarted(true);
+    }
+  };
+
+  const handleStopGame = () => {
+    pokiService.gameplayStop();
+    setGameStarted(false);
+    audioManager.stopBgm();
+  };
+
   // Map selection handler
   const handleRegionChange = (regionId: string) => {
     if (character) {
@@ -567,21 +634,32 @@ function AppContent() {
 
   return (
     <div className="h-full flex flex-col overflow-y-auto bg-background text-foreground ambient-particles custom-scrollbar">
+      {/* Poki Ad Overlay */}
+      {pokiService.isAdActive() && (
+        <div className="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-md flex items-center justify-center">
+          <div className="text-white text-2xl font-bold animate-pulse">Advertisement playing...</div>
+        </div>
+      )}
       {/* Fantasy Header */}
       <header className="fantasy-header px-4 py-1.5 relative shrink-0">
         <div className="mx-auto max-w-7xl flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-3"
-            >
-              <div className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]">✨</div>
-              <h1 className="text-xl font-black italic tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-500 to-amber-700 uppercase"
-                style={{ fontFamily: "'Cinzel', serif" }}>
-                VibeRPG
-              </h1>
-            </motion.div>
+            <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2 group cursor-pointer" style={{ fontFamily: "var(--font-serif)" }} onClick={() => setActiveTab("Inventory")}>
+              <span className="bg-gradient-to-br from-amber-400 to-amber-600 bg-clip-text text-transparent group-hover:drop-shadow-[0_0_8px_rgba(251,191,36,0.5)] transition-all">VIBE</span>
+              <span className="text-amber-500 font-extralight opacity-50">/</span>
+              <span className="text-slate-100 group-hover:text-white transition-colors">RPG</span>
+            </h1>
+            
+            {/* Poki STOP Button */}
+            {gameStarted && (
+              <button 
+                onClick={handleStopGame}
+                className="ml-4 flex items-center gap-1.5 bg-red-950/40 border border-red-900/40 px-3 py-1 rounded-lg text-red-400 text-xs font-bold hover:bg-red-900/30 transition-all active:scale-95"
+              >
+                <Square size={12} fill="currentColor" />
+                STOP
+              </button>
+            )}
           </div>
 
           {/* Audio Controls */}
@@ -835,319 +913,364 @@ function AppContent() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 min-h-0 overflow-hidden px-3 py-2">
-        {isLoading ? (
-          <div className="mx-auto max-w-3xl fantasy-card rounded-xl p-6">
-            <div className="flex items-center gap-3">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                className="text-2xl"
-              >
-                ⚙️
-              </motion.div>
-              <span className="text-slate-300">Loading...</span>
+      {/* Start Game Landing Overlay */}
+      {!gameStarted && (
+        <div className="fixed inset-0 z-[10000] bg-slate-950/90 backdrop-blur-xl flex items-center justify-center p-6">
+          <div className="max-w-md w-full fantasy-card p-10 text-center relative overflow-hidden group">
+            <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            
+            <div className="mb-8 relative">
+              <div className="w-24 h-24 bg-gradient-to-br from-amber-400 to-amber-600 rounded-3xl mx-auto flex items-center justify-center shadow-2xl shadow-amber-900/40 rotate-12 group-hover:rotate-0 transition-transform duration-500">
+                <Gamepad2 size={48} className="text-slate-950" />
+              </div>
+              <div className="absolute -top-2 -right-2 w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-xl shadow-lg animate-bounce">⚔️</div>
+            </div>
+
+            <h2 className="text-4xl font-bold mb-4 text-white uppercase tracking-widest" style={{ fontFamily: "var(--font-serif)" }}>
+              Vibe <span className="text-amber-500">RPG</span>
+            </h2>
+            
+            <p className="text-slate-400 mb-10 text-lg leading-relaxed">
+              Embark on a mythical journey where your choices shape destiny.
+            </p>
+
+            <button
+              onClick={handleStartGame}
+              className="w-full btn-fantasy py-5 rounded-2xl text-xl font-bold flex items-center justify-center gap-3 shadow-2xl shadow-amber-500/20 relative z-[10001] pointer-events-auto cursor-pointer"
+            >
+              <Play fill="currentColor" size={24} />
+              START JOURNEY
+            </button>
+            
+            <div className="mt-8 pt-8 border-t border-slate-800/50 flex justify-center gap-6 opacity-60">
+              <div className="flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase tracking-tighter">
+                <Trophy size={14} className="text-gold" /> Epic Loot
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-slate-300 font-bold uppercase tracking-tighter">
+                <Users size={14} className="text-blue-400" /> Deep Lore
+              </div>
             </div>
           </div>
-        ) : !character ? (
-          <main className="mx-auto max-w-lg">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="fantasy-card rounded-xl p-8"
-            >
-              <div className="text-center mb-6">
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      {gameStarted && (
+        <div className="flex-1 min-h-0 overflow-hidden px-3 py-2">
+          {isLoading ? (
+            <div className="mx-auto max-w-3xl fantasy-card rounded-xl p-6">
+              <div className="flex items-center gap-3">
                 <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-5xl mb-3"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="text-2xl"
                 >
-                  ⚔️
+                  ⚙️
                 </motion.div>
-                <h2 className="text-2xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
-                  Begin Your Adventure
-                </h2>
-                <p className="text-sm text-slate-400">Create your first hero to start your journey</p>
+                <span className="text-slate-300">Loading...</span>
               </div>
-              <form className="space-y-4" onSubmit={submitCreate}>
-                <div>
-                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">Hero Name</label>
-                  <input
-                    value={createName}
-                    onChange={(e) => setCreateName(e.target.value)}
-                    placeholder="Enter Hero Name"
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-600/50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-amber-200/60 mb-1 font-medium">Class</label>
-                  <select
-                    value={createClass}
-                    onChange={(e) => setCreateClass(e.target.value as CharacterClass)}
-                    className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
-                  >
-                    {CHARACTER_CLASSES.map((c) => (
-                      <option key={c} value={c}>{CLASS_ICONS[c]} {c.charAt(0).toUpperCase() + c.slice(1)}</option>
-                    ))}
-                  </select>
-                </div>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  className="btn-fantasy w-full py-3 rounded-lg font-bold tracking-wide"
-                  style={{ fontFamily: "'Cinzel', serif" }}
-                >
-                  Create Character
-                </motion.button>
-              </form>
-            </motion.div>
-          </main>
-        ) : (
-          <div className="w-full min-h-full grid gap-2 md:grid-cols-12">
-            {/* Sidebar */}
-            <aside className="md:col-span-3 flex flex-col gap-2 overflow-y-auto min-h-0">
-              <div className="fantasy-card rounded-xl p-4">
-                <div className="flex flex-wrap md:flex-col gap-1">
-                  {tabConfig.map(({ tab, icon, label }) => (
-                    <motion.button
-                      key={tab}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        setActiveTab(tab);
-                        audioManager.playSfx("click");
-                      }}
-                      className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-all ${activeTab === tab
-                        ? "btn-fantasy"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
-                        }`}
-                    >
-                      <span>{icon}</span>
-                      <span>{label}</span>
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Character Info */}
-              <div className="fantasy-card rounded-xl p-3">
-                <h3 className="text-[10px] font-bold text-amber-200/60 uppercase tracking-wider mb-2" style={{ fontFamily: "'Cinzel', serif" }}>Hero Stats</h3>
-                <div className="space-y-2">
-                  {statusBar("HP", character.hp, character.maxHp, "hp")}
-                  {statusBar("MP", character.mp, character.maxMp, "mp")}
-                  {statusBar("XP", character.xp, character.xpToNext, "xp")}
-                  <div className="h-px bg-slate-800/50 my-1"></div>
-                  {statusBar("Attack Power", character.attack, character.attack + 20, "attack")}
-                </div>
-              </div>
-            </aside>
-
-            {/* Main Content */}
-            <section className="md:col-span-9 h-full flex flex-col min-h-[400px]">
-              <AnimatePresence mode="wait">
-                {activeTab === "Inventory" && (
+            </div>
+          ) : !character ? (
+            <main className="mx-auto max-w-lg">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="fantasy-card rounded-xl p-8"
+              >
+                <div className="text-center mb-6">
                   <motion.div
-                    key="inventory"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="space-y-4"
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                    className="text-5xl mb-3"
                   >
-                    <Inventory
-                      inventory={inventory}
-                      selectedItem={selectedItem}
-                      onSelectItem={setSelectedItem}
-                      onToggleEquip={handleToggleEquip}
-                      onConsumeFood={handleConsumeFood}
-                      onSellItem={handleSellItem}
-                      characterClass={character.class}
-                    />
+                    ⚔️
                   </motion.div>
-                )}
-
-                {activeTab === "Shop" && character && (
-                  <motion.div
-                    key="shop"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Shop
-                      gold={character.gold}
-                      shopItems={SHOP_ITEMS}
-                      onBuyItem={handleBuyItem}
+                  <h2 className="text-2xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
+                    Begin Your Adventure
+                  </h2>
+                  <p className="text-sm text-slate-400">Create your first hero to start your journey</p>
+                </div>
+                <form className="space-y-4" onSubmit={submitCreate}>
+                  <div>
+                    <label className="block text-xs text-amber-200/60 mb-1 font-medium">Hero Name</label>
+                    <input
+                      value={createName}
+                      onChange={(e) => setCreateName(e.target.value)}
+                      placeholder="Enter Hero Name"
+                      className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-600/50"
                     />
-                  </motion.div>
-                )}
-
-                {activeTab === "Guild" && character && (
-                  <motion.div
-                    key="guild"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <GuildEvolution
-                      character={character}
-                      onEvolve={(updatedCharacter) => {
-                        setCharacter(updatedCharacter);
-                        audioManager.playSfx("victory");
-                      }}
-                      onClose={() => setActiveTab("World Map")}
-                    />
-                  </motion.div>
-                )}
-
-                {activeTab === "World Map" && character && (
-                  <motion.div
-                    key="world-map"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className="grid gap-2 h-full md:grid-cols-12 relative"
-                  >
-                    {/* Map - takes more columns when controls are minimized */}
-                    <div className={`${isMapControlsMinimized ? "md:col-span-12" : "md:col-span-8"} flex-1 md:h-full min-h-[50vh] md:min-h-0 overflow-hidden relative border border-amber-500/10 rounded-2xl`}>
-                      <button
-                        onClick={() => setIsMapControlsMinimized(!isMapControlsMinimized)}
-                        className="absolute top-4 right-4 z-[4000] px-3 py-1.5 bg-slate-900/90 backdrop-blur-md rounded-xl border border-amber-500/40 text-amber-200 hover:text-white transition-all shadow-xl pointer-events-auto flex items-center gap-2 text-xs font-bold"
-                        title={isMapControlsMinimized ? "Show Quests" : "Maximize Map"}
-                      >
-                        {isMapControlsMinimized ? "📜 Show Quests ◀" : "🗺️ Maximize Map ▶"}
-                      </button>
-                      {(() => {
-                        const mapData = getRegionMapData(character.currentRegion);
-                        return mapData && (
-                          <QuestMap
-                            mapData={mapData}
-                            character={character}
-                            playerClass={character.class}
-                            inventory={inventory}
-                            onNPCInteract={(npc: NPC) => {
-                              if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
-                                const quest = QUESTS.find(q => q.id === npc.questId);
-                                if (quest && (quest.class === character.class || hasFinishedMainStory(character))) {
-                                  handleAcceptQuestFromNPC(quest);
-                                }
-                              }
-                            }}
-                            onQuestAccepted={(quest: Quest) => {
-                              handleAcceptQuestFromNPC(quest);
-                            }}
-                            completedQuests={completedQuests}
-                            activeQuestId={activeQuest?.id}
-                            allQuests={QUESTS}
-                            onBack={() => { }}
-                            onNavigateToRegion={handleRegionChange}
-                          />
-                        );
-                      })()}
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs text-amber-200/60 font-medium">Class</label>
+                      <span className="text-amber-400">{CLASS_ICONS[createClass]}</span>
                     </div>
-
-                    {/* Map Controls - collapsible */}
-                    {!isMapControlsMinimized && (
-                      <motion.aside
-                        layout
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, x: 20 }}
-                        className="md:col-span-4 flex flex-col gap-2 min-h-0 overflow-y-auto"
-                      >
-                        <MapControls
-                          character={character}
-                          currentRegion={character.currentRegion}
-                          onRegionChange={handleRegionChange}
-                        />
-                      </motion.aside>
-                    )}
-                  </motion.div>
-                )}
-
-                {activeTab === "Quests" && character && (
-                  <motion.div
-                    key="quests"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.3 }}
+                    <select
+                      value={createClass}
+                      onChange={(e) => setCreateClass(e.target.value as CharacterClass)}
+                      className="w-full rounded-lg border border-slate-700 bg-slate-800/60 px-4 py-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                    >
+                      {CHARACTER_CLASSES.map((c) => (
+                        <option key={c} value={c}>{c.charAt(0).toUpperCase() + c.slice(1)}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    type="submit"
+                    className="btn-fantasy w-full py-3 rounded-lg font-bold tracking-wide"
+                    style={{ fontFamily: "'Cinzel', serif" }}
                   >
-                    {questState === "battle" && activeEnemy ? (
-                      <QuestBattle
-                        character={{ ...character, inventory }}
-                        enemy={activeEnemy}
-                        onVictory={handleBattleVictory}
-                        onDefeat={handleBattleDefeat}
-                        onFlee={handleBattleFlee}
-                        onUpdateCharacter={handleUpdateCharacter}
-                        onBattleComplete={(result) => {
-                          // Call handleBattleVictory with XP and gold from the battle result
-                          if (result.success) {
-                            handleBattleVictory(result.xp, result.gold);
-                          }
+                    Create Character
+                  </motion.button>
+                </form>
+              </motion.div>
+            </main>
+          ) : (
+            <div className="w-full min-h-full grid gap-2 md:grid-cols-12">
+              {/* Sidebar */}
+              <aside className="md:col-span-3 flex flex-col gap-2 overflow-y-auto min-h-0">
+                <div className="fantasy-card rounded-xl p-4">
+                  <div className="flex flex-wrap md:flex-col gap-1">
+                    {tabConfig.map(({ tab, icon, label }) => (
+                      <motion.button
+                        key={tab}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => {
+                          setActiveTab(tab);
+                          audioManager.playSfx("click");
                         }}
+                        className={`flex items-center gap-2 rounded-lg px-2 py-2 text-sm font-medium transition-all ${activeTab === tab
+                          ? "btn-fantasy"
+                          : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                          }`}
+                      >
+                        <span>{icon}</span>
+                        <span>{label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Character Info */}
+                <div className="fantasy-card rounded-xl p-3">
+                  <h3 className="text-[10px] font-bold text-amber-200/60 uppercase tracking-wider mb-2" style={{ fontFamily: "var(--font-serif)" }}>Hero Stats</h3>
+                  <div className="space-y-2">
+                    {statusBar("HP", character.hp, character.maxHp, "hp")}
+                    {statusBar("MP", character.mp, character.maxMp, "mp")}
+                    {statusBar("XP", character.xp, character.xpToNext, "xp")}
+                    <div className="h-px bg-slate-800/50 my-1"></div>
+                    {statusBar("Attack Power", character.attack, character.attack + 20, "attack")}
+                  </div>
+                </div>
+              </aside>
+
+              {/* Main Content */}
+              <section className="md:col-span-9 h-full flex flex-col min-h-[400px]">
+                <AnimatePresence mode="wait">
+                  {activeTab === "Inventory" && (
+                    <motion.div
+                      key="inventory"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="space-y-4"
+                    >
+                      <Inventory
+                        inventory={inventory}
+                        selectedItem={selectedItem}
+                        onSelectItem={setSelectedItem}
+                        onToggleEquip={handleToggleEquip}
+                        onConsumeFood={handleConsumeFood}
+                        onSellItem={handleSellItem}
+                        characterClass={character.class}
                       />
-                    ) : questState === "map" && activeQuest ? (
-                      (() => {
-                        const mapData = getQuestMap(activeQuest.region);
-                        return mapData ? (
-                          <QuestMap
-                            quest={activeQuest}
-                            mapData={getQuestMap(activeQuest.region)}
-                            character={character}
-                            playerClass={character.class}
-                            inventory={inventory}
-                            completedQuests={completedQuests}
-                            activeQuestId={activeQuest?.id}
-                            allQuests={QUESTS}
-                            onNPCInteract={(npc: NPC) => {
-                              // If NPC on quest map has a quest, it must be the objective
-                              if (npc.questId === activeQuest?.id) {
-                                setQuestState("active");
-                              }
-                            }}
-                            onBack={resetQuest}
-                          />
-                        ) : (
-                          <Quests
-                            character={character}
-                            quests={QUESTS}
-                            questState="active"
-                            activeQuest={activeQuest}
-                            questResult={questResult}
-                            completedQuests={completedQuests}
-                            onStartQuest={startQuest}
-                            onAttemptChoice={attemptQuestChoice}
-                            onResetQuest={resetQuest}
-                          />
-                        );
-                      })()
-                    ) : (
-                      <Quests
+                    </motion.div>
+                  )}
+
+                  {activeTab === "Shop" && character && (
+                    <motion.div
+                      key="shop"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Shop
+                        gold={character.gold}
+                        shopItems={SHOP_ITEMS}
+                        onBuyItem={handleBuyItem}
+                        onWatchAd={handleWatchAd}
+                      />
+                    </motion.div>
+                  )}
+
+                  {activeTab === "Guild" && character && (
+                    <motion.div
+                      key="guild"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <GuildEvolution
                         character={character}
-                        quests={QUESTS}
-                        questState={questState}
-                        activeQuest={activeQuest}
-                        questResult={questResult}
-                        completedQuests={completedQuests}
-                        onStartQuest={startQuest}
-                        onAttemptChoice={attemptQuestChoice}
-                        onResetQuest={resetQuest}
+                        onEvolve={(updatedCharacter) => {
+                          setCharacter(updatedCharacter);
+                          audioManager.playSfx("victory");
+                        }}
+                        onClose={() => setActiveTab("World Map")}
                       />
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </section>
-          </div>
-        )}
-      </div>
+                    </motion.div>
+                  )}
 
+                  {activeTab === "World Map" && character && (
+                    <motion.div
+                      key="world-map"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                      className="grid gap-2 h-full md:grid-cols-12 relative"
+                    >
+                      {/* Map - takes more columns when controls are minimized */}
+                      <div className={`${isMapControlsMinimized ? "md:col-span-12" : "md:col-span-8"} flex-1 md:h-full min-h-[50vh] md:min-h-0 overflow-hidden relative border border-amber-500/10 rounded-2xl`}>
+                        <button
+                          onClick={() => setIsMapControlsMinimized(!isMapControlsMinimized)}
+                          className="absolute top-4 right-4 z-[4000] px-3 py-1.5 bg-slate-900/90 backdrop-blur-md rounded-xl border border-amber-500/40 text-amber-200 hover:text-white transition-all shadow-xl pointer-events-auto flex items-center gap-2 text-xs font-bold"
+                          title={isMapControlsMinimized ? "Show Quests" : "Maximize Map"}
+                        >
+                          {isMapControlsMinimized ? "📜 Show Quests ◀" : "🗺️ Maximize Map ▶"}
+                        </button>
+                        {(() => {
+                          const mapData = getRegionMapData(character.currentRegion);
+                          return mapData && (
+                            <QuestMap
+                              mapData={mapData}
+                              character={character}
+                              playerClass={character.class}
+                              inventory={inventory}
+                              onNPCInteract={(npc: NPC) => {
+                                if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
+                                  const quest = QUESTS.find(q => q.id === npc.questId);
+                                  if (quest && (quest.class === character.class || hasFinishedMainStory(character))) {
+                                    handleAcceptQuestFromNPC(quest);
+                                  }
+                                }
+                              }}
+                              onQuestAccepted={(quest: Quest) => {
+                                handleAcceptQuestFromNPC(quest);
+                              }}
+                              completedQuests={completedQuests}
+                              activeQuestId={activeQuest?.id}
+                              allQuests={QUESTS}
+                              onBack={() => { }}
+                              onNavigateToRegion={handleRegionChange}
+                            />
+                          );
+                        })()}
+                      </div>
 
+                      {/* Map Controls - collapsible */}
+                      {!isMapControlsMinimized && (
+                        <motion.aside
+                          layout
+                          initial={{ opacity: 0, x: 20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          className="md:col-span-4 flex flex-col gap-2 min-h-0 overflow-y-auto"
+                        >
+                          <MapControls
+                            character={character}
+                            currentRegion={character.currentRegion}
+                            onRegionChange={handleRegionChange}
+                          />
+                        </motion.aside>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {activeTab === "Quests" && character && (
+                    <motion.div
+                      key="quests"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {questState === "battle" && activeEnemy ? (
+                        <QuestBattle
+                          character={{ ...character, inventory }}
+                          enemy={activeEnemy}
+                          onVictory={handleBattleVictory}
+                          onDefeat={handleBattleDefeat}
+                          onFlee={handleBattleFlee}
+                          onUpdateCharacter={handleUpdateCharacter}
+                          onBattleComplete={(result) => {
+                            if (result.success) {
+                              handleBattleVictory(result.xp, result.gold);
+                            }
+                          }}
+                        />
+                      ) : questState === "map" && activeQuest ? (
+                        (() => {
+                          const mapData = getQuestMap(activeQuest.region);
+                          return mapData ? (
+                            <QuestMap
+                              quest={activeQuest}
+                              mapData={getQuestMap(activeQuest.region)}
+                              character={character}
+                              playerClass={character.class}
+                              inventory={inventory}
+                              completedQuests={completedQuests}
+                              activeQuestId={activeQuest?.id}
+                              allQuests={QUESTS}
+                              onNPCInteract={(npc: NPC) => {
+                                if (npc.questId === activeQuest?.id) {
+                                  setQuestState("active");
+                                }
+                              }}
+                              onBack={resetQuest}
+                            />
+                          ) : (
+                            <Quests
+                              character={character}
+                              quests={QUESTS}
+                              questState="active"
+                              activeQuest={activeQuest}
+                              questResult={questResult}
+                              completedQuests={completedQuests}
+                              onStartQuest={startQuest}
+                              onAttemptChoice={attemptQuestChoice}
+                              onResetQuest={resetQuest}
+                            />
+                          );
+                        })()
+                      ) : (
+                        <Quests
+                          character={character}
+                          quests={QUESTS}
+                          questState={questState}
+                          activeQuest={activeQuest}
+                          questResult={questResult}
+                          completedQuests={completedQuests}
+                          onStartQuest={startQuest}
+                          onAttemptChoice={attemptQuestChoice}
+                          onResetQuest={resetQuest}
+                        />
+                      )}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </section>
+            </div>
+          )}
+        </div>
+      )}
+      
       {/* Celebration Overlay */}
       <AnimatePresence>
         {celebration && (
