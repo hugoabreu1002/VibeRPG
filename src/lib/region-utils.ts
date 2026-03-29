@@ -20,17 +20,17 @@ export const REGIONS: Record<string, Region> = {
     name: "Hub Town",
     description: "The central town where adventurers gather. All classes start here.",
     unlockedBy: [],
-    availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead", "mage-apprentice", "warrior-village", "priest-plague"],
-    nextRegions: ["Whispering Woods", "Trade Route", "Abandoned Church"],
+    availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead", "warrior-village", "rogue-stolen-cargo"],
+    nextRegions: ["Whispering Woods", "Trade Route", "Abandoned Church", "Northern Village", "Southern Village"],
     requiredQuestsToComplete: 1 // Tutorial region - quick progression
   },
   "Northern Village": {
     id: "Northern Village",
     name: "Northern Village",
     description: "A peaceful village under threat from bandits and monsters.",
-    unlockedBy: ["priest-ghost"], // Priest unlocks this after ghost. Warrior doesn't need to visit this for next quest, but can.
-    availableQuests: ["warrior-village", "priest-blessing"],
-    nextRegions: ["Trade Route", "Sacred Catacombs"],
+    unlockedBy: [], // Now unlocked by default or accessible
+    availableQuests: ["mage-library", "priest-blessing"],
+    nextRegions: ["Trade Route", "Sacred Catacombs", "Hub Town"],
     requiredQuestsToComplete: 1
   },
   "Whispering Woods": {
@@ -109,9 +109,9 @@ export const REGIONS: Record<string, Region> = {
     id: "Southern Village",
     name: "Southern Village",
     description: "Village suffering from a mysterious plague.",
-    unlockedBy: ["priest-plague"],
+    unlockedBy: [], // Now unlocked by default or accessible
     availableQuests: ["priest-plague"],
-    nextRegions: ["Abandoned Church"],
+    nextRegions: ["Abandoned Church", "Hub Town"],
     requiredQuestsToComplete: 1
   },
   "Abandoned Church": {
@@ -246,10 +246,12 @@ export function getAvailableRegions(character: Character): Region[] {
   const completedQuests = character.completedQuests;
   const unlockedRegions: Region[] = [];
 
+  // Hub Town is ALWAYS unlocked (Quest Hub)
+  unlockedRegions.push(REGIONS["Hub Town"]);
+
   // Default unlocked areas based on class
   if (character.class === "mage") unlockedRegions.push(REGIONS["Northern Village"]);
   else if (character.class === "priest") unlockedRegions.push(REGIONS["Southern Village"]);
-  else unlockedRegions.push(REGIONS["Hub Town"]);
 
   // If the player has finished the main story, unlock the intro towns for other classes
   if (hasFinishedMainStory(character)) {
@@ -362,4 +364,19 @@ export function getRegionProgress(character: Character): { current: number; tota
     total: validQuests.length,
     percentage: validQuests.length > 0 ? Math.round((completedInRegion / validQuests.length) * 100) : 0
   };
+}
+
+export function canLeaveRegion(character: Character): { can: boolean; reason?: string } {
+  const progress = getRegionProgress(character);
+  const currentRegion = getCurrentRegion(character);
+  const requiredCount = currentRegion.requiredQuestsToComplete ?? Math.max(1, progress.total);
+  
+  if (progress.current < requiredCount) {
+    return {
+      can: false,
+      reason: `Complete at least ${requiredCount} guild quests in ${currentRegion.name} to advance (Progress: ${progress.current}/${requiredCount})`
+    };
+  }
+  
+  return { can: true };
 }

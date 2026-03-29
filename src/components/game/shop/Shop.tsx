@@ -7,8 +7,8 @@ import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
 import { audioManager } from "../../../lib/audio";
-import { 
-  ShopTabIcon, GoldIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon 
+import {
+  ShopTabIcon, GoldIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon
 } from "../ui/GameIcons";
 
 interface ShopProps {
@@ -72,7 +72,7 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
         </div>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar content-start">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
         {shopItems.map((item, index) => (
           <motion.div
             key={item.id}
@@ -98,7 +98,7 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
                   <GoldIcon size={14} /> {item.price}
                 </div>
               </div>
-              
+
               <p className="text-xs text-slate-400 mb-3 line-clamp-2 min-h-[32px] text-left">
                 {item.description}
               </p>
@@ -128,11 +128,10 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
               whileTap={{ scale: 0.98 }}
               onClick={() => handleBuy(item)}
               disabled={gold < item.price}
-              className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all relative overflow-hidden ${
-                gold >= item.price 
+              className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all relative overflow-hidden ${gold >= item.price
                   ? "btn-fantasy"
                   : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700/30"
-              }`}
+                }`}
             >
               <AnimatePresence>
                 {purchasedItem === item.id && (

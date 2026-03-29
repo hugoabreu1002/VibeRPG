@@ -1,29 +1,19 @@
-import { useState, useEffect, useCallback, memo, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Quest, QuestMapData, NPC, TileType, InventoryItem, CharacterClass, Character } from "../../../types/game";
-import { NPCSprite } from "../world/NPCSprites";
-import { InventorySprite } from "../character/InventorySprite";
+import { AnimatePresence, motion } from "framer-motion";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { audioManager } from "../../../lib/audio";
+import { ENEMIES, REGION_MOBS } from "../../../lib/game-data";
 import { acceptQuestFromNPC, hasFinishedMainStory } from "../../../lib/quest-logic";
+import type { Character, CharacterClass, InventoryItem, NPC, Quest, QuestMapData } from "../../../types/game";
+import { EnemySpriteBody } from "../battle/EnemySprites";
+import { InventorySprite } from "../character/InventorySprite";
 import {
-  TileTreeIcon, TileWaterIcon, TileMountainIcon, TileHouseIcon,
-  TileCaveIcon, TileLavaIcon, ExclamationIndicator
+  ExclamationIndicator
 } from "../ui/GameIcons";
+import { NPCSprite } from "./NPCSprites";
 
 const TILE_SIZE = 80;
 
-const TILE_COLORS: Record<TileType, { bg: string; border: string; accent: string; icon?: React.ReactNode }> = {
-  grass: { bg: "linear-gradient(135deg, #166534, #14532D)", border: "#064E3B", accent: "#10B98120", icon: <TileTreeIcon size={20} className="opacity-20 filter grayscale" /> },
-  path: { bg: "linear-gradient(135deg, #78350F, #451A03)", border: "#422006", accent: "#F59E0B10", icon: undefined },
-  water: { bg: "linear-gradient(180deg, #1E40AF, #1E3A8A)", border: "#172554", accent: "#3B82F630", icon: <TileWaterIcon /> },
-  mountain: { bg: "linear-gradient(135deg, #44403C, #1C1917)", border: "#0C0A09", accent: "#A8A29E20", icon: <TileMountainIcon /> },
-  forest: { bg: "linear-gradient(135deg, #064E3B, #022C22)", border: "#064E3B", accent: "#05966920", icon: <TileTreeIcon /> },
-  town: { bg: "linear-gradient(135deg, #92400E, #78350F)", border: "#451A03", accent: "#FBBF2410", icon: <TileHouseIcon /> },
-  cave: { bg: "linear-gradient(135deg, #1C1917, #000000)", border: "#0C0A09", accent: "#44403C20", icon: <TileCaveIcon /> },
-  lava: { bg: "linear-gradient(180deg, #991B1B, #450A0A)", border: "#450A0A", accent: "#EF444430", icon: <TileLavaIcon /> },
-};
-
-interface QuestMapProps {
+interface WorldMapProps {
   mapData: QuestMapData;
   character: Character;
   playerClass?: CharacterClass;
@@ -31,21 +21,38 @@ interface QuestMapProps {
   inventory?: InventoryItem[];
   completedQuests?: string[];
   activeQuestId?: string | null;
-  quest?: Quest; // For rendering active quest objectives
+  quest?: Quest;
   allQuests: Quest[];
   onNPCInteract: (npc: NPC) => void;
   onBack: () => void;
   onNavigateToRegion?: (regionId: string) => void;
   onQuestAccepted?: (quest: Quest) => void;
+  onUpdateCharacter?: (updates: Partial<Character>) => void;
+  onMobInteract?: (enemyId: string) => void;
+}
+
+interface MapMob {
+  id: string;
+  enemyId: string;
+  position: { x: number; y: number };
+}
+
+interface FloatingText {
+  id: number;
+  text: string;
+  x: number;
+  y: number;
+  color: string;
 }
 
 const MapCanvas = memo(({
-  mapData, tileSize, playerPos, viewScale, getIsoPos, onTileClick
+  mapData, tileSize, playerPos, viewScale, getIsoPos, onTileClick, discoveredTiles
 }: {
   mapData: QuestMapData, tileSize: number, playerPos: { x: number, y: number },
   viewScale: number,
   getIsoPos: (x: number, y: number) => { x: number, y: number },
-  onTileClick: (x: number, y: number) => void
+  onTileClick: (x: number, y: number) => void,
+  discoveredTiles: string[]
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
@@ -69,17 +76,23 @@ const MapCanvas = memo(({
     const rect = canvas.getBoundingClientRect();
     const mx = (e.clientX - rect.left - dimensions.width / 2) / viewScale;
     const my = (e.clientY - rect.top - dimensions.height / 2) / viewScale;
+
     // Static camera centered on map center
     const centerX = Math.floor(mapData.width / 2);
     const centerY = Math.floor(mapData.height / 2);
     const { x: camX, y: camY } = getIsoPos(centerX, centerY);
+
     const worldX = mx + camX;
     const worldY = my + camY;
+
     const xPlusY = worldY / (tileSize / 4);
     const xMinusY = worldX / (tileSize / 2);
     const x = Math.round((xPlusY + xMinusY) / 2);
     const y = Math.round((xPlusY - xMinusY) / 2);
-    if (x >= 0 && x < mapData.width && y >= 0 && y < mapData.height) onTileClick(x, y);
+
+    if (x >= 0 && x < mapData.width && y >= 0 && y < mapData.height) {
+      onTileClick(x, y);
+    }
   };
 
   useEffect(() => {
@@ -94,7 +107,7 @@ const MapCanvas = memo(({
     ctx.scale(dpr, dpr);
 
     // 1. Clear & Fill Background
-    ctx.fillStyle = "#0a2412"; // Very dark forest/void color
+    ctx.fillStyle = "#0a1710";
     ctx.fillRect(0, 0, dimensions.width, dimensions.height);
 
     ctx.save();
@@ -107,7 +120,7 @@ const MapCanvas = memo(({
     const { x: camX, y: camY } = getIsoPos(centerX, centerY);
     ctx.translate(-camX, -camY);
 
-    // 2. Base Procedural Grid (Infinite feel)
+    // 2. Base Procedural Grid
     ctx.strokeStyle = "rgba(16, 185, 129, 0.05)";
     ctx.lineWidth = 1;
     const gridRange = 25;
@@ -129,11 +142,18 @@ const MapCanvas = memo(({
       row.forEach((tile, x) => {
         const { x: ix, y: iy } = getIsoPos(x, y);
 
-        // Generous Culling
-        const buffer = 500; // Extra wide buffer to prevent pop-in
+        const buffer = 500;
         const sx = (ix - camX) * viewScale + dimensions.width / 2;
         const sy = (iy - camY) * viewScale + dimensions.height / 2;
         if (sx < -buffer || sx > dimensions.width + buffer || sy < -buffer || sy > dimensions.height + buffer) return;
+
+        const isDiscovered = discoveredTiles.includes(`${x},${y}`);
+
+        ctx.save();
+        if (!isDiscovered) {
+          ctx.globalAlpha = 0.4;
+          ctx.filter = "grayscale(1) brightness(0.2)";
+        }
 
         // Shadow
         ctx.fillStyle = "rgba(0,0,0,0.3)";
@@ -160,12 +180,6 @@ const MapCanvas = memo(({
         ctx.strokeStyle = "rgba(255,255,255,0.06)";
         ctx.stroke();
 
-        // Procedural Textures
-        ctx.globalAlpha = 0.1;
-        ctx.fillStyle = (x * 7 + y * 13) % 2 === 0 ? "#fff" : "#000";
-        for (let i = 0; i < 3; i++) ctx.fillRect(ix + Math.sin(x + i) * 12, iy + Math.cos(y + i) * 6, 2, 2);
-        ctx.globalAlpha = 1.0;
-
         // Environmental Decorations
         if (tile === "forest") {
           ctx.fillStyle = "#022C22"; ctx.beginPath();
@@ -173,19 +187,14 @@ const MapCanvas = memo(({
         } else if (tile === "mountain") {
           ctx.fillStyle = "#222"; ctx.beginPath();
           ctx.moveTo(ix, iy - 22); ctx.lineTo(ix + 18, iy + 5); ctx.lineTo(ix - 18, iy + 5); ctx.fill();
-          ctx.fillStyle = "#fff"; ctx.beginPath();
-          ctx.moveTo(ix, iy - 22); ctx.lineTo(ix + 6, iy - 14); ctx.lineTo(ix - 6, iy - 14); ctx.fill();
-        } else if (tile === "water") {
-          ctx.strokeStyle = "rgba(255,255,255,0.15)";
-          ctx.beginPath(); ctx.arc(ix, iy, 12, 0, Math.PI); ctx.stroke();
         } else if (tile === "town") {
-          ctx.fillStyle = "#78350F"; ctx.fillRect(ix - 6, iy - 12, 12, 10);
           ctx.fillStyle = "#451A03"; ctx.beginPath(); ctx.moveTo(ix - 8, iy - 12); ctx.lineTo(ix, iy - 18); ctx.lineTo(ix + 8, iy - 12); ctx.fill();
         }
+        ctx.restore();
       });
     });
     ctx.restore();
-  }, [mapData, tileSize, playerPos, viewScale, getIsoPos, dimensions]);
+  }, [mapData, tileSize, playerPos, viewScale, getIsoPos, dimensions, discoveredTiles]);
 
   return (
     <canvas
@@ -196,9 +205,7 @@ const MapCanvas = memo(({
   );
 });
 
-
-export function QuestMap({
-  quest,
+export function WorldMap({
   mapData,
   character,
   playerClass = "warrior",
@@ -210,24 +217,123 @@ export function QuestMap({
   onNPCInteract,
   onBack,
   onNavigateToRegion,
-  onQuestAccepted
-}: QuestMapProps) {
-  // const { t } = useI18n();
+  onQuestAccepted,
+  onUpdateCharacter,
+  onMobInteract
+}: WorldMapProps) {
   const [selectedNPC, setSelectedNPC] = useState<NPC | null>(null);
   const [dialogIndex, setDialogIndex] = useState(0);
   const [playerPos, setPlayerPos] = useState(mapData.playerStart);
 
-  // Reset player position when map changes
-  useEffect(() => {
-    setPlayerPos(mapData.playerStart);
-  }, [mapData]);
-  const viewScale = 1.0;
-  const viewportHeight = 10 * TILE_SIZE;
+  const [mobs, setMobs] = useState<MapMob[]>([]);
+  const [popups, setPopups] = useState<FloatingText[]>([]);
+  const [timeOfDay, setTimeOfDay] = useState<"morning" | "day" | "dusk" | "night">("day");
 
+  const regionDiscovery = character.discoveredTiles?.[mapData.name] || [];
+
+  // Discovery logic
+  useEffect(() => {
+    if (!regionDiscovery.includes(`${playerPos.x},${playerPos.y}`)) {
+      const newDiscovery = [...regionDiscovery, `${playerPos.x},${playerPos.y}`];
+      onUpdateCharacter?.({
+        discoveredTiles: {
+          ...(character.discoveredTiles || {}),
+          [mapData.name]: newDiscovery
+        }
+      });
+
+      // Add a "Discovered!" popup if it's a new tile? 
+      // Maybe only for special tiles. For now just update.
+    }
+  }, [playerPos.x, playerPos.y, mapData.name, regionDiscovery, onUpdateCharacter, character.discoveredTiles]);
+
+  // Time Cycle effect - Based on real world time
+  useEffect(() => {
+    const updateTimeOfDay = () => {
+      const hour = new Date().getHours();
+      if (hour >= 6 && hour < 12) {
+        setTimeOfDay("morning");
+      } else if (hour >= 12 && hour < 18) {
+        setTimeOfDay("day");
+      } else if (hour >= 18 && hour < 21) {
+        setTimeOfDay("dusk");
+      } else {
+        setTimeOfDay("night");
+      }
+    };
+
+    // Set initial time
+    updateTimeOfDay();
+
+    // Update every minute to catch time changes
+    const interval = setInterval(updateTimeOfDay, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const getTimeFilters = () => {
+    switch (timeOfDay) {
+      case "morning": return "sepia(0.2) saturate(1.2) hue-rotate(-10deg) brightness(1.05)";
+      case "day": return "brightness(1) saturate(1)";
+      case "dusk": return "sepia(0.5) saturate(1.4) hue-rotate(15deg) brightness(0.9)";
+      case "night": return "brightness(0.5) saturate(0.8) hue-rotate(200deg) contrast(1.1)";
+    }
+  };
+
+  // Wild Mob Spawning
+  useEffect(() => {
+    if (!mapData) return;
+    const possibleEnemies = REGION_MOBS[mapData.name] || ["green-slime"];
+    const numMobs = 3 + Math.floor(Math.random() * 2);
+    const newMobs: MapMob[] = [];
+
+    // Get bounty target if there's an active bounty quest
+    const bountyTarget = activeQuestId && allQuests.find(q => q.id === activeQuestId)?.bounty?.targetMonsterId;
+
+    for (let i = 0; i < numMobs; i++) {
+      let x, y, valid = false;
+      let attempts = 0;
+      while (!valid && attempts < 20) {
+        x = Math.floor(Math.random() * mapData.width);
+        y = Math.floor(Math.random() * mapData.height);
+        const tile = mapData.tiles[y]?.[x];
+        const isNPC = mapData.npcs.some(n => n.position.x === x && n.position.y === y);
+        const isOccupied = newMobs.some(m => m.position.x === x && m.position.y === y);
+
+        if (tile === "grass" || tile === "path" || tile === "forest") {
+          if (!isNPC && !isOccupied && (x !== mapData.playerStart.x || y !== mapData.playerStart.y)) {
+            valid = true;
+            // Prioritize bounty target if active (50% chance to spawn bounty monster)
+            let enemyId: string;
+            if (bountyTarget && possibleEnemies.includes(bountyTarget) && Math.random() < 0.5) {
+              enemyId = bountyTarget;
+            } else {
+              enemyId = possibleEnemies[Math.floor(Math.random() * possibleEnemies.length)];
+            }
+            newMobs.push({
+              id: `mob-${Date.now()}-${i}`,
+              enemyId,
+              position: { x, y }
+            });
+          }
+        }
+        attempts++;
+      }
+    }
+    setMobs(newMobs);
+  }, [mapData, activeQuestId, allQuests]);
+
+  const viewScale = 1.0;
   const equippedWeapon = inventory?.find(i => i.type === "weapon" && i.equipped);
   const equippedHat = inventory?.find(i => i.type === "hat" && i.equipped);
   const equippedArmor = inventory?.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory?.find(i => i.type === "boot" && i.equipped);
+
+  const getIsoPos = useCallback((x: number, y: number) => {
+    return {
+      x: (x - y) * (TILE_SIZE / 2),
+      y: (x + y) * (TILE_SIZE / 4),
+    };
+  }, []);
 
   const getDialogsForNPC = useCallback((npc: NPC | null) => {
     if (!npc) return [];
@@ -243,86 +349,52 @@ export function QuestMap({
       }
     }
     return npc.dialog;
-  }, [completedQuests, allQuests, playerClass]);
+  }, [completedQuests, allQuests, playerClass, character]);
 
   const handleDialogAdvance = useCallback(async () => {
     if (!selectedNPC) return;
-    
     const dialogs = getDialogsForNPC(selectedNPC);
-    
     if (dialogIndex < dialogs.length - 1) {
       setDialogIndex(dialogIndex + 1);
       audioManager.playSfx("click");
     } else {
-      // Dialog complete - start quest if NPC has one
       if (selectedNPC.questId) {
-        // Check if quest is already completed
         if (completedQuests.includes(selectedNPC.questId)) {
           audioManager.playSfx("click");
           setSelectedNPC(null);
           setDialogIndex(0);
-          
           const nextQuest = allQuests
             .filter(q => (q.class === playerClass || hasFinishedMainStory(character)) && !completedQuests.includes(q.id) && !q.id.startsWith("guild-"))
             .sort((a, b) => a.minLevel - b.minLevel)[0];
-            
           if (nextQuest && onNavigateToRegion && nextQuest.region !== character.currentRegion) {
             onNavigateToRegion(nextQuest.region);
           }
           return;
         }
-
         try {
-          // Use centralized quest logic to accept the quest
           const quest = allQuests.find(q => q.id === selectedNPC.questId);
           if (quest) {
             const result = await acceptQuestFromNPC(character, quest);
             if (result.success) {
               audioManager.playSfx("questAccept");
-              // Quest started successfully, close dialog
               setSelectedNPC(null);
               setDialogIndex(0);
-              // Notify parent component about quest acceptance
-              if (onQuestAccepted) {
-                onQuestAccepted(quest);
-              }
-            } else {
-              // Quest couldn't be started (already completed, etc.)
-              audioManager.playSfx("click");
-              setSelectedNPC(null);
-              setDialogIndex(0);
+              onQuestAccepted?.(quest);
             }
-          } else {
-            // Quest not found
-            audioManager.playSfx("click");
-            setSelectedNPC(null);
-            setDialogIndex(0);
           }
         } catch (error) {
-          console.error("Failed to start quest:", error);
-          audioManager.playSfx("click");
+          console.error(error);
           setSelectedNPC(null);
           setDialogIndex(0);
         }
       } else {
-        // No quest, just close dialog
         onNPCInteract(selectedNPC);
         setSelectedNPC(null);
         setDialogIndex(0);
-        audioManager.playSfx("questAccept");
       }
     }
-  }, [selectedNPC, dialogIndex, character, onQuestAccepted, allQuests, completedQuests]);
+  }, [selectedNPC, dialogIndex, character, onQuestAccepted, allQuests, completedQuests, getDialogsForNPC, onNavigateToRegion, playerClass, onNPCInteract]);
 
-  const getIsoPos = useCallback((x: number, y: number) => {
-    return {
-      x: (x - y) * (TILE_SIZE / 2),
-      y: (x + y) * (TILE_SIZE / 4),
-    };
-  }, []);
-
-  // Keyboard walking removed - map interaction is mouse-only
-  // Enter key still works for NPC dialog advancement
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (selectedNPC && e.key === "Enter") {
@@ -330,16 +402,17 @@ export function QuestMap({
         handleDialogAdvance();
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedNPC, handleDialogAdvance]);
 
-  const { x: isoPlayerX, y: isoPlayerY } = getIsoPos(playerPos.x, playerPos.y);
-  // Static camera - centered on map center (matching canvas rendering)
-  const centerX = Math.floor(mapData.width / 2);
-  const centerY = Math.floor(mapData.height / 2);
-  const camPos = getIsoPos(centerX, centerY);
+  const addPopup = (text: string, x: number, y: number, color: string = "text-amber-400") => {
+    const id = Date.now();
+    setPopups(prev => [...prev, { id, text, x, y, color }]);
+    setTimeout(() => {
+      setPopups(prev => prev.filter(p => p.id !== id));
+    }, 1500);
+  };
 
   const handleTileClick = useCallback((x: number, y: number) => {
     const npc = mapData.npcs.find(n => n.position.x === x && n.position.y === y);
@@ -355,9 +428,19 @@ export function QuestMap({
       const tile = mapData.tiles[y]?.[x];
       if (tile && tile !== "water" && tile !== "mountain" && tile !== "lava") {
         setPlayerPos({ x, y });
+        const mobAtPos = mobs.find(m => m.position.x === x && m.position.y === y);
+        if (mobAtPos && onMobInteract) {
+          // Add a "Battle!" popup
+          const { x: ix, y: iy } = getIsoPos(x, y);
+          addPopup("BATTLE! ⚔️", ix, iy, "text-red-500");
+          setTimeout(() => onMobInteract(mobAtPos.enemyId), 400);
+        }
       }
     }
-  }, [playerPos, mapData]);
+  }, [playerPos, mapData, mobs, onMobInteract, addPopup, getIsoPos]);
+
+  const { x: isoPlayerX, y: isoPlayerY } = getIsoPos(playerPos.x, playerPos.y);
+  const camPos = getIsoPos(Math.floor(mapData.width / 2), Math.floor(mapData.height / 2));
 
   return (
     <div
@@ -365,14 +448,20 @@ export function QuestMap({
       style={{ height: "100%" }}
       tabIndex={0}
     >
-      <MapCanvas
-        mapData={mapData}
-        tileSize={TILE_SIZE}
-        playerPos={playerPos}
-        viewScale={viewScale}
-        getIsoPos={getIsoPos}
-        onTileClick={handleTileClick}
-      />
+      <div
+        className="w-full h-full transition-all duration-[3000ms] ease-in-out"
+        style={{ filter: getTimeFilters() }}
+      >
+        <MapCanvas
+          mapData={mapData}
+          tileSize={TILE_SIZE}
+          playerPos={playerPos}
+          viewScale={viewScale}
+          getIsoPos={getIsoPos}
+          onTileClick={handleTileClick}
+          discoveredTiles={regionDiscovery}
+        />
+      </div>
 
       <motion.div
         className="absolute inset-0 pointer-events-none"
@@ -389,17 +478,12 @@ export function QuestMap({
           top: '50%'
         }}
       >
-
         {/* NPCs */}
         {mapData.npcs.map((npc) => {
-          // Hide NPCs for quests of other classes
           if (npc.questId) {
             const questData = allQuests.find(q => q.id === npc.questId);
-            if (questData && questData.class !== playerClass) {
-              return null;
-            }
+            if (questData && questData.class !== playerClass) return null;
           }
-
           const { x: ix, y: iy } = getIsoPos(npc.position.x, npc.position.y);
           return (
             <motion.div
@@ -414,27 +498,68 @@ export function QuestMap({
               onClick={() => { setSelectedNPC(npc); setDialogIndex(0); }}
             >
               <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
-                {/* Character Sprite - Lifted up */}
-                <div className="translate-y-[-32px] filter drop-shadow-[0_8px_10px_rgba(0,0,0,0.5)]">
-                  <NPCSprite type={npc.sprite} className="w-16 h-16" />
+                <div className="translate-y-[-24px] filter drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">
+                  <NPCSprite type={npc.sprite} className="w-12 h-12" />
                 </div>
-
-                {/* Ground Shadow */}
-                <div className="absolute bottom-2 w-12 h-5 bg-black/40 rounded-full blur-[6px] -z-10" />
-
-                {/* Quest Indicator - Only red or green */}
+                <div className="absolute bottom-2 w-8 h-3.5 bg-black/40 rounded-full blur-[4px] -z-10" />
                 {npc.questId && (
                   <motion.div
                     animate={{ y: [-10, 0, -10] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
                     className={`absolute -top-20 left-1/2 -translate-x-1/2 ${completedQuests.includes(npc.questId)
-                      ? "text-emerald-400 drop-shadow-[0_0_15px_#10B981]"
-                      : "text-red-500 drop-shadow-[0_0_15px_#EF4444]"
+                      ? "text-emerald-400"
+                      : activeQuestId === npc.questId
+                        ? "text-cyan-400"
+                        : "text-amber-400"
                       }`}
                   >
-                    <ExclamationIndicator size={32} />
+                    {completedQuests.includes(npc.questId) ? (
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                    ) : activeQuestId === npc.questId ? (
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                      </svg>
+                    ) : (
+                      <ExclamationIndicator size={32} />
+                    )}
                   </motion.div>
                 )}
+              </div>
+            </motion.div>
+          );
+        })}
+
+        {/* Wild Mobs */}
+        {mobs.map((mob) => {
+          const { x: ix, y: iy } = getIsoPos(mob.position.x, mob.position.y);
+          const enemyData = ENEMIES[mob.enemyId];
+          return (
+            <motion.div
+              key={mob.id}
+              className="absolute z-[1000] cursor-pointer pointer-events-auto"
+              initial={{ opacity: 0, scale: 0 }}
+              animate={{ left: ix, top: iy, opacity: 1, scale: 1 }}
+              style={{
+                width: TILE_SIZE,
+                height: TILE_SIZE / 2,
+                zIndex: mob.position.x + mob.position.y + 1
+              }}
+              onClick={() => onMobInteract?.(mob.enemyId)}
+            >
+              <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
+                <motion.div
+                  animate={{ y: [0, -3, 0] }}
+                  transition={{ repeat: Infinity, duration: 1.5 + Math.random() }}
+                  className="translate-y-[-20px] filter drop-shadow-[0_6px_8px_rgba(239,68,68,0.3)]"
+                >
+                  <svg width="32" height="32" viewBox="-24 -24 48 48">
+                    <EnemySpriteBody sprite={enemyData?.sprite || 'slime'} />
+                  </svg>
+                </motion.div>
+                <div className="absolute top-[-30px] text-xs text-red-500 font-black animate-pulse">!</div>
+                <div className="absolute bottom-1.5 w-8 h-3 bg-red-950/20 rounded-full blur-[3px] -z-10" />
               </div>
             </motion.div>
           );
@@ -452,8 +577,7 @@ export function QuestMap({
           }}
         >
           <div className="relative w-full h-full flex items-center justify-center">
-            {/* Player Sprite */}
-            <div className="relative z-10 scale-125 translate-y-[-36px] filter drop-shadow-[0_10px_15px_rgba(0,0,0,0.6)]">
+            <div className="relative z-10 scale-90 translate-y-[-28px] filter drop-shadow-[0_6px_10px_rgba(0,0,0,0.6)]">
               <InventorySprite
                 characterClass={playerClass}
                 rank={playerRank}
@@ -462,25 +586,30 @@ export function QuestMap({
                 equippedArmor={equippedArmor}
                 equippedBoot={equippedBoot}
               />
-              kp okfgł            </div>
-
-            {/* Ground Shadow */}
-            <div className="absolute bottom-2 w-16 h-6 bg-amber-500/20 rounded-full blur-[8px] -z-10 animate-pulse" />
-            <div className="absolute bottom-2 w-14 h-5 bg-black/60 rounded-full blur-[4px] -z-20" />
-
-            {/* Soft Glow */}
-            <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-3xl -z-30" />
+            </div>
+            <div className="absolute bottom-2 w-10 h-4 bg-amber-500/20 rounded-full blur-[5px] -z-10 animate-pulse" />
+            <div className="absolute bottom-2 w-10 h-4 bg-black/60 rounded-full blur-[3px] -z-20" />
           </div>
         </motion.div>
       </motion.div>
 
-      {/* Region Badge & Controls - Fixed UI Overlay */}
-      <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-slate-950/40" />
+      {/* Floating Popups */}
+      <AnimatePresence>
+        {popups.map(p => (
+          <motion.div
+            key={p.id}
+            initial={{ opacity: 0, y: 0 }}
+            animate={{ opacity: 1, y: -50 }}
+            exit={{ opacity: 0 }}
+            className={`absolute pointer-events-none font-black text-lg z-[3000] ${p.color}`}
+            style={{ left: p.x, top: p.y }}
+          >
+            {p.text}
+          </motion.div>
+        ))}
+      </AnimatePresence>
 
-      <div className="absolute top-6 right-6 pointer-events-none flex flex-col gap-3 items-end">
-        {/* Controls removed */}
-      </div>
-
+      {/* Region Badge */}
       <div className="absolute top-6 left-6 pointer-events-none">
         <motion.div
           initial={{ x: -20, opacity: 0 }}
@@ -489,26 +618,27 @@ export function QuestMap({
         >
           <div className="text-[10px] font-black text-amber-500/60 uppercase tracking-[0.3em] mb-1">Current Region</div>
           <div className="text-2xl font-black text-white flex items-center gap-3" style={{ fontFamily: "'Cinzel', serif" }}>
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10B981]" />
-            {mapData.name} <span className="text-slate-500 font-normal text-sm">Realm</span>
+            <span className={`w-2.5 h-2.5 rounded-full animate-pulse shadow-[0_0_10px_currentColor] ${timeOfDay === 'day' ? 'text-yellow-400 bg-yellow-400' :
+              timeOfDay === 'night' ? 'text-blue-500 bg-blue-500' :
+                timeOfDay === 'morning' ? 'text-orange-400 bg-orange-400' :
+                  'text-orange-600 bg-orange-600'
+              }`} />
+            {mapData.name} <span className="text-slate-500 font-normal text-sm capitalize">{timeOfDay}</span>
           </div>
         </motion.div>
       </div>
 
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
         <div className="px-6 py-2.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/10 flex gap-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest shadow-2xl">
-          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">🖱️</span> Click to Move</div>
+          <div className="flex items-center gap-2">🖱️ Move</div>
           <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2"><span className="bg-slate-800 px-2 py-1 rounded border border-white/20 text-white">Enter</span> Talk</div>
+          <div className="flex items-center gap-2">⚔️ Wild Mobs Roaming</div>
           <div className="w-px h-4 bg-white/10" />
-          <div className="flex items-center gap-2 font-black text-amber-400">Quests Active</div>
+          <div className={`flex items-center gap-2 font-black ${timeOfDay === 'night' ? 'text-blue-400' : 'text-amber-400'}`}>
+            {timeOfDay.toUpperCase()}
+          </div>
         </div>
       </div>
-
-      {/* Hint */}
-      <p className="text-xs text-slate-500 text-center mb-4">
-        Click tiles to move, click NPCs to interact. Enter to advance dialogs.
-      </p>
 
       {/* NPC Dialog Overlay */}
       <AnimatePresence>
@@ -527,52 +657,28 @@ export function QuestMap({
               className="w-full max-w-lg mb-8"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="fantasy-card rounded-xl p-5">
+              <div className="fantasy-card rounded-xl p-5 bg-slate-900 border border-amber-500/20 shadow-2xl">
                 <div className="flex items-center gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800/50 border border-slate-700/50 shadow-inner overflow-hidden uppercase">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800/50 border border-slate-700/50 overflow-hidden">
                     <NPCSprite type={selectedNPC.sprite} className="w-10 h-10" />
                   </div>
                   <div>
                     <h3 className="font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>
                       {selectedNPC.name}
                     </h3>
-                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest font-bold">NPC ({selectedNPC.sprite})</p>
+                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest font-bold">NPC</p>
                   </div>
                 </div>
-
-                <motion.p
-                  key={dialogIndex}
-                  initial={{ opacity: 0, x: 10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="text-sm text-slate-300 leading-relaxed mb-4 min-h-[48px]"
-                >
+                <motion.p key={dialogIndex} className="text-sm text-slate-300 leading-relaxed mb-4 min-h-[48px]">
                   {getDialogsForNPC(selectedNPC)[dialogIndex]}
                 </motion.p>
-
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 px-3 py-1 bg-black/30 rounded-full border border-white/5">
                     {dialogIndex + 1} / {getDialogsForNPC(selectedNPC).length}
                   </span>
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={handleDialogAdvance}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold ${dialogIndex < getDialogsForNPC(selectedNPC).length - 1
-                      ? "bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700"
-                      : "btn-fantasy"
-                      }`}
-                  >
-                    {dialogIndex < getDialogsForNPC(selectedNPC).length - 1
-                      ? "Continue (Enter) ▶"
-                      : selectedNPC.questId
-                        ? (() => {
-                          if (completedQuests.includes(selectedNPC.questId)) return "Close (Enter) ✕";
-                          const questData = allQuests.find(q => q.id === selectedNPC.questId);
-                          if (questData && questData.class !== playerClass) return "Wait (Enter) ...";
-                          return "Accept Quest (Enter) ⚔️";
-                        })()
-                        : "Close (Enter) ✕"}
-                  </motion.button>
+                  <button onClick={handleDialogAdvance} className="px-4 py-2 rounded-lg text-sm font-bold bg-amber-600 text-white shadow-lg shadow-amber-900/20 active:scale-95 transition-transform">
+                    {dialogIndex < getDialogsForNPC(selectedNPC).length - 1 ? "Next (Enter)" : "Close (Enter)"}
+                  </button>
                 </div>
               </div>
             </motion.div>

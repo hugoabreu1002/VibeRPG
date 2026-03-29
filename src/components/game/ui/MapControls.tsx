@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import type { Character } from "../../../types/game";
-import { getCurrentRegion, getAvailableRegions, getRegionProgress } from "../../../lib/region-utils";
+import { getCurrentRegion, getAvailableRegions, getRegionProgress, canLeaveRegion } from "../../../lib/region-utils";
 import { audioManager } from "../../../lib/audio";
 
 interface MapControlsProps {
@@ -24,11 +24,18 @@ export function MapControls({ character, currentRegion, onRegionChange }: MapCon
 
   const handleRegionSelect = (regionId: string) => {
     if (regionId !== currentRegion) {
+      const leaveCheck = canLeaveRegion(character);
+      if (!leaveCheck.can) {
+        audioManager.playSfx("click");
+        return;
+      }
       setSelectedRegion(regionId);
       onRegionChange(regionId);
       audioManager.playSfx("click");
     }
   };
+
+  const leaveCheck = canLeaveRegion(character);
 
   return (
     <div className="space-y-4">
@@ -48,17 +55,19 @@ export function MapControls({ character, currentRegion, onRegionChange }: MapCon
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <span className="text-xs text-amber-500/60 uppercase tracking-widest font-bold">Region Progress</span>
+              <span className={`text-[10px] uppercase tracking-widest font-bold ${!leaveCheck.can ? "text-red-400 animate-pulse" : "text-amber-500/60"}`}>
+                {!leaveCheck.can ? "🔒 Region Locked" : "Region Progress"}
+              </span>
               <div className="flex items-center gap-2 mt-1">
-                <div className="w-24 bg-slate-800 rounded-full h-2">
+                <div className="w-24 bg-slate-800 rounded-full h-1.5 overflow-hidden">
                   <motion.div
                     initial={{ width: 0 }}
                     animate={{ width: `${currentProgress.percentage}%` }}
                     transition={{ duration: 0.5, ease: "easeOut" }}
-                    className="h-2 bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
+                    className={`h-full ${!leaveCheck.can ? "bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-gradient-to-r from-emerald-500 to-emerald-400"}`}
                   />
                 </div>
-                <span className="text-sm text-slate-300 font-mono">
+                <span className={`text-xs font-mono font-bold ${!leaveCheck.can ? "text-red-400" : "text-slate-300"}`}>
                   {currentProgress.current}/{currentProgress.total}
                 </span>
               </div>
@@ -199,10 +208,17 @@ export function MapControls({ character, currentRegion, onRegionChange }: MapCon
           <div className="text-xs text-slate-400 leading-relaxed">
             {currentRegionData.description}
           </div>
-          <div className="mt-2 flex items-center justify-between text-xs text-slate-500">
-            <span>Available Quests: {getRegionProgress(character).total}</span>
-            <span>Completed: {getRegionProgress(character).current}</span>
+          <div className="mt-2 flex items-center justify-between text-xs font-bold">
+            <span className="text-slate-500 uppercase tracking-tighter">Contracts Status:</span>
+            <span className={!leaveCheck.can ? "text-red-400" : "text-emerald-400"}>
+              {currentProgress.current} / {currentProgress.total} Complete
+            </span>
           </div>
+          {!leaveCheck.can && (
+            <div className="mt-2 text-[10px] text-red-500/70 italic border-t border-red-900/20 pt-1.5">
+               {leaveCheck.reason}
+            </div>
+          )}
         </div>
       </motion.div>
     </div>

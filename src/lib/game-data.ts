@@ -141,11 +141,13 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
 export function getInitialCharacterStats(charClass: CharacterClass) {
   switch (charClass) {
     case "mage":
-      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Hub Town" };
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Northern Village" };
     case "warrior":
       return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
     case "priest":
-      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Hub Town" };
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Southern Village" };
+    case "rogue":
+      return { hp: 75, maxHp: 75, mp: 50, maxMp: 50, attack: 18, defense: 8, magicPower: 10, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
   }
 }
 
@@ -740,103 +742,70 @@ export const QUESTS: Quest[] = [
   {
     id: "mage-library",
     title: "The Cursed Library",
-    description: "The village library has been overtaken by wild magic. Books float everywhere and the librarian is trapped in a magical barrier.",
+    description: "The village library has been overtaken by wild magic books. Exterminate the possessed Grimoires to restore order.",
     class: "mage",
     minLevel: 1,
     region: "Northern Village",
+    bounty: {
+      targetMonsterId: "arcane-book",
+      targetCount: 5
+    },
     choices: [
       {
-        text: "Cast Dispel Magic to break the barrier",
-        requiredStat: "magicPower",
-        difficulty: 15,
-        successMessage: "Your dispel magic works! The barrier shatters and the librarian is freed.",
-        failureMessage: "Your magic fizzles against the barrier. The wild magic is too strong!",
-        xpReward: 50,
-        goldReward: 25
-      },
-      {
-        text: "Use Sense Magic to find the source",
+        text: "Report back to the Librarian",
         requiredStat: "magicPower",
         difficulty: 10,
-        successMessage: "You sense a wild spellbook causing the chaos. With precision, you neutralize it!",
-        failureMessage: "The magical feedback is too overwhelming. You retreat to regroup.",
-        xpReward: 30,
-        goldReward: 15
-      },
-      {
-        text: "Try to reason with the magical disturbance",
-        requiredStat: "magicPower",
-        difficulty: 8,
-        successMessage: "Through careful negotiation with the sentient magic, you calm the wild energies.",
-        failureMessage: "The magical entity doesn't understand your words. It lashes out!",
-        xpReward: 20,
-        goldReward: 10
+        successMessage: "The library is quiet once more. The books have returned to their shelves.",
+        failureMessage: "The magic is still lingering...",
+        xpReward: 100,
+        goldReward: 50
       }
     ]
   },
   {
     id: "mage-apprentice",
     title: "The Missing Apprentice",
-    description: "A young apprentice has gone missing in the forest. The village elder says they were studying magical herbs.",
+    description: "A young apprentice is trapped in the Whispering Woods. Clear the wild spirits to ensure their safe return.",
     class: "mage",
     minLevel: 1,
     region: "Whispering Woods",
+    bounty: {
+      targetMonsterId: "wild-spirit",
+      targetCount: 8
+    },
     choices: [
       {
-        text: "Use Sense Magic to locate them",
+        text: "Rescue the Apprentice",
         requiredStat: "magicPower",
         difficulty: 12,
-        successMessage: "You sense the apprentice's magical aura nearby! They're trapped in a magical bramble.",
-        failureMessage: "The forest's natural magic interferes with your senses. You find nothing.",
-        xpReward: 40,
-        goldReward: 20,
+        successMessage: "You find the apprentice safe. They thank you with a new spell!",
+        failureMessage: "You couldn't find them in time...",
+        xpReward: 120,
+        goldReward: 60,
         rewardSkill: "fireball"
-      },
-      {
-        text: "Cast an illusion to lure them out",
-        requiredStat: "magicPower",
-        difficulty: 15,
-        successMessage: "Your illusion distracts the magical creatures, allowing the apprentice to escape!",
-        failureMessage: "The creatures see through your illusion. They become agitated!",
-        xpReward: 35,
-        goldReward: 15
       }
     ]
   },
   {
     id: "mage-elemental",
     title: "The Elemental Disturbance",
-    description: "An earth elemental has awakened near the village and is blocking the main road. The villagers are frightened.",
+    description: "An earth elemental has awakened in the Mountain Pass. Banish the rogue elementals to restore the balance of nature.",
     class: "mage",
     minLevel: 2,
     region: "Mountain Pass",
+    bounty: {
+      targetMonsterId: "earth-elemental",
+      targetCount: 3
+    },
     choices: [
       {
-        text: "Challenge the elemental in a magical duel",
-        requiredStat: "magicPower",
-        difficulty: 25,
-        successMessage: "Your magical prowess overwhelms the elemental! It retreats deep underground.",
-        failureMessage: "The elemental's power is immense. You're pushed back by the sheer force of earth!",
-        xpReward: 80,
-        goldReward: 50
-      },
-      {
-        text: "Communicate with the elemental",
+        text: "Restore Balance",
         requiredStat: "magicPower",
         difficulty: 20,
-        successMessage: "Through ancient magical words, you convince the elemental to guard the village instead!",
-        failureMessage: "The elemental doesn't understand your magical language. It roars in confusion!",
-        xpReward: 60,
-        goldReward: 30
-      },
-      {
-        text: "Banish the elemental back to its plane",
-        requiredStat: "magicPower",
-        difficulty: 30,
-        successMessage: "With a powerful banishment spell, you send the elemental back to the elemental plane!",
-        failureMessage: "Your banishment fails! The elemental grows angrier!",
-        xpReward: 100,
-        goldReward: 75
+        successMessage: "The elementals have returned to the earth. The energy is calm.",
+        failureMessage: "The energy is still turbulent...",
+        xpReward: 200,
+        goldReward: 100
       }
     ]
   },
@@ -927,29 +896,24 @@ export const QUESTS: Quest[] = [
   // ⚔️ WARRIOR QUESTS
   {
     id: "warrior-village",
-    title: "Village Protection",
-    description: "Bandits are approaching the village! The village leader needs someone to defend the gates.",
+    title: "The Bandit Scourge",
+    description: "Bandits are raiding the Northern Village. Defeat their leaders to protect the villagers.",
     class: "warrior",
     minLevel: 1,
     region: "Northern Village",
+    bounty: {
+      targetMonsterId: "bandit-leader",
+      targetCount: 5
+    },
     choices: [
       {
-        text: "Stand at the gates and fight them head-on!",
+        text: "Victory Parade",
         requiredStat: "attack",
         difficulty: 15,
-        successMessage: "Your fierce fighting scares off the bandits! The village is safe.",
-        failureMessage: "There are too many bandits! You hold them off but they pillage some houses.",
+        successMessage: "The bandits haven't been seen since. The village celebrates your victory!",
+        failureMessage: "The remaining bandits are hiding...",
         xpReward: 150,
         goldReward: 80
-      },
-      {
-        text: "Lead a charge to scatter them",
-        requiredStat: "attack",
-        difficulty: 20,
-        successMessage: "Your leadership and combat skills turn the tide! The bandits flee in panic.",
-        failureMessage: "The bandits anticipate your charge. You're surrounded!",
-        xpReward: 60,
-        goldReward: 35
       }
     ]
   },
@@ -1097,38 +1061,24 @@ export const QUESTS: Quest[] = [
   // ⛑️ PRIEST QUESTS
   {
     id: "priest-plague",
-    title: "The Plagued Village",
-    description: "A mysterious illness is spreading through the village. The healer needs help finding the cure.",
+    title: "The Plague Beasts",
+    description: "A mysterious plague is being spread by foul beasts in the Southern Village. Eradicate them to stop the infection.",
     class: "priest",
     minLevel: 1,
     region: "Southern Village",
+    bounty: {
+      targetMonsterId: "plague-beast",
+      targetCount: 6
+    },
     choices: [
       {
-        text: "Use healing magic on the sick",
+        text: "Healing Ritual",
         requiredStat: "magicPower",
         difficulty: 15,
-        successMessage: "Your holy magic cures the villagers! They recover quickly.",
-        failureMessage: "The plague is stronger than your magic. More people fall ill!",
-        xpReward: 120,
-        goldReward: 60
-      },
-      {
-        text: "Search for medicinal herbs in the forest",
-        requiredStat: "defense",
-        difficulty: 10,
-        successMessage: "You find the rare healing herbs. The cure is made!",
-        failureMessage: "You cannot find the right herbs. Time is running out!",
-        xpReward: 35,
-        goldReward: 20
-      },
-      {
-        text: "Purify the contaminated water source",
-        requiredStat: "magicPower",
-        difficulty: 20,
-        successMessage: "Your purification ritual cleanses the water! The source of illness is gone.",
-        failureMessage: "The contamination is too severe. The ritual fails!",
-        xpReward: 60,
-        goldReward: 35
+        successMessage: "The plague has been halted. The villagers bow in gratitude.",
+        failureMessage: "The sickness lingers...",
+        xpReward: 200,
+        goldReward: 100
       }
     ]
   },
@@ -1502,6 +1452,27 @@ export const QUESTS: Quest[] = [
   },
 ];
 
+// Map regions to the mobs that can spawn there
+export const REGION_MOBS: Record<string, string[]> = {
+  "Hub Town": ["green-slime", "giant-rat", "skeleton-soldier", "wild-spirit", "bandit-leader", "plague-beast"],
+  "Northern Village": ["green-slime", "giant-rat", "goblin", "bandit-leader", "arcane-book", "restless-ghost"],
+  "Whispering Woods": ["wild-boar", "terror-hawk", "mushroom-horror", "treant", "wild-spirit"],
+  "Mountain Pass": ["thunder-hawk", "earth-elemental", "ice-golem"],
+  "Trade Route": ["wolf-pack", "bandit-leader", "orc-warrior"],
+  "Training Grounds": ["honor-knight", "skeleton-soldier"],
+  "Dark Forest": ["orc-warrior", "dire-bear", "dark-mage", "mantis-warrior"],
+  "Dragon Peak": ["fire-sprite", "wyvern", "drake"],
+  "Southern Village": ["green-slime", "giant-rat", "plague-beast"],
+  "Abandoned Church": ["restless-ghost", "skeleton-soldier", "zombie"],
+  "Sacred Catacombs": ["skeleton-soldier", "zombie", "wraith", "death-knight"],
+  "Cursed Ruins": ["imp", "hellhound", "succubus", "arch-demon"],
+  "Crystal Caverns": ["giant-spider", "mimic", "wild-spirit", "crystal-dragon"],
+  "Shadow Tower": ["dark-mage", "wraith", "lich", "shadow-fiend"],
+  "Capital City": ["skeleton-soldier", "bandit-leader"],
+  "Astral Observatory": ["wild-spirit", "arcane-book", "storm-djinn", "void-terror"],
+  "Celestial Shrine": ["wild-spirit", "priest-robes", "fallen-angel"], // Use priest as base for angel
+};
+
 // Map quests to their enemies
 export const QUEST_ENEMIES: Record<string, string> = {
   "mage-library": "arcane-book",
@@ -1712,7 +1683,7 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       description: t("quests.warrior-village.description"),
       class: "warrior",
       minLevel: 1,
-      region: "Northern Village",
+      region: "Hub Town",
       choices: [
         {
           text: t("quests.warrior-village.choice1"),
