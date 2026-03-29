@@ -7,6 +7,7 @@ import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
 import { audioManager } from "../../../lib/audio";
+import { pokiService } from "../../../lib/poki";
 import {
   ShopTabIcon, GoldIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon
 } from "../ui/GameIcons";
@@ -56,6 +57,16 @@ export function Shop({ gold, shopItems, onBuyItem, onWatchAd }: ShopProps) {
     setTimeout(() => setPurchasedItem(null), 1000);
   };
 
+  const handleWatchAd = async () => {
+    const success = await pokiService.rewardedBreak({
+      onStart: () => audioManager.setAdMute(true)
+    });
+    audioManager.setAdMute(false);
+    if (success) {
+      onWatchAd();
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -68,13 +79,13 @@ export function Shop({ gold, shopItems, onBuyItem, onWatchAd }: ShopProps) {
         <h2 className="text-xl font-bold text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
           <ShopTabIcon size={28} /> Shop
         </h2>
-        
+
         <div className="flex items-center gap-3">
           {/* Rewarded Ad Button */}
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={onWatchAd}
+            onClick={handleWatchAd}
             className="flex items-center gap-2 bg-gradient-to-br from-amber-500/20 to-yellow-600/30 border-2 border-amber-400/50 px-4 py-1.5 rounded-xl text-amber-200 font-bold text-sm shadow-lg shadow-amber-900/20 hover:from-amber-500/30 hover:to-yellow-600/40 transition-all group"
           >
             <span className="text-xl group-hover:animate-bounce">🎬</span>
@@ -144,8 +155,8 @@ export function Shop({ gold, shopItems, onBuyItem, onWatchAd }: ShopProps) {
               onClick={() => handleBuy(item)}
               disabled={gold < item.price}
               className={`w-full py-2.5 rounded-lg font-semibold text-sm transition-all relative overflow-hidden ${gold >= item.price
-                  ? "btn-fantasy"
-                  : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700/30"
+                ? "btn-fantasy"
+                : "bg-slate-800/50 text-slate-500 cursor-not-allowed border border-slate-700/30"
                 }`}
             >
               <AnimatePresence>
