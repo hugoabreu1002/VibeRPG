@@ -28,7 +28,7 @@ class QuestServiceImpl implements QuestService {
   getAvailableQuests(character: Character): Quest[] {
     const availableRegions = getAvailableRegions(character);
     const allAvailableQuests: Quest[] = [];
-    
+
     availableRegions.forEach(region => {
       const regionQuests = getAvailableQuestsForRegion(region.id, character);
       regionQuests.forEach(questId => {
@@ -38,7 +38,7 @@ class QuestServiceImpl implements QuestService {
         }
       });
     });
-    
+
     return allAvailableQuests;
   }
 
@@ -51,6 +51,11 @@ class QuestServiceImpl implements QuestService {
     const quest = QUESTS.find(q => q.id === questId);
     if (!quest) {
       return { success: false, message: "Quest not found" };
+    }
+
+    // Check if there's already an active quest - must finish before starting another
+    if (character.activeQuestId) {
+      return { success: false, message: "You must complete your current quest before starting a new one" };
     }
 
     if (!this.canAcceptQuest(character, quest)) {
@@ -66,7 +71,7 @@ class QuestServiceImpl implements QuestService {
     const updatedCharacter = {
       ...character,
       activeQuestId: questId,
-      questState: "map" as QuestState,
+      questState: "active" as QuestState,
       acceptedQuests: [...(character.acceptedQuests || []), questId]
     };
 
@@ -89,7 +94,7 @@ class QuestServiceImpl implements QuestService {
     const requiredStat = choice.requiredStat;
     const characterStat = character[requiredStat];
     const difficulty = choice.difficulty;
-    
+
     // Add some randomness to the check
     const randomFactor = Math.random() * 10;
     const success = characterStat + randomFactor >= difficulty;
@@ -111,6 +116,17 @@ class QuestServiceImpl implements QuestService {
       throw new Error("No active quest to complete");
     }
 
+    // Check if quest was already completed - prevent duplicate rewards
+    if (character.completedQuests.includes(character.activeQuestId)) {
+      // Quest already completed, just clear active quest without giving rewards again
+      const updatedCharacter = {
+        ...character,
+        activeQuestId: null,
+        questState: "result" as QuestState
+      };
+      return await updateCharacter(updatedCharacter);
+    }
+
     // Add rewards to character
     let updatedCharacter = {
       ...character,
@@ -120,9 +136,7 @@ class QuestServiceImpl implements QuestService {
     };
 
     // Add completed quest to list
-    if (!updatedCharacter.completedQuests.includes(character.activeQuestId)) {
-      updatedCharacter.completedQuests = [...updatedCharacter.completedQuests, character.activeQuestId];
-    }
+    updatedCharacter.completedQuests = [...updatedCharacter.completedQuests, character.activeQuestId];
 
     // Clear active quest
     updatedCharacter.activeQuestId = null;
@@ -165,7 +179,7 @@ class QuestServiceImpl implements QuestService {
   // Progress Tracking
   getQuestProgress(character: Character): { current: number; total: number; percentage: number } {
     const availableQuests = this.getAvailableQuests(character);
-    const completedInAvailable = availableQuests.filter(quest => 
+    const completedInAvailable = availableQuests.filter(quest =>
       character.completedQuests.includes(quest.id)
     ).length;
 
@@ -179,7 +193,7 @@ class QuestServiceImpl implements QuestService {
   getRegionProgress(character: Character): { current: number; total: number; percentage: number } {
     const currentRegion = character.currentRegion;
     const availableQuests = getAvailableQuestsForRegion(currentRegion, character);
-    const completedInRegion = availableQuests.filter(questId => 
+    const completedInRegion = availableQuests.filter(questId =>
       character.completedQuests.includes(questId)
     ).length;
 

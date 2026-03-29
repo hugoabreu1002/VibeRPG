@@ -24,6 +24,7 @@ export interface Character {
   completedQuests: string[];
   acceptedQuests: string[];
   currentRegion: string;
+  discoveredTiles?: Record<string, string[]>;
   activeQuestId?: string;
   questState: "list" | "map" | "active" | "battle" | "result";
 }

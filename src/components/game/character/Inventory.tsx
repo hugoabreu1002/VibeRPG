@@ -103,11 +103,12 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
 
 
       <div className="flex flex-col lg:flex-row gap-8">
-        {/* Left Column: Currently Equipped */}
+        {/* Left Column: Currently Equipped & Preview */}
         <div className="lg:w-1/3 space-y-4">
           <div className="bg-slate-900/40 p-5 rounded-xl border border-slate-700/30">
             <h3 className="text-[10px] font-bold mb-4 text-amber-200/60 uppercase tracking-wider text-center">Currently Equipped</h3>
             <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[240px] mx-auto items-center justify-items-center">
+              <div className="text-xs text-slate-400 text-center mb-2">Hat</div>
               {/* Top: Hat */}
               <div className="col-start-2 row-start-1 flex justify-center">
                 <EquipmentSlot
@@ -118,7 +119,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                 />
               </div>
 
-              {/* Left: Weapon */}
+              <div className="text-xs text-slate-400 text-center mb-2">Weapon</div>
               <div className="col-start-1 row-start-2 flex justify-center">
                 <EquipmentSlot
                   type="weapon"
@@ -129,7 +130,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
               </div>
 
               {/* Center: Character */}
-              <div className="col-start-2 row-start-2 flex justify-center min-w-[64px] min-h-[64px] scale-110">
+              <div className="col-start-2 row-start-2 flex justify-center min-w-[80px] min-h-[80px] scale-120">
                 {characterClass && (
                   <InventorySprite
                     characterClass={characterClass}
@@ -143,7 +144,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                 )}
               </div>
 
-              {/* Right: Armor */}
+              <div className="text-xs text-slate-400 text-center mb-2">Armor</div>
               <div className="col-start-3 row-start-2 flex justify-center">
                 <EquipmentSlot
                   type="armor"
@@ -153,7 +154,7 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                 />
               </div>
 
-              {/* Bottom: Boots */}
+              <div className="text-xs text-slate-400 text-center mb-2">Boots</div>
               <div className="col-start-2 row-start-3 flex justify-center">
                 <EquipmentSlot
                   type="boot"

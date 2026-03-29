@@ -141,11 +141,13 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
 export function getInitialCharacterStats(charClass: CharacterClass) {
   switch (charClass) {
     case "mage":
-      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Hub Town" };
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Northern Village" };
     case "warrior":
       return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
     case "priest":
-      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Hub Town" };
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Southern Village" };
+    case "rogue":
+      return { hp: 75, maxHp: 75, mp: 50, maxMp: 50, attack: 18, defense: 8, magicPower: 10, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
   }
 }
 
@@ -446,7 +448,6 @@ export const SHOP_ITEMS: InventoryItem[] = [
   }
 ];
 
-
 export const ALL_ITEMS = SHOP_ITEMS;
 
 // ============================================================
@@ -676,24 +677,6 @@ export const ENEMIES: Record<string, Enemy> = {
     description: "A rogue sorcerer wielding forbidden magic.",
     sprite: "dark-mage", battleTheme: "undead"
   },
-  "royal-assassin": {
-    id: "royal-assassin", name: "Royal Assassin", hp: 120, maxHp: 120,
-    attack: 35, defense: 12, magicPower: 0, xpReward: 160, goldReward: 90,
-    description: "A highly trained killer targeting the King.",
-    sprite: "rogue", battleTheme: "boss"
-  },
-  "void-terror": {
-    id: "void-terror", name: "Void Terror", hp: 140, maxHp: 140,
-    attack: 15, defense: 28, magicPower: 40, xpReward: 180, goldReward: 100,
-    description: "An entity from the astral plane that consumes reality.",
-    sprite: "wraith", battleTheme: "boss"
-  },
-  "fallen-angel": {
-    id: "fallen-angel", name: "Fallen Angel", hp: 200, maxHp: 200,
-    attack: 25, defense: 20, magicPower: 25, xpReward: 170, goldReward: 95,
-    description: "A celestial being corrupted by ancient power.",
-    sprite: "priest", battleTheme: "boss"
-  },
   "bandit-leader": {
     id: "bandit-leader", name: "Bandit Leader", hp: 60, maxHp: 60,
     attack: 20, defense: 8, magicPower: 2, xpReward: 50, goldReward: 30,
@@ -740,105 +723,44 @@ export const QUESTS: Quest[] = [
   {
     id: "mage-library",
     title: "The Cursed Library",
-    description: "The village library has been overtaken by wild magic. Books float everywhere and the librarian is trapped in a magical barrier.",
+    description: "The village library has been overtaken by wild magic books. Exterminate the possessed Grimoires to restore order.",
     class: "mage",
     minLevel: 1,
     region: "Northern Village",
-    choices: [
-      {
-        text: "Cast Dispel Magic to break the barrier",
-        requiredStat: "magicPower",
-        difficulty: 15,
-        successMessage: "Your dispel magic works! The barrier shatters and the librarian is freed.",
-        failureMessage: "Your magic fizzles against the barrier. The wild magic is too strong!",
-        xpReward: 50,
-        goldReward: 25
-      },
-      {
-        text: "Use Sense Magic to find the source",
-        requiredStat: "magicPower",
-        difficulty: 10,
-        successMessage: "You sense a wild spellbook causing the chaos. With precision, you neutralize it!",
-        failureMessage: "The magical feedback is too overwhelming. You retreat to regroup.",
-        xpReward: 30,
-        goldReward: 15
-      },
-      {
-        text: "Try to reason with the magical disturbance",
-        requiredStat: "magicPower",
-        difficulty: 8,
-        successMessage: "Through careful negotiation with the sentient magic, you calm the wild energies.",
-        failureMessage: "The magical entity doesn't understand your words. It lashes out!",
-        xpReward: 20,
-        goldReward: 10
-      }
-    ]
+    bounty: {
+      targetMonsterId: "arcane-book",
+      targetCount: 5
+    },
+    xpReward: 100,
+    goldReward: 50
   },
   {
     id: "mage-apprentice",
     title: "The Missing Apprentice",
-    description: "A young apprentice has gone missing in the forest. The village elder says they were studying magical herbs.",
+    description: "A young apprentice is trapped in the Whispering Woods. Clear the wild spirits to ensure their safe return.",
     class: "mage",
     minLevel: 1,
     region: "Whispering Woods",
-    choices: [
-      {
-        text: "Use Sense Magic to locate them",
-        requiredStat: "magicPower",
-        difficulty: 12,
-        successMessage: "You sense the apprentice's magical aura nearby! They're trapped in a magical bramble.",
-        failureMessage: "The forest's natural magic interferes with your senses. You find nothing.",
-        xpReward: 40,
-        goldReward: 20,
-        rewardSkill: "fireball"
-      },
-      {
-        text: "Cast an illusion to lure them out",
-        requiredStat: "magicPower",
-        difficulty: 15,
-        successMessage: "Your illusion distracts the magical creatures, allowing the apprentice to escape!",
-        failureMessage: "The creatures see through your illusion. They become agitated!",
-        xpReward: 35,
-        goldReward: 15
-      }
-    ]
+    bounty: {
+      targetMonsterId: "wild-spirit",
+      targetCount: 8
+    },
+    xpReward: 120,
+    goldReward: 60
   },
   {
     id: "mage-elemental",
     title: "The Elemental Disturbance",
-    description: "An earth elemental has awakened near the village and is blocking the main road. The villagers are frightened.",
+    description: "An earth elemental has awakened in the Mountain Pass. Banish the rogue elementals to restore the balance of nature.",
     class: "mage",
     minLevel: 2,
     region: "Mountain Pass",
-    choices: [
-      {
-        text: "Challenge the elemental in a magical duel",
-        requiredStat: "magicPower",
-        difficulty: 25,
-        successMessage: "Your magical prowess overwhelms the elemental! It retreats deep underground.",
-        failureMessage: "The elemental's power is immense. You're pushed back by the sheer force of earth!",
-        xpReward: 80,
-        goldReward: 50
-      },
-      {
-        text: "Communicate with the elemental",
-        requiredStat: "magicPower",
-        difficulty: 20,
-        successMessage: "Through ancient magical words, you convince the elemental to guard the village instead!",
-        failureMessage: "The elemental doesn't understand your magical language. It roars in confusion!",
-        xpReward: 60,
-        goldReward: 30
-      },
-      {
-        text: "Banish the elemental back to its plane",
-        requiredStat: "magicPower",
-        difficulty: 30,
-        successMessage: "With a powerful banishment spell, you send the elemental back to the elemental plane!",
-        failureMessage: "Your banishment fails! The elemental grows angrier!",
-        xpReward: 100,
-        goldReward: 75
-      }
-    ]
+    bounty: {
+      targetMonsterId: "earth-elemental",
+      targetCount: 3
+    },
+    xpReward: 200,
+    goldReward: 100
   },
   {
     id: "mage-crystalcave",
@@ -847,26 +769,12 @@ export const QUESTS: Quest[] = [
     class: "mage",
     minLevel: 2,
     region: "Crystal Caverns",
-    choices: [
-      {
-        text: "Harness the crystal energy to blast the creatures",
-        requiredStat: "magicPower",
-        difficulty: 22,
-        successMessage: "You channel the crystal energy into a devastating arcane blast!",
-        failureMessage: "The crystal energy is unstable and backfires on you!",
-        xpReward: 70,
-        goldReward: 40
-      },
-      {
-        text: "Create a protective ward around the miners",
-        requiredStat: "defense",
-        difficulty: 18,
-        successMessage: "Your magical barrier holds firm, allowing the miners to escape safely!",
-        failureMessage: "The creatures overwhelm your ward with sheer numbers!",
-        xpReward: 55,
-        goldReward: 30
-      }
-    ]
+    bounty: {
+      targetMonsterId: "crystal-dragon",
+      targetCount: 3
+    },
+    xpReward: 70,
+    goldReward: 40
   },
   {
     id: "mage-tower",
@@ -875,26 +783,12 @@ export const QUESTS: Quest[] = [
     class: "mage",
     minLevel: 3,
     region: "Shadow Tower",
-    choices: [
-      {
-        text: "Engage in a full magical duel",
-        requiredStat: "magicPower",
-        difficulty: 30,
-        successMessage: "Your superior magical knowledge wins the duel! The dark mage surrenders!",
-        failureMessage: "The dark mage's forbidden spells prove too powerful!",
-        xpReward: 80,
-        goldReward: 40
-      },
-      {
-        text: "Dismantle the tower's magical defenses",
-        requiredStat: "magicPower",
-        difficulty: 25,
-        successMessage: "You systematically unravel the wards, leaving the mage vulnerable!",
-        failureMessage: "A trap spell triggers, blasting you backwards!",
-        xpReward: 90,
-        goldReward: 50
-      }
-    ]
+    bounty: {
+      targetMonsterId: "dark-mage",
+      targetCount: 5
+    },
+    xpReward: 80,
+    goldReward: 40
   },
   {
     id: "mage-astral-plane",
@@ -903,55 +797,27 @@ export const QUESTS: Quest[] = [
     class: "mage",
     minLevel: 4,
     region: "Astral Observatory",
-    choices: [
-      {
-        text: "Perform the Ritual of Sealing",
-        requiredStat: "magicPower",
-        difficulty: 40,
-        successMessage: "Your magic binds the astral energies, closing the tear permanently!",
-        failureMessage: "The void energy overwhelms your spell! You must retreat!",
-        xpReward: 120,
-        goldReward: 60
-      },
-      {
-        text: "Overload the Rift with pure arcane energy",
-        requiredStat: "magicPower",
-        difficulty: 35,
-        successMessage: "The sheer arcane explosion collapses the rift into itself!",
-        failureMessage: "The rift absorbs your magic and grows larger!",
-        xpReward: 150,
-        goldReward: 80
-      }
-    ]
+    bounty: {
+      targetMonsterId: "void-terror",
+      targetCount: 5
+    },
+    xpReward: 120,
+    goldReward: 60
   },
   // ⚔️ WARRIOR QUESTS
   {
     id: "warrior-village",
-    title: "Village Protection",
-    description: "Bandits are approaching the village! The village leader needs someone to defend the gates.",
+    title: "The Bandit Scourge",
+    description: "Bandits are raiding the Northern Village. Defeat their leaders to protect the villagers.",
     class: "warrior",
     minLevel: 1,
     region: "Northern Village",
-    choices: [
-      {
-        text: "Stand at the gates and fight them head-on!",
-        requiredStat: "attack",
-        difficulty: 15,
-        successMessage: "Your fierce fighting scares off the bandits! The village is safe.",
-        failureMessage: "There are too many bandits! You hold them off but they pillage some houses.",
-        xpReward: 150,
-        goldReward: 80
-      },
-      {
-        text: "Lead a charge to scatter them",
-        requiredStat: "attack",
-        difficulty: 20,
-        successMessage: "Your leadership and combat skills turn the tide! The bandits flee in panic.",
-        failureMessage: "The bandits anticipate your charge. You're surrounded!",
-        xpReward: 60,
-        goldReward: 35
-      }
-    ]
+    bounty: {
+      targetMonsterId: "bandit-leader",
+      targetCount: 5
+    },
+    xpReward: 150,
+    goldReward: 80
   },
   {
     id: "warrior-duel",
@@ -960,27 +826,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 2,
     region: "Training Grounds",
-    choices: [
-      {
-        text: "Use raw strength to overpower them",
-        requiredStat: "attack",
-        difficulty: 25,
-        successMessage: "Your powerful strikes overwhelm the knight! You win the duel!",
-        failureMessage: "The knight is more skilled than expected. You lose the duel.",
-        xpReward: 70,
-        goldReward: 40,
-        rewardSkill: "strike"
-      },
-      {
-        text: "Use tactical defense and counter-attacks",
-        requiredStat: "defense",
-        difficulty: 20,
-        successMessage: "You deflect their attacks perfectly and find an opening for victory!",
-        failureMessage: "Their technique is flawless. You cannot find a weakness!",
-        xpReward: 55,
-        goldReward: 30
-      }
-    ]
+    bounty: {
+      targetMonsterId: "honor-knight",
+      targetCount: 5
+    },
+    xpReward: 70,
+    goldReward: 40
   },
   {
     id: "warrior-monster",
@@ -989,26 +840,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 1,
     region: "Trade Route",
-    choices: [
-      {
-        text: "Storm the nest alone!",
-        requiredStat: "attack",
-        difficulty: 20,
-        successMessage: "Your ferocity is terrifying! The wolves flee from their own nest!",
-        failureMessage: "There are too many wolves! You're forced to retreat temporarily.",
-        xpReward: 55,
-        goldReward: 30
-      },
-      {
-        text: "Set a trap and lure them out",
-        requiredStat: "defense",
-        difficulty: 15,
-        successMessage: "Your trap works perfectly! You defeat the wolves efficiently.",
-        failureMessage: "The wolves are smarter than expected. They avoid your trap!",
-        xpReward: 40,
-        goldReward: 20
-      }
-    ]
+    bounty: {
+      targetMonsterId: "wolf-pack",
+      targetCount: 5
+    },
+    xpReward: 55,
+    goldReward: 30
   },
   {
     id: "warrior-orc-camp",
@@ -1017,26 +854,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 2,
     region: "Dark Forest",
-    choices: [
-      {
-        text: "Challenge the orc chieftain to single combat",
-        requiredStat: "attack",
-        difficulty: 28,
-        successMessage: "You defeat the chieftain! Without a leader, the orcs scatter!",
-        failureMessage: "The orc chieftain is incredibly powerful! You barely escape!",
-        xpReward: 85,
-        goldReward: 50
-      },
-      {
-        text: "Lead a night raid on their supplies",
-        requiredStat: "defense",
-        difficulty: 22,
-        successMessage: "You destroy their food stores, forcing the orcs to retreat!",
-        failureMessage: "The orc sentries spot you! You fight your way out!",
-        xpReward: 65,
-        goldReward: 35
-      }
-    ]
+    bounty: {
+      targetMonsterId: "orc-warrior",
+      targetCount: 5
+    },
+    xpReward: 85,
+    goldReward: 50
   },
   {
     id: "warrior-dragon-lair",
@@ -1045,26 +868,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 3,
     region: "Dragon Peak",
-    choices: [
-      {
-        text: "Face the wyvern head-on with sword and shield",
-        requiredStat: "attack",
-        difficulty: 32,
-        successMessage: "Your blade finds the gap in the wyvern's scales! It falls defeated!",
-        failureMessage: "The wyvern's flames nearly incinerate you! You retreat badly burned!",
-        xpReward: 50,
-        goldReward: 25
-      },
-      {
-        text: "Use the terrain to your advantage",
-        requiredStat: "defense",
-        difficulty: 26,
-        successMessage: "You lure the wyvern into a narrow passage where it can't fly! Victory!",
-        failureMessage: "The wyvern is smarter than you expected. It corners you instead!",
-        xpReward: 100,
-        goldReward: 55
-      }
-    ]
+    bounty: {
+      targetMonsterId: "wyvern",
+      targetCount: 5
+    },
+    xpReward: 50,
+    goldReward: 25
   },
   {
     id: "warrior-kings-guard",
@@ -1073,64 +882,27 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 4,
     region: "Capital City",
-    choices: [
-      {
-        text: "Block the assassin's strike with your shield",
-        requiredStat: "defense",
-        difficulty: 35,
-        successMessage: "You perfectly deflect the killing blow, saving the King!",
-        failureMessage: "The assassin slips past your shield, wounding you heavily!",
-        xpReward: 80,
-        goldReward: 40
-      },
-      {
-        text: "Intercept the assassin with a mighty charge",
-        requiredStat: "attack",
-        difficulty: 40,
-        successMessage: "Your powerful charge pins the assassin before they can react!",
-        failureMessage: "You miss the charge, and the assassin counters quickly!",
-        xpReward: 220,
-        goldReward: 150
-      }
-    ]
+    bounty: {
+      targetMonsterId: "royal-assassin",
+      targetCount: 5
+    },
+    xpReward: 220,
+    goldReward: 150
   },
   // ⛑️ PRIEST QUESTS
   {
     id: "priest-plague",
-    title: "The Plagued Village",
-    description: "A mysterious illness is spreading through the village. The healer needs help finding the cure.",
+    title: "The Plague Beasts",
+    description: "A mysterious plague is being spread by foul beasts in the Southern Village. Eradicate them to stop the infection.",
     class: "priest",
     minLevel: 1,
     region: "Southern Village",
-    choices: [
-      {
-        text: "Use healing magic on the sick",
-        requiredStat: "magicPower",
-        difficulty: 15,
-        successMessage: "Your holy magic cures the villagers! They recover quickly.",
-        failureMessage: "The plague is stronger than your magic. More people fall ill!",
-        xpReward: 120,
-        goldReward: 60
-      },
-      {
-        text: "Search for medicinal herbs in the forest",
-        requiredStat: "defense",
-        difficulty: 10,
-        successMessage: "You find the rare healing herbs. The cure is made!",
-        failureMessage: "You cannot find the right herbs. Time is running out!",
-        xpReward: 35,
-        goldReward: 20
-      },
-      {
-        text: "Purify the contaminated water source",
-        requiredStat: "magicPower",
-        difficulty: 20,
-        successMessage: "Your purification ritual cleanses the water! The source of illness is gone.",
-        failureMessage: "The contamination is too severe. The ritual fails!",
-        xpReward: 60,
-        goldReward: 35
-      }
-    ]
+    bounty: {
+      targetMonsterId: "plague-beast",
+      targetCount: 6
+    },
+    xpReward: 200,
+    goldReward: 100
   },
   {
     id: "priest-ghost",
@@ -1139,27 +911,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 1,
     region: "Abandoned Church",
-    choices: [
-      {
-        text: "Use Holy Light to banish the spirit",
-        requiredStat: "magicPower",
-        difficulty: 18,
-        successMessage: "The Holy Light reveals the spirit's burden. You help it find peace.",
-        failureMessage: "The spirit resists your magic. It's too powerful!",
-        xpReward: 55,
-        goldReward: 30
-      },
-      {
-        text: "Listen to the spirit's story and help it",
-        requiredStat: "magicPower",
-        difficulty: 12,
-        successMessage: "Through compassionate listening, you learn of its unfinished business. You help complete it.",
-        failureMessage: "The spirit cannot communicate. It remains restless!",
-        xpReward: 40,
-        goldReward: 20,
-        rewardSkill: "holy"
-      }
-    ]
+    bounty: {
+      targetMonsterId: "restless-ghost",
+      targetCount: 5
+    },
+    xpReward: 55,
+    goldReward: 30
   },
   {
     id: "priest-blessing",
@@ -1168,26 +925,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 2,
     region: "Northern Village",
-    choices: [
-      {
-        text: "Perform the Great Blessing ritual",
-        requiredStat: "magicPower",
-        difficulty: 25,
-        successMessage: "The blessing is successful! A protective aura surrounds the village.",
-        failureMessage: "The ritual drains your energy. You barely complete it!",
-        xpReward: 75,
-        goldReward: 45
-      },
-      {
-        text: "Place protective wards around the village",
-        requiredStat: "defense",
-        difficulty: 20,
-        successMessage: "Your wards are strong! The village is now protected.",
-        failureMessage: "Some wards fail to activate. The village remains vulnerable.",
-        xpReward: 55,
-        goldReward: 30
-      }
-    ]
+    bounty: {
+      targetMonsterId: "dark-corrupter",
+      targetCount: 5
+    },
+    xpReward: 75,
+    goldReward: 45
   },
   {
     id: "priest-undead-crypt",
@@ -1196,26 +939,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 2,
     region: "Sacred Catacombs",
-    choices: [
-      {
-        text: "Perform a mass exorcism ritual",
-        requiredStat: "magicPower",
-        difficulty: 24,
-        successMessage: "Your holy power banishes the undead back to their graves!",
-        failureMessage: "Too many undead! Your holy power is overwhelmed!",
-        xpReward: 80,
-        goldReward: 45
-      },
-      {
-        text: "Seal the crypt with divine wards",
-        requiredStat: "defense",
-        difficulty: 20,
-        successMessage: "The divine seals hold! No more undead can escape!",
-        failureMessage: "The dark energy within cracks your seals!",
-        xpReward: 60,
-        goldReward: 35
-      }
-    ]
+    bounty: {
+      targetMonsterId: "death-knight",
+      targetCount: 5
+    },
+    xpReward: 80,
+    goldReward: 45
   },
   {
     id: "priest-demon-portal",
@@ -1224,26 +953,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 3,
     region: "Cursed Ruins",
-    choices: [
-      {
-        text: "Channel divine power to close the portal",
-        requiredStat: "magicPower",
-        difficulty: 30,
-        successMessage: "With an explosion of holy light, you seal the portal forever!",
-        failureMessage: "The demonic energy is overwhelming! The portal resists!",
-        xpReward: 50,
-        goldReward: 25
-      },
-      {
-        text: "Confront the demon gatekeeper",
-        requiredStat: "attack",
-        difficulty: 25,
-        successMessage: "You smite the gatekeeper with divine fury! The portal collapses!",
-        failureMessage: "The demon's dark power scorches your holy shields!",
-        xpReward: 100,
-        goldReward: 55
-      }
-    ]
+    bounty: {
+      targetMonsterId: "arch-demon",
+      targetCount: 5
+    },
+    xpReward: 50,
+    goldReward: 25
   },
   {
     id: "priest-celestial-shrine",
@@ -1252,26 +967,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 4,
     region: "Celestial Shrine",
-    choices: [
-      {
-        text: "Channel the Grand Purification",
-        requiredStat: "magicPower",
-        difficulty: 40,
-        successMessage: "The overwhelming holy light cleanses the corrupted angel!",
-        failureMessage: "The dark celestial energy shatters your holy ward!",
-        xpReward: 80,
-        goldReward: 40
-      },
-      {
-        text: "Sing the ancient hymn of serenity",
-        requiredStat: "defense",
-        difficulty: 35,
-        successMessage: "The ancient hymn soothes the guardian's troubled soul, ending the corruption.",
-        failureMessage: "The guardian's screams drown out your hymn!",
-        xpReward: 150,
-        goldReward: 80
-      }
-    ]
+    bounty: {
+      targetMonsterId: "fallen-angel",
+      targetCount: 5
+    },
+    xpReward: 80,
+    goldReward: 40
   },
   // ═══════════════════════════════════════════════════════════════
   // GUILD SYSTEM - REPEATABLE GOLD FARMING QUESTS
@@ -1283,26 +984,12 @@ export const QUESTS: Quest[] = [
     class: "mage",
     minLevel: 1,
     region: "Eastern Farmlands",
-    choices: [
-      {
-        text: "Burn them with fire magic",
-        requiredStat: "magicPower",
-        difficulty: 8,
-        successMessage: "Your flames incinerate the slimes! The farmers pay handsomely.",
-        failureMessage: "The slimes resist your magic! You need a different approach.",
-        xpReward: 15,
-        goldReward: 35
-      },
-      {
-        text: "Scoop them into buckets",
-        requiredStat: "defense",
-        difficulty: 5,
-        successMessage: "You carefully collect the slimes. The alchemist pays extra for specimens!",
-        failureMessage: "The slime dissolves the bucket. What a mess!",
-        xpReward: 10,
-        goldReward: 25
-      }
-    ]
+    bounty: {
+      targetMonsterId: "green-slime",
+      targetCount: 5
+    },
+    xpReward: 15,
+    goldReward: 35
   },
   {
     id: "guild-bounty-rats",
@@ -1311,26 +998,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 1,
     region: "Tavern Cellar",
-    choices: [
-      {
-        text: "Charge in and smash them all!",
-        requiredStat: "attack",
-        difficulty: 10,
-        successMessage: "You clear the cellar in minutes! The innkeeper rewards you generously.",
-        failureMessage: "There are too many rats! They overwhelm you!",
-        xpReward: 20,
-        goldReward: 40
-      },
-      {
-        text: "Set traps and wait",
-        requiredStat: "defense",
-        difficulty: 8,
-        successMessage: "Your traps work perfectly! The rats are caught one by one.",
-        failureMessage: "The rats are too clever for your traps!",
-        xpReward: 15,
-        goldReward: 30
-      }
-    ]
+    bounty: {
+      targetMonsterId: "giant-rat",
+      targetCount: 5
+    },
+    xpReward: 20,
+    goldReward: 40
   },
   {
     id: "guild-bounty-undead",
@@ -1339,26 +1012,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 2,
     region: "Old Graveyard",
-    choices: [
-      {
-        text: "Purify the undead with holy light",
-        requiredStat: "magicPower",
-        difficulty: 15,
-        successMessage: "Your holy magic returns the skeletons to their graves! The priest pays well.",
-        failureMessage: "The undead resist your purification! They're too strong!",
-        xpReward: 35,
-        goldReward: 60
-      },
-      {
-        text: "Smash their bones with your mace",
-        requiredStat: "attack",
-        difficulty: 12,
-        successMessage: "You shatter the skeletons! The bones scatter across the graveyard.",
-        failureMessage: "The skeletons dodge your swings! They're surprisingly agile!",
-        xpReward: 25,
-        goldReward: 45
-      }
-    ]
+    bounty: {
+      targetMonsterId: "skeleton-soldier",
+      targetCount: 5
+    },
+    xpReward: 35,
+    goldReward: 60
   },
   {
     id: "guild-escort-merchant",
@@ -1367,26 +1026,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 2,
     region: "Forest Path",
-    choices: [
-      {
-        text: "Walk ahead and clear the path",
-        requiredStat: "attack",
-        difficulty: 18,
-        successMessage: "You dispatch the bandits before they reach the merchant! Full payment received.",
-        failureMessage: "Bandits ambush from the trees! The merchant is robbed!",
-        xpReward: 45,
-        goldReward: 80
-      },
-      {
-        text: "Stay close and guard the merchant",
-        requiredStat: "defense",
-        difficulty: 15,
-        successMessage: "Your vigilant guard protects the merchant throughout the journey!",
-        failureMessage: "A thief slips past you and steals from the merchant's cart!",
-        xpReward: 35,
-        goldReward: 65
-      }
-    ]
+    bounty: {
+      targetMonsterId: "bandit-leader",
+      targetCount: 5
+    },
+    xpReward: 45,
+    goldReward: 80
   },
   {
     id: "guild-herb-gathering",
@@ -1395,26 +1040,12 @@ export const QUESTS: Quest[] = [
     class: "priest",
     minLevel: 2,
     region: "Poison Swamp",
-    choices: [
-      {
-        text: "Use nature magic to find the herbs",
-        requiredStat: "magicPower",
-        difficulty: 16,
-        successMessage: "Your magic guides you to the rarest specimens! The alchemist is thrilled.",
-        failureMessage: "The swamp's toxic magic interferes with your senses!",
-        xpReward: 40,
-        goldReward: 70
-      },
-      {
-        text: "Brave the swamp creatures head-on",
-        requiredStat: "attack",
-        difficulty: 20,
-        successMessage: "You fight through the swamp creatures and gather the herbs!",
-        failureMessage: "A giant snake guards the herbs! You retreat wounded!",
-        xpReward: 50,
-        goldReward: 85
-      }
-    ]
+    bounty: {
+      targetMonsterId: "water-serpent",
+      targetCount: 5
+    },
+    xpReward: 40,
+    goldReward: 70
   },
   {
     id: "guild-treasure-hunt",
@@ -1423,26 +1054,12 @@ export const QUESTS: Quest[] = [
     class: "rogue",
     minLevel: 3,
     region: "Crystal Caverns",
-    choices: [
-      {
-        text: "Sneak past the cave guardians",
-        requiredStat: "defense",
-        difficulty: 22,
-        successMessage: "You slip past the guardians unnoticed! The treasure is yours!",
-        failureMessage: "The guardians spot you! You're forced to flee empty-handed!",
-        xpReward: 55,
-        goldReward: 120
-      },
-      {
-        text: "Fight your way to the treasure",
-        requiredStat: "attack",
-        difficulty: 28,
-        successMessage: "You defeat the guardians in combat! The treasure glitters in your torchlight!",
-        failureMessage: "The cave guardians are too powerful! You barely escape!",
-        xpReward: 70,
-        goldReward: 150
-      }
-    ]
+    bounty: {
+      targetMonsterId: "mimic",
+      targetCount: 5
+    },
+    xpReward: 55,
+    goldReward: 120
   },
   {
     id: "guild-monster-hunt",
@@ -1451,26 +1068,12 @@ export const QUESTS: Quest[] = [
     class: "warrior",
     minLevel: 3,
     region: "Mountain Pass",
-    choices: [
-      {
-        text: "Challenge the beast to single combat",
-        requiredStat: "attack",
-        difficulty: 30,
-        successMessage: "You slay the mighty beast! The guild rewards you handsomely!",
-        failureMessage: "The beast is too powerful! You retreat to fight another day!",
-        xpReward: 100,
-        goldReward: 200
-      },
-      {
-        text: "Set an elaborate trap",
-        requiredStat: "defense",
-        difficulty: 25,
-        successMessage: "Your trap catches the beast! A clean kill with minimal risk!",
-        failureMessage: "The beast avoids your trap and charges!",
-        xpReward: 75,
-        goldReward: 150
-      }
-    ]
+    bounty: {
+      targetMonsterId: "dire-bear",
+      targetCount: 5
+    },
+    xpReward: 100,
+    goldReward: 200
   },
   {
     id: "guild-arcane-research",
@@ -1479,28 +1082,35 @@ export const QUESTS: Quest[] = [
     class: "mage",
     minLevel: 3,
     region: "Mystic Grove",
-    choices: [
-      {
-        text: "Carefully extract the essence",
-        requiredStat: "magicPower",
-        difficulty: 28,
-        successMessage: "You extract pure magical essence! The mages pay a premium!",
-        failureMessage: "The essence explodes in your hands! The spirits are angered!",
-        xpReward: 90,
-        goldReward: 180
-      },
-      {
-        text: "Negotiate with the spirits",
-        requiredStat: "magicPower",
-        difficulty: 22,
-        successMessage: "The spirits gift you their essence willingly! A peaceful exchange.",
-        failureMessage: "The spirits don't trust you. They vanish into the mist!",
-        xpReward: 65,
-        goldReward: 120
-      }
-    ]
+    bounty: {
+      targetMonsterId: "storm-djinn",
+      targetCount: 5
+    },
+    xpReward: 90,
+    goldReward: 180
   },
 ];
+
+// Map regions to the mobs that can spawn there
+export const REGION_MOBS: Record<string, string[]> = {
+  "Hub Town": ["green-slime", "giant-rat", "skeleton-soldier", "wild-spirit", "bandit-leader", "plague-beast"],
+  "Northern Village": ["green-slime", "giant-rat", "goblin", "bandit-leader", "arcane-book", "restless-ghost"],
+  "Whispering Woods": ["wild-boar", "terror-hawk", "mushroom-horror", "treant", "wild-spirit"],
+  "Mountain Pass": ["thunder-hawk", "earth-elemental", "ice-golem"],
+  "Trade Route": ["wolf-pack", "bandit-leader", "orc-warrior"],
+  "Training Grounds": ["honor-knight", "skeleton-soldier"],
+  "Dark Forest": ["orc-warrior", "dire-bear", "dark-mage", "mantis-warrior"],
+  "Dragon Peak": ["fire-sprite", "wyvern", "drake"],
+  "Southern Village": ["green-slime", "giant-rat", "plague-beast"],
+  "Abandoned Church": ["restless-ghost", "skeleton-soldier", "zombie"],
+  "Sacred Catacombs": ["skeleton-soldier", "zombie", "wraith", "death-knight"],
+  "Cursed Ruins": ["imp", "hellhound", "succubus", "arch-demon"],
+  "Crystal Caverns": ["giant-spider", "mimic", "wild-spirit", "crystal-dragon"],
+  "Shadow Tower": ["dark-mage", "wraith", "lich", "shadow-fiend"],
+  "Capital City": ["skeleton-soldier", "bandit-leader"],
+  "Astral Observatory": ["wild-spirit", "arcane-book", "storm-djinn", "void-terror"],
+  "Celestial Shrine": ["wild-spirit", "priest-robes", "fallen-angel"], // Use priest as base for angel
+};
 
 // Map quests to their enemies
 export const QUEST_ENEMIES: Record<string, string> = {
@@ -1553,35 +1163,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "mage",
       minLevel: 1,
       region: "Northern Village",
-      choices: [
-        {
-          text: t("quests.mage-library.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 15,
-          successMessage: t("quests.mage-library.success1"),
-          failureMessage: t("quests.mage-library.failure1"),
-          xpReward: 50,
-          goldReward: 25
-        },
-        {
-          text: t("quests.mage-library.choice2"),
-          requiredStat: "magicPower",
-          difficulty: 10,
-          successMessage: t("quests.mage-library.success2"),
-          failureMessage: t("quests.mage-library.failure2"),
-          xpReward: 30,
-          goldReward: 15
-        },
-        {
-          text: t("quests.mage-library.choice3"),
-          requiredStat: "magicPower",
-          difficulty: 8,
-          successMessage: t("quests.mage-library.success3"),
-          failureMessage: t("quests.mage-library.failure3"),
-          xpReward: 20,
-          goldReward: 10
-        }
-      ]
+      bounty: {
+        targetMonsterId: "arcane-book",
+        targetCount: 5
+      },
+      xpReward: 50,
+      goldReward: 25
     },
     {
       id: "mage-apprentice",
@@ -1590,27 +1177,13 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "mage",
       minLevel: 1,
       region: "Whispering Woods",
-      choices: [
-        {
-          text: t("quests.mage-apprentice.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 12,
-          successMessage: t("quests.mage-apprentice.success1"),
-          failureMessage: t("quests.mage-apprentice.failure1"),
-          xpReward: 40,
-          goldReward: 20,
-          rewardSkill: "fireball"
-        },
-        {
-          text: t("quests.mage-apprentice.choice2"),
-          requiredStat: "magicPower",
-          difficulty: 15,
-          successMessage: t("quests.mage-apprentice.success2"),
-          failureMessage: t("quests.mage-apprentice.failure2"),
-          xpReward: 35,
-          goldReward: 15
-        }
-      ]
+      bounty: {
+        targetMonsterId: "wild-spirit",
+        targetCount: 8
+      },
+      xpReward: 40,
+      goldReward: 20,
+      rewardSkill: "fireball"
     },
     {
       id: "mage-elemental",
@@ -1619,35 +1192,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "mage",
       minLevel: 2,
       region: "Mountain Pass",
-      choices: [
-        {
-          text: t("quests.mage-elemental.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 25,
-          successMessage: t("quests.mage-elemental.success1"),
-          failureMessage: t("quests.mage-elemental.failure1"),
-          xpReward: 80,
-          goldReward: 50
-        },
-        {
-          text: t("quests.mage-elemental.choice2"),
-          requiredStat: "magicPower",
-          difficulty: 20,
-          successMessage: t("quests.mage-elemental.success2"),
-          failureMessage: t("quests.mage-elemental.failure2"),
-          xpReward: 60,
-          goldReward: 30
-        },
-        {
-          text: t("quests.mage-elemental.choice3"),
-          requiredStat: "magicPower",
-          difficulty: 30,
-          successMessage: t("quests.mage-elemental.success3"),
-          failureMessage: t("quests.mage-elemental.failure3"),
-          xpReward: 100,
-          goldReward: 75
-        }
-      ]
+      bounty: {
+        targetMonsterId: "earth-elemental",
+        targetCount: 3
+      },
+      xpReward: 80,
+      goldReward: 50
     },
     {
       id: "mage-crystalcave",
@@ -1656,26 +1206,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "mage",
       minLevel: 2,
       region: "Crystal Caverns",
-      choices: [
-        {
-          text: t("quests.mage-crystalcave.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 22,
-          successMessage: t("quests.mage-crystalcave.success1"),
-          failureMessage: t("quests.mage-crystalcave.failure1"),
-          xpReward: 70,
-          goldReward: 40
-        },
-        {
-          text: t("quests.mage-crystalcave.choice2"),
-          requiredStat: "defense",
-          difficulty: 18,
-          successMessage: t("quests.mage-crystalcave.success2"),
-          failureMessage: t("quests.mage-crystalcave.failure2"),
-          xpReward: 55,
-          goldReward: 30
-        }
-      ]
+      bounty: {
+        targetMonsterId: "crystal-dragon",
+        targetCount: 3
+      },
+      xpReward: 70,
+      goldReward: 40
     },
     {
       id: "mage-tower",
@@ -1684,26 +1220,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "mage",
       minLevel: 3,
       region: "Shadow Tower",
-      choices: [
-        {
-          text: t("quests.mage-tower.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 30,
-          successMessage: t("quests.mage-tower.success1"),
-          failureMessage: t("quests.mage-tower.failure1"),
-          xpReward: 80,
-          goldReward: 40
-        },
-        {
-          text: t("quests.mage-tower.choice2"),
-          requiredStat: "magicPower",
-          difficulty: 25,
-          successMessage: t("quests.mage-tower.success2"),
-          failureMessage: t("quests.mage-tower.failure2"),
-          xpReward: 90,
-          goldReward: 50
-        }
-      ]
+      bounty: {
+        targetMonsterId: "dark-mage",
+        targetCount: 5
+      },
+      xpReward: 80,
+      goldReward: 40
     },
     // ⚔️ WARRIOR QUESTS
     {
@@ -1712,27 +1234,13 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       description: t("quests.warrior-village.description"),
       class: "warrior",
       minLevel: 1,
-      region: "Northern Village",
-      choices: [
-        {
-          text: t("quests.warrior-village.choice1"),
-          requiredStat: "attack",
-          difficulty: 15,
-          successMessage: t("quests.warrior-village.success1"),
-          failureMessage: t("quests.warrior-village.failure1"),
-          xpReward: 150,
-          goldReward: 80
-        },
-        {
-          text: t("quests.warrior-village.choice2"),
-          requiredStat: "attack",
-          difficulty: 20,
-          successMessage: t("quests.warrior-village.success2"),
-          failureMessage: t("quests.warrior-village.failure2"),
-          xpReward: 60,
-          goldReward: 35
-        }
-      ]
+      region: "Hub Town",
+      bounty: {
+        targetMonsterId: "bandit-leader",
+        targetCount: 5
+      },
+      xpReward: 150,
+      goldReward: 80
     },
     {
       id: "warrior-duel",
@@ -1741,27 +1249,13 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "warrior",
       minLevel: 2,
       region: "Training Grounds",
-      choices: [
-        {
-          text: t("quests.warrior-duel.choice1"),
-          requiredStat: "attack",
-          difficulty: 25,
-          successMessage: t("quests.warrior-duel.success1"),
-          failureMessage: t("quests.warrior-duel.failure1"),
-          xpReward: 70,
-          goldReward: 40,
-          rewardSkill: "strike"
-        },
-        {
-          text: t("quests.warrior-duel.choice2"),
-          requiredStat: "defense",
-          difficulty: 20,
-          successMessage: t("quests.warrior-duel.success2"),
-          failureMessage: t("quests.warrior-duel.failure2"),
-          xpReward: 55,
-          goldReward: 30
-        }
-      ]
+      bounty: {
+        targetMonsterId: "honor-knight",
+        targetCount: 5
+      },
+      xpReward: 70,
+      goldReward: 40,
+      rewardSkill: "strike"
     },
     {
       id: "warrior-monster",
@@ -1770,26 +1264,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "warrior",
       minLevel: 1,
       region: "Trade Route",
-      choices: [
-        {
-          text: t("quests.warrior-monster.choice1"),
-          requiredStat: "attack",
-          difficulty: 20,
-          successMessage: t("quests.warrior-monster.success1"),
-          failureMessage: t("quests.warrior-monster.failure1"),
-          xpReward: 55,
-          goldReward: 30
-        },
-        {
-          text: t("quests.warrior-monster.choice2"),
-          requiredStat: "defense",
-          difficulty: 15,
-          successMessage: t("quests.warrior-monster.success2"),
-          failureMessage: t("quests.warrior-monster.failure2"),
-          xpReward: 40,
-          goldReward: 20
-        }
-      ]
+      bounty: {
+        targetMonsterId: "wolf-pack",
+        targetCount: 5
+      },
+      xpReward: 55,
+      goldReward: 30
     },
     {
       id: "warrior-orc-camp",
@@ -1798,26 +1278,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "warrior",
       minLevel: 2,
       region: "Dark Forest",
-      choices: [
-        {
-          text: t("quests.warrior-orc-camp.choice1"),
-          requiredStat: "attack",
-          difficulty: 28,
-          successMessage: t("quests.warrior-orc-camp.success1"),
-          failureMessage: t("quests.warrior-orc-camp.failure1"),
-          xpReward: 85,
-          goldReward: 50
-        },
-        {
-          text: t("quests.warrior-orc-camp.choice2"),
-          requiredStat: "defense",
-          difficulty: 22,
-          successMessage: t("quests.warrior-orc-camp.success2"),
-          failureMessage: t("quests.warrior-orc-camp.failure2"),
-          xpReward: 65,
-          goldReward: 35
-        }
-      ]
+      bounty: {
+        targetMonsterId: "orc-warrior",
+        targetCount: 5
+      },
+      xpReward: 85,
+      goldReward: 50
     },
     {
       id: "warrior-dragon-lair",
@@ -1826,26 +1292,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "warrior",
       minLevel: 3,
       region: "Dragon Peak",
-      choices: [
-      {
-        text: t("quests.warrior-dragon-lair.choice1"),
-        requiredStat: "attack",
-        difficulty: 32,
-        successMessage: t("quests.warrior-dragon-lair.success1"),
-        failureMessage: t("quests.warrior-dragon-lair.failure1"),
-        xpReward: 50,
-        goldReward: 25
+      bounty: {
+        targetMonsterId: "wyvern",
+        targetCount: 5
       },
-        {
-          text: t("quests.warrior-dragon-lair.choice2"),
-          requiredStat: "defense",
-          difficulty: 26,
-          successMessage: t("quests.warrior-dragon-lair.success2"),
-          failureMessage: t("quests.warrior-dragon-lair.failure2"),
-          xpReward: 100,
-          goldReward: 55
-        }
-      ]
+      xpReward: 50,
+      goldReward: 25
     },
     // ⛑️ PRIEST QUESTS
     {
@@ -1855,35 +1307,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "priest",
       minLevel: 1,
       region: "Southern Village",
-      choices: [
-        {
-          text: t("quests.priest-plague.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 15,
-          successMessage: t("quests.priest-plague.success1"),
-          failureMessage: t("quests.priest-plague.failure1"),
-          xpReward: 120,
-          goldReward: 60
-        },
-        {
-          text: t("quests.priest-plague.choice2"),
-          requiredStat: "defense",
-          difficulty: 10,
-          successMessage: t("quests.priest-plague.success2"),
-          failureMessage: t("quests.priest-plague.failure2"),
-          xpReward: 35,
-          goldReward: 20
-        },
-        {
-          text: t("quests.priest-plague.choice3"),
-          requiredStat: "magicPower",
-          difficulty: 20,
-          successMessage: t("quests.priest-plague.success3"),
-          failureMessage: t("quests.priest-plague.failure3"),
-          xpReward: 60,
-          goldReward: 35
-        }
-      ]
+      bounty: {
+        targetMonsterId: "plague-beast",
+        targetCount: 6
+      },
+      xpReward: 120,
+      goldReward: 60
     },
     {
       id: "priest-ghost",
@@ -1892,27 +1321,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "priest",
       minLevel: 1,
       region: "Abandoned Church",
-      choices: [
-        {
-          text: t("quests.priest-ghost.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 18,
-          successMessage: t("quests.priest-ghost.success1"),
-          failureMessage: t("quests.priest-ghost.failure1"),
-          xpReward: 55,
-          goldReward: 30
-        },
-        {
-          text: t("quests.priest-ghost.choice2"),
-          requiredStat: "magicPower",
-          difficulty: 12,
-          successMessage: t("quests.priest-ghost.success2"),
-          failureMessage: t("quests.priest-ghost.failure2"),
-          xpReward: 40,
-          goldReward: 20,
-          rewardSkill: "holy"
-        }
-      ]
+      bounty: {
+        targetMonsterId: "restless-ghost",
+        targetCount: 5
+      },
+      xpReward: 55,
+      goldReward: 30
     },
     {
       id: "priest-blessing",
@@ -1921,26 +1335,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "priest",
       minLevel: 2,
       region: "Northern Village",
-      choices: [
-        {
-          text: t("quests.priest-blessing.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 25,
-          successMessage: t("quests.priest-blessing.success1"),
-          failureMessage: t("quests.priest-blessing.failure1"),
-          xpReward: 75,
-          goldReward: 45
-        },
-        {
-          text: t("quests.priest-blessing.choice2"),
-          requiredStat: "defense",
-          difficulty: 20,
-          successMessage: t("quests.priest-blessing.success2"),
-          failureMessage: t("quests.priest-blessing.failure2"),
-          xpReward: 55,
-          goldReward: 30
-        }
-      ]
+      bounty: {
+        targetMonsterId: "dark-corrupter",
+        targetCount: 5
+      },
+      xpReward: 75,
+      goldReward: 45
     },
     {
       id: "priest-undead-crypt",
@@ -1949,26 +1349,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "priest",
       minLevel: 2,
       region: "Sacred Catacombs",
-      choices: [
-        {
-          text: t("quests.priest-undead-crypt.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 24,
-          successMessage: t("quests.priest-undead-crypt.success1"),
-          failureMessage: t("quests.priest-undead-crypt.failure1"),
-          xpReward: 80,
-          goldReward: 45
-        },
-        {
-          text: t("quests.priest-undead-crypt.choice2"),
-          requiredStat: "defense",
-          difficulty: 20,
-          successMessage: t("quests.priest-undead-crypt.success2"),
-          failureMessage: t("quests.priest-undead-crypt.failure2"),
-          xpReward: 60,
-          goldReward: 35
-        }
-      ]
+      bounty: {
+        targetMonsterId: "death-knight",
+        targetCount: 5
+      },
+      xpReward: 80,
+      goldReward: 45
     },
     {
       id: "priest-demon-portal",
@@ -1977,26 +1363,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "priest",
       minLevel: 3,
       region: "Cursed Ruins",
-      choices: [
-        {
-          text: t("quests.priest-demon-portal.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 30,
-          successMessage: t("quests.priest-demon-portal.success1"),
-          failureMessage: t("quests.priest-demon-portal.failure1"),
-          xpReward: 50,
-          goldReward: 25
-        },
-        {
-          text: t("quests.priest-demon-portal.choice2"),
-          requiredStat: "attack",
-          difficulty: 25,
-          successMessage: t("quests.priest-demon-portal.success2"),
-          failureMessage: t("quests.priest-demon-portal.failure2"),
-          xpReward: 100,
-          goldReward: 55
-        }
-      ]
+      bounty: {
+        targetMonsterId: "arch-demon",
+        targetCount: 5
+      },
+      xpReward: 50,
+      goldReward: 25
     },
     // ═══════════════════════════════════════════════════════════════
     // GUILD SYSTEM - REPEATABLE GOLD FARMING QUESTS
@@ -2008,26 +1380,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "mage",
       minLevel: 1,
       region: "Eastern Farmlands",
-      choices: [
-        {
-          text: t("quests.guild-bounty-slimes.choice1"),
-          requiredStat: "magicPower",
-          difficulty: 8,
-          successMessage: t("quests.guild-bounty-slimes.success1"),
-          failureMessage: t("quests.guild-bounty-slimes.failure1"),
-          xpReward: 15,
-          goldReward: 35
-        },
-        {
-          text: t("quests.guild-bounty-slimes.choice2"),
-          requiredStat: "defense",
-          difficulty: 5,
-          successMessage: t("quests.guild-bounty-slimes.success2"),
-          failureMessage: t("quests.guild-bounty-slimes.failure2"),
-          xpReward: 10,
-          goldReward: 25
-        }
-      ]
+      bounty: {
+        targetMonsterId: "green-slime",
+        targetCount: 5
+      },
+      xpReward: 15,
+      goldReward: 35
     },
     {
       id: "guild-bounty-rats",
@@ -2036,26 +1394,12 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       class: "warrior",
       minLevel: 1,
       region: "Tavern Cellar",
-      choices: [
-        {
-          text: t("quests.guild-bounty-rats.choice1"),
-          requiredStat: "attack",
-          difficulty: 10,
-          successMessage: t("quests.guild-bounty-rats.success1"),
-          failureMessage: t("quests.guild-bounty-rats.failure1"),
-          xpReward: 20,
-          goldReward: 40
-        },
-        {
-          text: t("quests.guild-bounty-rats.choice2"),
-          requiredStat: "defense",
-          difficulty: 8,
-          successMessage: t("quests.guild-bounty-rats.success2"),
-          failureMessage: t("quests.guild-bounty-rats.failure2"),
-          xpReward: 15,
-          goldReward: 30
-        }
-      ]
+      bounty: {
+        targetMonsterId: "giant-rat",
+        targetCount: 5
+      },
+      xpReward: 20,
+      goldReward: 40
     }
   ];
 }

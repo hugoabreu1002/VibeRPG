@@ -1,7 +1,7 @@
 import type { CharacterClass } from "../lib/storage";
 export type { CharacterClass };
 
-export type Tab = "Inventory" | "World Map" | "Quests" | "Shop" | "Guild";
+export type Tab = "Inventory" | "World Map" | "Quests" | "Shop" | "Guild" | "Quest Board";
 
 export type QuestState = "list" | "map" | "active" | "battle" | "result";
 
@@ -57,9 +57,15 @@ export interface Quest {
   title: string;
   description: string;
   class: CharacterClass;
-  choices: QuestChoice[];
+  choices?: QuestChoice[];
   minLevel: number;
   region: string;
+  bounty?: {
+    targetMonsterId: string;
+    targetCount: number;
+  };
+  xpReward: number;
+  goldReward: number;
 }
 
 export interface InventoryItem {
@@ -98,6 +104,7 @@ export interface Character {
   attack: number;
   defense: number;
   magicPower: number;
+  speed: number;
   xpToNext: number;
   rank: "F" | "E" | "D" | "C" | "B" | "A" | "S";
   skills: string[];
@@ -105,10 +112,11 @@ export interface Character {
   completedQuests: string[];
   acceptedQuests: string[];
   currentRegion: string;
+  discoveredTiles?: Record<string, string[]>;
   activeQuestId?: string;
   questState: QuestState;
+  questProgress?: Record<string, number>;
 }
-
 export interface QuestResult {
   success: boolean;
   message: string;
