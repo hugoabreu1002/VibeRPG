@@ -22,7 +22,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: [],
     availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead", "warrior-village", "rogue-stolen-cargo"],
     nextRegions: ["Whispering Woods", "Trade Route", "Abandoned Church", "Northern Village", "Southern Village"],
-    requiredQuestsToComplete: 1 // Tutorial region - quick progression
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Northern Village": {
     id: "Northern Village",
@@ -31,7 +31,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: [], // Now unlocked by default or accessible
     availableQuests: ["mage-library", "priest-blessing"],
     nextRegions: ["Trade Route", "Sacred Catacombs", "Hub Town"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Whispering Woods": {
     id: "Whispering Woods",
@@ -40,7 +40,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["mage-apprentice"],
     availableQuests: ["mage-apprentice", "mage-library"],
     nextRegions: ["Mountain Pass"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Mountain Pass": {
     id: "Mountain Pass",
@@ -49,7 +49,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["mage-library"],
     availableQuests: ["mage-elemental"],
     nextRegions: ["Crystal Caverns"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Trade Route": {
     id: "Trade Route",
@@ -58,7 +58,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["warrior-village"],
     availableQuests: ["warrior-monster"],
     nextRegions: ["Training Grounds"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Training Grounds": {
     id: "Training Grounds",
@@ -67,7 +67,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["warrior-monster"],
     availableQuests: ["warrior-duel"],
     nextRegions: ["Dark Forest"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Dark Forest": {
     id: "Dark Forest",
@@ -76,7 +76,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["warrior-duel"],
     availableQuests: ["warrior-orc-camp"],
     nextRegions: ["Dragon Peak"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Dragon Peak": {
     id: "Dragon Peak",
@@ -85,7 +85,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["warrior-orc-camp"],
     availableQuests: ["warrior-dragon-lair"],
     nextRegions: ["Capital City"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Crystal Caverns": {
     id: "Crystal Caverns",
@@ -94,7 +94,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["mage-elemental"],
     availableQuests: ["mage-crystalcave"],
     nextRegions: ["Shadow Tower"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Shadow Tower": {
     id: "Shadow Tower",
@@ -103,7 +103,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["mage-crystalcave"],
     availableQuests: ["mage-tower"],
     nextRegions: ["Astral Observatory"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Southern Village": {
     id: "Southern Village",
@@ -112,7 +112,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: [], // Now unlocked by default or accessible
     availableQuests: ["priest-plague"],
     nextRegions: ["Abandoned Church", "Hub Town"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Abandoned Church": {
     id: "Abandoned Church",
@@ -121,7 +121,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["priest-plague"],
     availableQuests: ["priest-ghost"],
     nextRegions: ["Northern Village"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Sacred Catacombs": {
     id: "Sacred Catacombs",
@@ -130,7 +130,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["priest-blessing"],
     availableQuests: ["priest-undead-crypt"],
     nextRegions: ["Cursed Ruins"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Cursed Ruins": {
     id: "Cursed Ruins",
@@ -139,7 +139,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["priest-undead-crypt"],
     availableQuests: ["priest-demon-portal"],
     nextRegions: ["Celestial Shrine"],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Capital City": {
     id: "Capital City",
@@ -148,7 +148,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["warrior-dragon-lair"],
     availableQuests: ["warrior-kings-guard"],
     nextRegions: [],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Astral Observatory": {
     id: "Astral Observatory",
@@ -157,7 +157,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["mage-tower"],
     availableQuests: ["mage-astral-plane"],
     nextRegions: [],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Celestial Shrine": {
     id: "Celestial Shrine",
@@ -166,7 +166,7 @@ export const REGIONS: Record<string, Region> = {
     unlockedBy: ["priest-demon-portal"],
     availableQuests: ["priest-celestial-shrine"],
     nextRegions: [],
-    requiredQuestsToComplete: 1
+    requiredQuestsToComplete: undefined // Complete ALL quests to advance
   }
 };
 
@@ -370,13 +370,13 @@ export function canLeaveRegion(character: Character): { can: boolean; reason?: s
   const progress = getRegionProgress(character);
   const currentRegion = getCurrentRegion(character);
   const requiredCount = currentRegion.requiredQuestsToComplete ?? Math.max(1, progress.total);
-  
+
   if (progress.current < requiredCount) {
     return {
       can: false,
       reason: `Complete at least ${requiredCount} guild quests in ${currentRegion.name} to advance (Progress: ${progress.current}/${requiredCount})`
     };
   }
-  
+
   return { can: true };
 }

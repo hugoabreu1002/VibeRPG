@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import type { Character, Enemy } from "../../../types/game";
+import type { Character, Enemy, QuestResult } from "../../../types/game";
 import type { CharacterClass } from "../animations/types";
 import { BattleSprite } from "../battle/BattleSprite";
 import { SkillIcon } from "../battle/SkillIcons";
 import { audioManager } from "../../../lib/audio";
 import { questService } from "../../../lib/quest-service";
-import { 
-  SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon, 
+import {
+  SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon,
   HealthIcon, ManaIcon, GoldIcon, XPIcon,
   TileTreeIcon, TileWaterIcon, TileMountainIcon, TileCaveIcon, TileLavaIcon
 } from "../ui/GameIcons";
@@ -112,7 +112,7 @@ export function QuestBattle({
   const [showDamage, setShowDamage] = useState<{ target: "player" | "enemy"; value: number } | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   const monsterColors = getMonsterColors(enemy.sprite, enemy.name);
-  
+
   // Custom gradient for this monster
   const customGradient = `linear-gradient(to bottom, 
     hsla(${monsterColors.hue}, 40%, 10%, 0.8), 
@@ -127,11 +127,11 @@ export function QuestBattle({
     setPhase("player-turn");
     setIsDefending(false);
     setLogs([{ message: `${enemy.name} appears!`, type: "system", icon: "attack" }]);
-    
+
     // Switch to battle music based on theme
     audioManager.playBgm(theme.music);
   }, [enemy.id, theme.music]);
-  
+
   // Sync health/mana to sidebar character state
   useEffect(() => {
     onUpdateCharacter({
@@ -147,7 +147,7 @@ export function QuestBattle({
       setPhase("victory");
       setLogs((prev) => [...prev, { message: `${enemy.name} defeated!`, type: "system", icon: "victory" }]);
       audioManager.playSfx("victory");
-      
+
       // Create quest result for battle completion
       const battleResult = {
         success: true,
@@ -157,7 +157,7 @@ export function QuestBattle({
         rewardItem: undefined,
         rewardSkill: undefined
       };
-      
+
       // Complete the quest through the service
       onBattleComplete(battleResult);
     } else if (playerHp <= 0 && phase !== "defeat") {
@@ -300,7 +300,7 @@ export function QuestBattle({
     // Apply damage
     setPlayerHp((prev) => Math.max(0, prev - damage));
     audioManager.playSfx("hit");
-    
+
     // Trigger screen shake
     const shakeDuration = enemy.battleTheme === 'boss' ? 800 : 400;
     setTimeout(() => setIsShaking(false), shakeDuration);
@@ -324,48 +324,48 @@ export function QuestBattle({
 
 
       {/* Battle Arena */}
-      <motion.div 
+      <motion.div
         animate={isShaking ? { x: [-4, 4, -4, 4, 0], y: [-2, 2, -2, 2, 0] } : {}}
         transition={{ duration: 0.4 }}
         className={`relative rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50`}
       >
         {/* Dynamic Theme Background */}
-        <div 
+        <div
           className="absolute inset-0 z-0 transition-colors duration-1000"
           style={{ background: customGradient }}
         />
-        
+
         {/* Decorative Layer 1 (Theme) */}
         <div className={`absolute inset-0 z-0 opacity-20 bg-gradient-to-b ${theme.gradient}`} />
-        
+
         {/* Decorative Background Icons */}
         <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
-           {theme.icons.map((Icon, i) => (
-             <div 
-               key={i} 
-               className="absolute" 
-               style={{ 
-                 left: `${15 + (i * 40) + (Math.random() * 20)}%`, 
-                 bottom: `${10 + (Math.random() * 20)}%`,
-                 transform: `scale(${1.5 + Math.random()}) rotate(${Math.random() * 20 - 10}deg)`
-               }}
-             >
-               <Icon size={120} />
-             </div>
-           ))}
+          {theme.icons.map((Icon, i) => (
+            <div
+              key={i}
+              className="absolute"
+              style={{
+                left: `${15 + (i * 40) + (Math.random() * 20)}%`,
+                bottom: `${10 + (Math.random() * 20)}%`,
+                transform: `scale(${1.5 + Math.random()}) rotate(${Math.random() * 20 - 10}deg)`
+              }}
+            >
+              <Icon size={120} />
+            </div>
+          ))}
         </div>
 
         {/* Decorative Layer 2 (Unique Monster Specific) */}
-      <div className="absolute top-0 right-0 bottom-0 w-[60%] z-0 pointer-events-none overflow-hidden">
-        {[...Array(6)].map((_, i) => (
-          <ThemeProp 
-            key={`theme-prop-${i}`}
-            theme={enemy.battleTheme || 'grassland'} 
-            color={monsterColors.secondary}
-            index={i}
-          />
-        ))}
-      </div>
+        <div className="absolute top-0 right-0 bottom-0 w-[60%] z-0 pointer-events-none overflow-hidden">
+          {[...Array(6)].map((_, i) => (
+            <ThemeProp
+              key={`theme-prop-${i}`}
+              theme={enemy.battleTheme || 'grassland'}
+              color={monsterColors.secondary}
+              index={i}
+            />
+          ))}
+        </div>
         {/* Player */}
         <div className="absolute left-[28%] bottom-16 flex flex-col items-center">
           <div className="transform scale-150 mb-4">
@@ -396,9 +396,8 @@ export function QuestBattle({
           {/* Enemy HP Bar */}
           <div className="w-24 mt-4">
             <div className="flex justify-between items-center mb-1">
-              <span className={`text-[10px] font-black uppercase tracking-tighter ${
-                enemy.battleTheme === 'boss' ? 'text-amber-400 animate-pulse' : 'text-slate-400 opacity-60'
-              }`}>
+              <span className={`text-[10px] font-black uppercase tracking-tighter ${enemy.battleTheme === 'boss' ? 'text-amber-400 animate-pulse' : 'text-slate-400 opacity-60'
+                }`}>
                 {enemy.battleTheme ? enemy.battleTheme.toUpperCase() : "COMMON"}
               </span>
               <span className="text-[10px] font-mono text-slate-300">{Math.ceil(enemyHp)}/{enemy.maxHp}</span>
@@ -438,10 +437,10 @@ export function QuestBattle({
             <div
               key={idx}
               className={`text-sm flex items-center gap-2 ${log.type === "player"
-                  ? "text-green-400"
-                  : log.type === "enemy"
-                    ? "text-red-400"
-                    : "text-slate-400"
+                ? "text-green-400"
+                : log.type === "enemy"
+                  ? "text-red-400"
+                  : "text-slate-400"
                 }`}
             >
               <div className="shrink-0 w-4 h-4 opacity-70">
@@ -479,8 +478,8 @@ export function QuestBattle({
               onClick={playerSpell}
               disabled={playerMp < 10}
               className={`py-3 px-2 rounded-lg font-semibold flex flex-col items-center border shadow-lg ${playerMp >= 10
-                  ? "bg-gradient-to-b from-blue-600 to-indigo-800 hover:from-blue-500 hover:to-indigo-700 text-white border-blue-500/30 shadow-blue-900/30"
-                  : "bg-slate-800 text-slate-500 cursor-not-allowed border-slate-700/30"
+                ? "bg-gradient-to-b from-blue-600 to-indigo-800 hover:from-blue-500 hover:to-indigo-700 text-white border-blue-500/30 shadow-blue-900/30"
+                : "bg-slate-800 text-slate-500 cursor-not-allowed border-slate-700/30"
                 }`}
             >
               <div className="w-6 h-6 mb-1">
@@ -532,12 +531,12 @@ export function QuestBattle({
           </p>
           {phase === "victory" && (
             <div className="flex justify-center gap-4">
-               <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-bold bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-800/20">
-                 <XPIcon size={14} /> +{enemy.xpReward}
-               </span>
-               <span className="flex items-center gap-1.5 text-amber-400 text-sm font-bold bg-amber-950/30 px-3 py-1 rounded-full border border-amber-800/20">
-                 <GoldIcon size={14} /> +{enemy.goldReward}
-               </span>
+              <span className="flex items-center gap-1.5 text-emerald-400 text-sm font-bold bg-emerald-950/30 px-3 py-1 rounded-full border border-emerald-800/20">
+                <XPIcon size={14} /> +{enemy.xpReward}
+              </span>
+              <span className="flex items-center gap-1.5 text-amber-400 text-sm font-bold bg-amber-950/30 px-3 py-1 rounded-full border border-amber-800/20">
+                <GoldIcon size={14} /> +{enemy.goldReward}
+              </span>
             </div>
           )}
         </div>

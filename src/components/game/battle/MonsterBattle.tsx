@@ -4,8 +4,8 @@ import type { Character, Enemy } from "../../../types/game";
 import { BattleSprite } from "./BattleSprite";
 import { SkillIcon } from "./SkillIcons";
 import { audioManager } from "../../../lib/audio";
-import { 
-  SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon, 
+import {
+  SwordIcon, SparkleIcon, ShieldIcon, VictoryIcon, DefeatIcon,
   HealthIcon, ManaIcon, GoldIcon, XPIcon,
   TileTreeIcon, TileWaterIcon, TileMountainIcon, TileCaveIcon, TileLavaIcon
 } from "../ui/GameIcons";
@@ -106,7 +106,7 @@ export function MonsterBattle({
   const [showDamage, setShowDamage] = useState<{ target: "player" | "enemy"; value: number } | null>(null);
   const [isShaking, setIsShaking] = useState(false);
   const monsterColors = getMonsterColors(enemy.sprite, enemy.name);
-  
+
   const customGradient = `linear-gradient(to bottom, 
     hsla(${monsterColors.hue}, 40%, 10%, 0.8), 
     hsla(${(monsterColors.hue + 180) % 360}, 20%, 5%, 0.95)
@@ -121,7 +121,7 @@ export function MonsterBattle({
     setLogs([{ message: `A wild ${enemy.name} appears!`, type: "system", icon: "attack" }]);
     audioManager.playBgm(theme.music);
   }, [enemy.id, theme.music]);
-  
+
   useEffect(() => {
     onUpdateCharacter({
       hp: playerHp,
@@ -135,7 +135,7 @@ export function MonsterBattle({
       setPhase("victory");
       setLogs((prev) => [...prev, { message: `${enemy.name} defeated!`, type: "system", icon: "victory" }]);
       audioManager.playSfx("victory");
-      
+
       // Delay to show the victory screen
       setTimeout(() => {
         onVictory(enemy.xpReward, enemy.goldReward);
@@ -144,7 +144,7 @@ export function MonsterBattle({
       setPhase("defeat");
       setLogs((prev) => [...prev, { message: `${enemy.name} defeated you!`, type: "system", icon: "defeat" }]);
       audioManager.playSfx("defeat");
-      
+
       setTimeout(() => {
         onDefeat();
       }, 2000);
@@ -261,7 +261,7 @@ export function MonsterBattle({
 
     setPlayerHp((prev) => Math.max(0, prev - damage));
     audioManager.playSfx("hit");
-    
+
     const shakeDuration = enemy.battleTheme === 'boss' ? 800 : 400;
     setIsShaking(true);
     setTimeout(() => setIsShaking(false), shakeDuration);
@@ -278,24 +278,24 @@ export function MonsterBattle({
       animate={{ opacity: 1 }}
       className="rounded-xl bg-slate-900 p-4 shadow-lg h-full border border-amber-500/10"
     >
-      <motion.div 
+      <motion.div
         animate={isShaking ? { x: [-4, 4, -4, 4, 0], y: [-2, 2, -2, 2, 0] } : {}}
         transition={{ duration: 0.4 }}
         className="relative rounded-2xl p-8 mb-6 min-h-[400px] overflow-hidden border border-slate-700/30 shadow-2xl shadow-black/50"
       >
         <div className="absolute inset-0 z-0 transition-colors duration-1000" style={{ background: customGradient }} />
         <div className={`absolute inset-0 z-0 opacity-20 bg-gradient-to-b ${theme.gradient}`} />
-        
+
         <div className="absolute inset-0 overflow-hidden opacity-20 pointer-events-none">
-           {theme.icons.map((Icon, i) => (
-             <div key={i} className="absolute" style={{ 
-                 left: `${15 + (i * 40) + (Math.random() * 20)}%`, 
-                 bottom: `${10 + (Math.random() * 20)}%`,
-                 transform: `scale(${1.5 + Math.random()}) rotate(${Math.random() * 20 - 10}deg)`
-               }}>
-               <Icon size={120} />
-             </div>
-           ))}
+          {theme.icons.map((Icon, i) => (
+            <div key={i} className="absolute" style={{
+              left: `${15 + (i * 40) + (Math.random() * 20)}%`,
+              bottom: `${10 + (Math.random() * 20)}%`,
+              transform: `scale(${1.5 + Math.random()}) rotate(${Math.random() * 20 - 10}deg)`
+            }}>
+              <Icon size={120} />
+            </div>
+          ))}
         </div>
 
         <div className="absolute top-0 right-0 bottom-0 w-[60%] z-0 pointer-events-none overflow-hidden">
@@ -341,7 +341,7 @@ export function MonsterBattle({
         <div className="space-y-1.5">
           {logs.map((log, idx) => (
             <div key={idx} className={`text-sm flex items-center gap-2 font-medium ${log.type === "player" ? "text-green-400" : log.type === "enemy" ? "text-red-400" : "text-slate-400"}`}>
-               <div className="shrink-0 w-4 h-4 opacity-70">
+              <div className="shrink-0 w-4 h-4 opacity-70">
                 {log.icon === "attack" && <SwordIcon size={14} />}
                 {log.icon === "spell" && <SparkleIcon size={14} />}
                 {log.icon === "defend" && <ShieldIcon size={14} />}
@@ -388,18 +388,18 @@ export function MonsterBattle({
           </h2>
           {phase === "victory" && (
             <div className="flex justify-center gap-6">
-               <div className="flex flex-col items-center">
-                 <span className="text-xs text-slate-400 uppercase font-bold mb-1">Experience</span>
-                 <div className="flex items-center gap-2 text-2xl font-black text-emerald-400 bg-emerald-950/40 px-6 py-2 rounded-2xl border border-emerald-500/20 shadow-xl shadow-emerald-900/20">
-                   <XPIcon size={24} /> +{enemy.xpReward}
-                 </div>
-               </div>
-               <div className="flex flex-col items-center">
-                 <span className="text-xs text-slate-400 uppercase font-bold mb-1">Gold Scavenged</span>
-                 <div className="flex items-center gap-2 text-2xl font-black text-amber-400 bg-amber-950/40 px-6 py-2 rounded-2xl border border-amber-500/20 shadow-xl shadow-amber-900/20">
-                   <GoldIcon size={24} /> +{enemy.goldReward}
-                 </div>
-               </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xs text-slate-400 uppercase font-bold mb-1">Experience</span>
+                <div className="flex items-center gap-2 text-2xl font-black text-emerald-400 bg-emerald-950/40 px-6 py-2 rounded-2xl border border-emerald-500/20 shadow-xl shadow-emerald-900/20">
+                  <XPIcon size={24} /> +{enemy.xpReward}
+                </div>
+              </div>
+              <div className="flex flex-col items-center">
+                <span className="text-xs text-slate-400 uppercase font-bold mb-1">Gold Scavenged</span>
+                <div className="flex items-center gap-2 text-2xl font-black text-amber-400 bg-amber-950/40 px-6 py-2 rounded-2xl border border-amber-500/20 shadow-xl shadow-amber-900/20">
+                  <GoldIcon size={20} /> +{enemy.goldReward}
+                </div>
+              </div>
             </div>
           )}
           {phase === "defeat" && (

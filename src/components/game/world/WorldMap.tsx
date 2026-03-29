@@ -121,31 +121,25 @@ const MapCanvas = memo(({
     ctx.translate(-camX, -camY);
 
     // 2. Base Procedural Grid
-    ctx.strokeStyle = "rgba(16, 185, 129, 0.05)";
-    ctx.lineWidth = 1;
+    // Removed grid lines for cleaner look
+    ctx.strokeStyle = "transparent";
+    ctx.lineWidth = 0;
     const gridRange = 25;
     for (let gx = playerPos.x - gridRange; gx <= playerPos.x + gridRange; gx++) {
       for (let gy = playerPos.y - gridRange; gy <= playerPos.y + gridRange; gy++) {
         const { x: ix, y: iy } = getIsoPos(gx, gy);
-        ctx.beginPath();
-        ctx.moveTo(ix, iy - tileSize / 4);
-        ctx.lineTo(ix + tileSize / 2, iy);
-        ctx.lineTo(ix, iy + tileSize / 4);
-        ctx.lineTo(ix - tileSize / 2, iy);
-        ctx.closePath();
-        ctx.stroke();
+        // No grid lines drawn
       }
     }
 
-    // 3. Render Real Tiles
-    mapData.tiles.forEach((row, y) => {
-      row.forEach((tile, x) => {
+    for (let y = 0; y < mapData.height; y++) {
+      for (let x = 0; x < mapData.width; x++) {
         const { x: ix, y: iy } = getIsoPos(x, y);
 
         const buffer = 500;
         const sx = (ix - camX) * viewScale + dimensions.width / 2;
         const sy = (iy - camY) * viewScale + dimensions.height / 2;
-        if (sx < -buffer || sx > dimensions.width + buffer || sy < -buffer || sy > dimensions.height + buffer) return;
+        if (sx < -buffer || sx > dimensions.width + buffer || sy < -buffer || sy > dimensions.height + buffer) continue;
 
         const isDiscovered = discoveredTiles.includes(`${x},${y}`);
 
@@ -165,6 +159,7 @@ const MapCanvas = memo(({
         ctx.moveTo(ix, iy - tileSize / 4); ctx.lineTo(ix + tileSize / 2, iy); ctx.lineTo(ix, iy + tileSize / 4); ctx.lineTo(ix - tileSize / 2, iy);
         ctx.closePath();
 
+        let tile = mapData.tiles[y]?.[x] || "grass";
         let colors = ["#166534", "#14532D"]; // Default grass
         if (tile === "water") colors = ["#1D4ED8", "#1E3A8A"];
         else if (tile === "lava") colors = ["#B91C1C", "#7F1D1D"];
@@ -184,15 +179,41 @@ const MapCanvas = memo(({
         if (tile === "forest") {
           ctx.fillStyle = "#022C22"; ctx.beginPath();
           ctx.moveTo(ix, iy - 15); ctx.lineTo(ix + 10, iy + 5); ctx.lineTo(ix - 10, iy + 5); ctx.fill();
+          // Add more forest details
+          ctx.fillStyle = "#014D4E"; ctx.beginPath();
+          ctx.arc(ix + 8, iy - 8, 3, 0, Math.PI * 2); ctx.fill();
+          ctx.arc(ix - 8, iy - 8, 3, 0, Math.PI * 2); ctx.fill();
+          ctx.arc(ix, iy + 8, 4, 0, Math.PI * 2); ctx.fill();
         } else if (tile === "mountain") {
           ctx.fillStyle = "#222"; ctx.beginPath();
           ctx.moveTo(ix, iy - 22); ctx.lineTo(ix + 18, iy + 5); ctx.lineTo(ix - 18, iy + 5); ctx.fill();
+          // Add mountain details
+          ctx.fillStyle = "#444"; ctx.beginPath();
+          ctx.moveTo(ix - 12, iy - 18); ctx.lineTo(ix - 6, iy - 12); ctx.lineTo(ix - 18, iy - 12); ctx.fill();
+          ctx.moveTo(ix + 12, iy - 18); ctx.lineTo(ix + 6, iy - 12); ctx.lineTo(ix + 18, iy - 12); ctx.fill();
         } else if (tile === "town") {
           ctx.fillStyle = "#451A03"; ctx.beginPath(); ctx.moveTo(ix - 8, iy - 12); ctx.lineTo(ix, iy - 18); ctx.lineTo(ix + 8, iy - 12); ctx.fill();
+          // Add town details
+          ctx.fillStyle = "#6B4423"; ctx.beginPath();
+          ctx.rect(ix - 6, iy - 10, 4, 6); ctx.fill();
+          ctx.rect(ix + 2, iy - 10, 4, 6); ctx.fill();
+        } else if (tile === "grass") {
+          // Add grass details
+          ctx.fillStyle = "#0F5132"; ctx.beginPath();
+          ctx.arc(ix + 12, iy - 8, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.arc(ix - 12, iy - 8, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.arc(ix, iy + 12, 3, 0, Math.PI * 2); ctx.fill();
+        } else if (tile === "path") {
+          // Add path details
+          ctx.fillStyle = "#78350F"; ctx.beginPath();
+          ctx.rect(ix - 6, iy - 2, 12, 4); ctx.fill();
+          ctx.fillStyle = "#A45200"; ctx.beginPath();
+          ctx.arc(ix - 10, iy, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.arc(ix + 10, iy, 2, 0, Math.PI * 2); ctx.fill();
         }
         ctx.restore();
-      });
-    });
+      }
+    }
     ctx.restore();
   }, [mapData, tileSize, playerPos, viewScale, getIsoPos, dimensions, discoveredTiles]);
 
@@ -462,6 +483,25 @@ export function WorldMap({
           discoveredTiles={regionDiscovery}
         />
       </div>
+      <div className="absolute inset-0 mix-blend-multiply pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-950/20 via-transparent to-slate-950/30" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/10 via-transparent to-transparent" />
+        {timeOfDay === "night" && (
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 via-transparent to-blue-900/30" />
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/10 via-transparent to-transparent" />
+          </div>
+        )}
+        {timeOfDay === "dusk" && (
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-br from-orange-500/15 via-transparent to-orange-500/25" />
+            <div className="absolute inset-0 bg-gradient-to-t from-orange-500/5 via-transparent to-transparent" />
+          </div>
+        )}
+      </div>
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Removed all noise patterns and grid lines */}
+      </div>
 
       <motion.div
         className="absolute inset-0 pointer-events-none"
@@ -540,7 +580,13 @@ export function WorldMap({
               key={mob.id}
               className="absolute z-[1000] cursor-pointer pointer-events-auto"
               initial={{ opacity: 0, scale: 0 }}
-              animate={{ left: ix, top: iy, opacity: 1, scale: 1 }}
+              animate={{
+                left: ix,
+                top: iy,
+                opacity: 1,
+                scale: 1,
+                rotate: [0, -2, 0, 2, 0]
+              }}
               style={{
                 width: TILE_SIZE,
                 height: TILE_SIZE / 2,
@@ -550,16 +596,23 @@ export function WorldMap({
             >
               <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
                 <motion.div
-                  animate={{ y: [0, -3, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 + Math.random() }}
+                  animate={{
+                    y: [0, -3, 0],
+                    scale: [1, 1.05, 1],
+                    rotate: [-1, 0, 1, 0, -1]
+                  }}
+                  transition={{ repeat: Infinity, duration: 2 + Math.random() }}
                   className="translate-y-[-20px] filter drop-shadow-[0_6px_8px_rgba(239,68,68,0.3)]"
                 >
-                  <svg width="32" height="32" viewBox="-24 -24 48 48">
+                  <svg width="64" height="64" viewBox="-32 -32 64 64">
                     <EnemySpriteBody sprite={enemyData?.sprite || 'slime'} />
                   </svg>
                 </motion.div>
                 <div className="absolute top-[-30px] text-xs text-red-500 font-black animate-pulse">!</div>
                 <div className="absolute bottom-1.5 w-8 h-3 bg-red-950/20 rounded-full blur-[3px] -z-10" />
+                <div className="absolute bottom-1.5 w-8 h-3 bg-red-500/30 rounded-full blur-[6px] -z-20" />
+                <div className="absolute bottom-1.5 w-8 h-3 bg-red-500/20 rounded-full blur-[10px] -z-30" />
+                <div className="absolute bottom-1.5 w-8 h-3 bg-red-500/10 rounded-full blur-[15px] -z-40" />
               </div>
             </motion.div>
           );

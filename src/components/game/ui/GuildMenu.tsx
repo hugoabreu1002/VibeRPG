@@ -1,89 +1,111 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Character, Quest } from "../../../types/game";
 import { GuildEvolution } from "./GuildEvolution";
-import { QuestBoard } from "./QuestBoard";
-import { RankIcon, SwordIcon } from "./GameIcons";
+import { RANKS, getNextRank, getRankSkills } from "../../../lib/rank-utils";
 
 interface GuildMenuProps {
   character: Character;
   completedQuests: string[];
-  activeQuestId?: string | null;
+  activeQuestId?: string;
   onEvolve: (updatedCharacter: Character) => void;
   onAcceptQuest: (quest: Quest) => void;
-  onCompleteQuest: (quest: Quest) => void;
+  onCompleteQuest: (quest: Quest) => Promise<void>;
   onClose: () => void;
 }
 
-export function GuildMenu({ character, completedQuests, activeQuestId, onEvolve, onAcceptQuest, onCompleteQuest, onClose }: GuildMenuProps) {
-  const [activeTab, setActiveTab] = useState<"ranking" | "quests">("ranking");
+// Calculate evolution gains upfront
+const calculateEvolutionGains = (character: Character) => {
+  const nextRank = getNextRank(character.rank);
+  if (!nextRank) return null;
+
+  const currentSkills = getRankSkills(character.class, character.rank);
+  const newAllSkills = getRankSkills(character.class, nextRank.rank);
+  const newSkillsOnly = newAllSkills.filter(skill => !currentSkills.includes(skill));
+
+  const statBoost = {
+    maxHp: Math.floor(character.maxHp * 0.15) + 10,
+    maxMp: Math.floor(character.maxMp * 0.15) + 5,
+    attack: Math.floor(character.attack * 0.15) + 3,
+    defense: Math.floor(character.defense * 0.15) + 3,
+    magicPower: Math.floor(character.magicPower * 0.15) + 3,
+  };
+
+  return {
+    nextRank,
+    newSkillsOnly,
+    statBoost,
+  };
+};
+
+export function GuildMenu({ character, onEvolve, onClose }: GuildMenuProps) {
+  const currentRankData = RANKS.find(r => r.rank === character.rank);
+  const evolutionData = calculateEvolutionGains(character);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-slate-950/20 rounded-2xl border border-white/5 p-4 md:p-6 backdrop-blur-md">
-      {/* Tab Navigation */}
-      <div className="flex gap-4 mb-4 md:mb-8 bg-slate-900/40 p-1.5 rounded-2xl border border-slate-700/30 w-full sm:w-max mx-auto shadow-inner shadow-black/20">
-        <button
-          onClick={() => setActiveTab("ranking")}
-          className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
-            activeTab === "ranking"
-              ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg shadow-amber-900/30"
-              : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
-          }`}
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          <RankIcon size={16} />
-          Guild Ranking
-        </button>
-        <button
-          onClick={() => setActiveTab("quests")}
-          className={`flex items-center gap-2.5 px-6 py-2.5 rounded-xl font-black uppercase tracking-widest text-xs transition-all ${
-            activeTab === "quests"
-              ? "bg-gradient-to-r from-amber-600 to-amber-700 text-white shadow-lg shadow-amber-900/30"
-              : "text-slate-500 hover:text-slate-300 hover:bg-slate-800/50"
-          }`}
-          style={{ fontFamily: "'Cinzel', serif" }}
-        >
-          <SwordIcon size={16} />
-          Quest Board
-        </button>
+      {/* Current Rank Display */}
+      <div className="mb-6 p-4 rounded-xl bg-slate-900/40 border border-slate-700/30">
+        <h4 className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-3">Current Rank</h4>
+        <div className="flex items-center gap-4">
+          <div
+            className="text-5xl font-black filter drop-shadow-[0_0_15px_rgba(245,158,11,0.3)]"
+            style={{ color: currentRankData?.color }}
+          >
+            {character.rank}
+          </div>
+          <div>
+            <div className="text-lg font-bold text-amber-100">{currentRankData?.label}</div>
+            <div className="text-sm text-slate-400">Level {character.level}</div>
+          </div>
+        </div>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <AnimatePresence mode="wait">
-          {activeTab === "ranking" ? (
-             <motion.div
-               key="ranking"
-               initial={{ opacity: 0, scale: 0.98 }}
-               animate={{ opacity: 1, scale: 1 }}
-               exit={{ opacity: 0, scale: 1.02 }}
-               transition={{ duration: 0.2 }}
-               className="h-full"
-             >
-               <GuildEvolution 
-                 character={character} 
-                 onEvolve={onEvolve} 
-                 onClose={onClose} 
-               />
-             </motion.div>
-          ) : (
-             <motion.div
-                key="quests"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 1.02 }}
-                transition={{ duration: 0.2 }}
-                className="h-full"
-             >
-                <QuestBoard 
-                  character={character} 
-                  completedQuests={completedQuests} 
-                  onAcceptQuest={onAcceptQuest}
-                  onCompleteQuest={onCompleteQuest}
-                  activeQuestId={activeQuestId}
-                />
-             </motion.div>
+      {/* Evolution Preview */}
+      {evolutionData && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <h4 className="text-[10px] font-bold text-amber-500/60 uppercase tracking-widest mb-4">
+            Evolution to {evolutionData.nextRank.label}
+          </h4>
+
+          {/* Stat Boosts */}
+          <div className="mb-4">
+            <h5 className="text-xs font-bold text-emerald-400 mb-2">Stat Improvements</h5>
+            <div className="grid grid-cols-3 gap-2">
+              {Object.entries(evolutionData.statBoost).map(([stat, boost]) => (
+                <div key={stat} className="text-center p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                  <div className="font-bold text-emerald-300">+{boost}</div>
+                  <div className="text-[10px] text-slate-400 uppercase">{stat.replace(/([A-Z])/g, ' $1').trim()}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* New Skills */}
+          {evolutionData.newSkillsOnly.length > 0 && (
+            <div>
+              <h5 className="text-xs font-bold text-blue-400 mb-2">New Skills Unlocked</h5>
+              <div className="space-y-2">
+                {evolutionData.newSkillsOnly.map((skill) => (
+                  <div key={skill} className="flex items-center gap-2 p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                    <span className="text-blue-300 font-medium capitalize">{skill.replace(/-/g, ' ')}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
-        </AnimatePresence>
+
+          {evolutionData.newSkillsOnly.length === 0 && (
+            <div className="text-xs text-slate-500 italic">No new skills at this rank</div>
+          )}
+        </div>
+      )}
+
+      {/* Guild Evolution Component */}
+      <div className="flex-1 overflow-y-auto">
+        <GuildEvolution
+          character={character}
+          onEvolve={onEvolve}
+          onClose={onClose}
+        />
       </div>
     </div>
   );

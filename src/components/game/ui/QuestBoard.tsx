@@ -35,9 +35,9 @@ export function QuestBoard({ character, completedQuests, onAcceptQuest, onComple
 
   const activeQuest = activeQuestId ? QUESTS.find(q => q.id === activeQuestId) : null;
 
-  // Only show one quest at a time - prioritize active quest, otherwise show first available
-  const displayQuests = activeQuest ? [] : availableQuests.slice(0, 1);
-  const progress = activeQuestId && character.questProgress ? character.questProgress[activeQuestId] || 0 : 0;
+  // Show all available quests (up to 3 per map), but not if there's an active quest
+  const displayQuests = activeQuest ? [] : availableQuests;
+  const progress = activeQuestId && character.questProgress ? (character.questProgress[activeQuestId] ?? 0) : 0;
   const isBountyComplete = activeQuest?.bounty && progress >= activeQuest.bounty.targetCount;
 
   // Check if active quest is from an NPC (not in region's availableQuests)
@@ -170,10 +170,10 @@ export function QuestBoard({ character, completedQuests, onAcceptQuest, onComple
                 </div>
                 <div className="flex items-center gap-3 mt-1.5">
                   <div className="flex items-center gap-1 text-emerald-400 text-xs font-bold">
-                    <XPIcon size={10} /> +{quest.choices[0]?.xpReward || 0} XP
+                    <XPIcon size={10} /> +{quest.xpReward || 0} XP
                   </div>
                   <div className="flex items-center gap-1 text-amber-400 text-xs font-bold">
-                    <GoldIcon size={10} /> +{quest.choices[0]?.goldReward || 0} G
+                    <GoldIcon size={10} /> +{quest.goldReward || 0} G
                   </div>
                 </div>
               </div>

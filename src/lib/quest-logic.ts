@@ -53,22 +53,25 @@ export async function completeQuestAfterBattle(
     rewardItem?: InventoryItem,
     rewardSkill?: string
 ): Promise<QuestLogicResult> {
+    // Check if quest was already completed - prevent duplicate rewards
+    const alreadyCompleted = character.completedQuests.includes(activeQuest.id);
+
     // Add quest to completedQuests if not already there
-    const newCompletedQuests = character.completedQuests.includes(activeQuest.id)
+    const newCompletedQuests = alreadyCompleted
         ? character.completedQuests
         : [...character.completedQuests, activeQuest.id];
 
-    // Update character with rewards and clear active quest
+    // Update character - only give rewards if quest wasn't already completed
     let updatedCharacter: Character = {
         ...character,
-        xp: character.xp + xpReward,
-        gold: character.gold + goldReward,
+        xp: alreadyCompleted ? character.xp : character.xp + xpReward,
+        gold: alreadyCompleted ? character.gold : character.gold + goldReward,
         completedQuests: newCompletedQuests,
         acceptedQuests: character.acceptedQuests?.filter(id => id !== activeQuest.id) || [],
         activeQuestId: undefined,
         questState: "list" as QuestState,
-        ...(rewardItem && { inventory: [...character.inventory, rewardItem] }),
-        ...(rewardSkill && !character.skills.includes(rewardSkill) && { skills: [...character.skills, rewardSkill] })
+        ...(!alreadyCompleted && rewardItem && { inventory: [...character.inventory, rewardItem] }),
+        ...(!alreadyCompleted && rewardSkill && !character.skills.includes(rewardSkill) && { skills: [...character.skills, rewardSkill] })
     };
 
     // Check for level up

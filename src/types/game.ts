@@ -57,13 +57,15 @@ export interface Quest {
   title: string;
   description: string;
   class: CharacterClass;
-  choices: QuestChoice[];
+  choices?: QuestChoice[];
   minLevel: number;
   region: string;
   bounty?: {
     targetMonsterId: string;
     targetCount: number;
   };
+  xpReward: number;
+  goldReward: number;
 }
 
 export interface InventoryItem {
@@ -102,6 +104,7 @@ export interface Character {
   attack: number;
   defense: number;
   magicPower: number;
+  speed: number;
   xpToNext: number;
   rank: "F" | "E" | "D" | "C" | "B" | "A" | "S";
   skills: string[];
@@ -114,7 +117,6 @@ export interface Character {
   questState: QuestState;
   questProgress?: Record<string, number>;
 }
-
 export interface QuestResult {
   success: boolean;
   message: string;
