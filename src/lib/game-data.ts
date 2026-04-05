@@ -1,7 +1,7 @@
 import type { CharacterClass } from "./storage";
 import type { InventoryItem, Quest, Enemy } from "../types/game";
 
-export const CHARACTER_CLASSES: CharacterClass[] = ["mage", "warrior", "priest"];
+export const CHARACTER_CLASSES: CharacterClass[] = ["mage", "warrior", "priest", "rogue", "archer"];
 
 // Starter inventory items by class
 export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
@@ -135,19 +135,77 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
           description: "A pendant imbued with holy energy."
         }
       ];
+    case "rogue":
+      return [
+        {
+          id: "iron-dagger",
+          name: "Iron Dagger",
+          type: "weapon",
+          rarity: "common",
+          price: 18,
+          stats: { attack: 7 },
+          equipped: true,
+          description: "A small but sharp dagger."
+        },
+        {
+          id: "leather-tunic",
+          name: "Leather Tunic",
+          type: "armor",
+          rarity: "common",
+          price: 22,
+          stats: { defense: 4, hp: 10 },
+          equipped: true,
+          description: "Lightweight tunic for agile movements."
+        }
+      ];
+    case "archer":
+      return [
+        {
+          id: "shortbow",
+          name: "Shortbow",
+          type: "weapon",
+          rarity: "common",
+          price: 20,
+          stats: { attack: 6 },
+          equipped: true,
+          description: "A simple wooden bow for beginners."
+        },
+        {
+          id: "ranger-tunic",
+          name: "Ranger Tunic",
+          type: "armor",
+          rarity: "common",
+          price: 25,
+          stats: { defense: 3, hp: 12 },
+          equipped: true,
+          description: "Green tunic that blends in with nature."
+        },
+        {
+          id: "leather-boots",
+          name: "Leather Boots",
+          type: "boot",
+          rarity: "common",
+          price: 15,
+          stats: { hp: 5 },
+          equipped: true,
+          description: "Light boots for quick movement."
+        }
+      ];
   }
 }
 
 export function getInitialCharacterStats(charClass: CharacterClass) {
   switch (charClass) {
     case "mage":
-      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Northern Village" };
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, speed: 10, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Northern Village" };
     case "warrior":
-      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
+      return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, speed: 10, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
     case "priest":
-      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Southern Village" };
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, speed: 10, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Southern Village" };
     case "rogue":
-      return { hp: 75, maxHp: 75, mp: 50, maxMp: 50, attack: 18, defense: 8, magicPower: 10, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
+      return { hp: 75, maxHp: 75, mp: 50, maxMp: 50, attack: 18, defense: 8, magicPower: 10, speed: 15, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
+    case "archer":
+      return { hp: 80, maxHp: 80, mp: 40, maxMp: 40, attack: 16, defense: 10, magicPower: 5, speed: 12, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
   }
 }
 
@@ -375,76 +433,564 @@ export const SHOP_ITEMS: InventoryItem[] = [
     equipped: false,
     description: "A radiant feather from a phoenix. When used, it bestows incredible healing power."
   },
-  // ── FORMER REWARD ITEMS NOW PURCHASABLE ────────────────
+  // ── WARRIOR GEAR ──────────────────────────────────────
   {
-    id: "mystic-ring",
-    name: "Amulet of Eternity",
-    type: "hat",
-    rarity: "epic",
-    price: 350,
-    stats: { magicPower: 22, mp: 60, defense: 5 },
+    id: "bronze-sword",
+    name: "Bronze Sword",
+    type: "weapon",
+    rarity: "common",
+    price: 50,
+    stats: { attack: 12 },
+    description: "A basic bronze sword for new warriors.",
     equipped: false,
-    description: "An ancient jewelry piece that pulses with the heartbeat of the cosmos."
+    allowedClasses: ["warrior"]
   },
   {
-    id: "steel-buckler",
-    name: "Aegis of the Vanguard",
-    type: "armor",
-    rarity: "epic",
-    price: 480,
-    stats: { defense: 35, hp: 120 },
+    id: "steel-greatsword",
+    name: "Steel Greatsword",
+    type: "weapon",
+    rarity: "rare",
+    price: 250,
+    stats: { attack: 25, defense: 5 },
+    description: "A heavy steel blade that offers both offense and defense.",
     equipped: false,
-    description: "A shield forged from the scales of a celestial dragon."
+    allowedClasses: ["warrior"]
   },
   {
-    id: "silver-dagger",
-    name: "Blade of Whispers",
+    id: "heavy-steel-axe",
+    name: "Heavy Steel Axe",
+    type: "weapon",
+    rarity: "rare",
+    price: 280,
+    stats: { attack: 30 },
+    description: "A powerful axe designed for crushing through enemy defenses.",
+    equipped: false,
+    allowedClasses: ["warrior"]
+  },
+  {
+    id: "mithril-cleaver",
+    name: "Mithril Cleaver",
     type: "weapon",
     rarity: "epic",
-    price: 450,
-    stats: { attack: 42, magicPower: 10 },
+    price: 800,
+    stats: { attack: 45, defense: 10 },
+    description: "Forged from rare mithril, it cuts through armor like butter.",
     equipped: false,
-    description: "A silent, ethereal blade that seems to phase through armor."
+    allowedClasses: ["warrior"]
   },
   {
-    id: "holy-relic",
-    name: "Sunlord's Halo",
-    type: "hat",
-    rarity: "epic",
-    price: 400,
-    stats: { magicPower: 28, hp: 80, defense: 12 },
-    equipped: false,
-    description: "A crown of pure sunlight that blinds those who would strike you."
-  },
-  {
-    id: "fire-staff",
-    name: "Pheonix's Core",
+    id: "ascalon-blade",
+    name: "Ascalon, Dragon's Bane",
     type: "weapon",
     rarity: "legendary",
-    price: 1200,
-    stats: { magicPower: 65, attack: 15, mp: 150 },
+    price: 2500,
+    stats: { attack: 85, defense: 15, hp: 50 },
+    description: "A legendary blade said to have slain a thousand dragons.",
     equipped: false,
-    description: "The heat radiating from this staff can ignite the very air."
+    allowedClasses: ["warrior"]
   },
   {
-    id: "knight-armor",
+    id: "warrior-chainmail",
+    name: "Chainmail",
+    type: "armor",
+    rarity: "common",
+    price: 60,
+    stats: { defense: 15 },
+    description: "Basic chainmail armor for physical protection.",
+    equipped: false,
+    allowedClasses: ["warrior"]
+  },
+  {
+    id: "iron-plate",
+    name: "Iron Plate",
+    type: "armor",
+    rarity: "rare",
+    price: 300,
+    stats: { defense: 35, hp: 40 },
+    description: "Solid iron plates to withstand heavy blows.",
+    equipped: false,
+    allowedClasses: ["warrior"]
+  },
+  {
+    id: "splint-mail",
+    name: "Splint Mail",
+    type: "armor",
+    rarity: "rare",
+    price: 320,
+    stats: { defense: 40, hp: 20 },
+    description: "Reinforced mail with metal splints for superior protection.",
+    equipped: false,
+    allowedClasses: ["warrior"]
+  },
+  {
+    id: "mithril-armor",
+    name: "Mithril Armor",
+    type: "armor",
+    rarity: "epic",
+    price: 1000,
+    stats: { defense: 65, hp: 100 },
+    description: "Lightweight yet incredibly tough mithril protection.",
+    equipped: false,
+    allowedClasses: ["warrior"]
+  },
+  {
+    id: "dreadnought-plate",
     name: "Dreadnought Plate",
     type: "armor",
     rarity: "legendary",
-    price: 1500,
-    stats: { defense: 75, hp: 250, attack: 10 },
+    price: 3500,
+    stats: { defense: 110, hp: 250, attack: 15 },
+    description: "The ultimate armor for those who fear no enemy.",
     equipped: false,
-    description: "A colossal set of armor that makes you feel like an immovable object."
+    allowedClasses: ["warrior"]
+  },
+
+  // ── MAGE GEAR ──────────────────────────────────────────
+  {
+    id: "wooden-staff",
+    name: "Wooden Staff",
+    type: "weapon",
+    rarity: "common",
+    price: 55,
+    stats: { magicPower: 15 },
+    description: "A simple staff to focus basic magical energy.",
+    equipped: false,
+    allowedClasses: ["mage"]
   },
   {
-    id: "divine-robes",
+    id: "apprentice-wand",
+    name: "Apprentice Wand",
+    type: "weapon",
+    rarity: "rare",
+    price: 280,
+    stats: { magicPower: 30, mp: 25 },
+    description: "A refined wand for aspiring sorcerers.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "spellblade",
+    name: "Spellblade",
+    type: "weapon",
+    rarity: "rare",
+    price: 300,
+    stats: { attack: 20, magicPower: 25 },
+    description: "A magical blade that channels the user's mana into strikes.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "crystal-staff",
+    name: "Crystal Staff",
+    type: "weapon",
+    rarity: "epic",
+    price: 900,
+    stats: { magicPower: 55, mp: 60 },
+    description: "A staff topped with a focusing crystal of pure arcane power.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "phoenix-core-staff",
+    name: "Phoenix's Core",
+    type: "weapon",
+    rarity: "legendary",
+    price: 2800,
+    stats: { magicPower: 95, mp: 150, attack: 20 },
+    description: "Channels the eternal flame of a phoenix.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "scholar-robe",
+    name: "Scholar's Robe",
+    type: "armor",
+    rarity: "common",
+    price: 45,
+    stats: { defense: 8, magicPower: 12 },
+    description: "Simple robes worn by students of the arcane.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "silk-tunic",
+    name: "Silk Tunic",
+    type: "armor",
+    rarity: "rare",
+    price: 250,
+    stats: { defense: 20, magicPower: 25, mp: 30 },
+    description: "Magic-infused silk that offers decent protection.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "sorcerer-tunic",
+    name: "Sorcerer's Tunic",
+    type: "armor",
+    rarity: "rare",
+    price: 260,
+    stats: { defense: 25, mp: 30 },
+    description: "Reinforcd robes with protective charms.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "arcane-mantle",
+    name: "Arcane Mantle",
+    type: "armor",
+    rarity: "epic",
+    price: 850,
+    stats: { defense: 45, magicPower: 50, mp: 80 },
+    description: "A mantle that pulses with visible magical energy.",
+    equipped: false,
+    allowedClasses: ["mage"]
+  },
+  {
+    id: "ether-woven-regalia-mage",
     name: "Ether-Woven Regalia",
     type: "armor",
     rarity: "legendary",
-    price: 1400,
-    stats: { defense: 35, magicPower: 70, hp: 180, mp: 100 },
+    price: 3200,
+    stats: { defense: 85, magicPower: 80, mp: 150, hp: 200 },
+    description: "Armor woven from the fabric of reality itself.",
     equipped: false,
-    description: "Robes that bleed between realities, granting near-infinite magical flow."
+    allowedClasses: ["mage"]
+  },
+
+  // ── PRIEST GEAR ────────────────────────────────────────
+  {
+    id: "iron-mace",
+    name: "Iron Mace",
+    type: "weapon",
+    rarity: "common",
+    price: 50,
+    stats: { attack: 8, magicPower: 8 },
+    description: "A sturdy iron mace for divine strikes.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "silver-scepter",
+    name: "Silver Scepter",
+    type: "weapon",
+    rarity: "rare",
+    price: 260,
+    stats: { attack: 15, magicPower: 20, mp: 20 },
+    description: "A silver scepter that amplifies holy light.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "blessed-flail",
+    name: "Blessed Flail",
+    type: "weapon",
+    rarity: "rare",
+    price: 270,
+    stats: { attack: 18, magicPower: 18 },
+    description: "A consecrated flail used by warrior priests.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "golden-crozier",
+    name: "Golden Crozier",
+    type: "weapon",
+    rarity: "epic",
+    price: 850,
+    stats: { attack: 30, magicPower: 45, mp: 50 },
+    description: "A golden staff carried by high-ranking prelates.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "seraphim-staff",
+    name: "Staff of the Seraphim",
+    type: "weapon",
+    rarity: "legendary",
+    price: 3000,
+    stats: { attack: 55, magicPower: 85, mp: 120, hp: 100 },
+    description: "A legendary staff blessed by the highest angels.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "novice-habit",
+    name: "Novice Habit",
+    type: "armor",
+    rarity: "common",
+    price: 50,
+    stats: { defense: 10, magicPower: 10 },
+    description: "Basic attire for those just beginning their holy journey.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "cleric-vestment",
+    name: "Cleric's Vestment",
+    type: "armor",
+    rarity: "rare",
+    price: 280,
+    stats: { defense: 25, magicPower: 25, hp: 40 },
+    description: "Durable vestments for traveling clerics.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "padded-vestment",
+    name: "Padded Vestment",
+    type: "armor",
+    rarity: "rare",
+    price: 290,
+    stats: { defense: 30, hp: 30 },
+    description: "Reinforce robes with quilted layers for extra resilience.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "saint-robe",
+    name: "Saint's Robe",
+    type: "armor",
+    rarity: "epic",
+    price: 900,
+    stats: { defense: 50, magicPower: 45, hp: 100 },
+    description: "Robes said to have been worn by a legendary saint.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+  {
+    id: "high-sanctum-vestment",
+    name: "High Sanctum Vestment",
+    type: "armor",
+    rarity: "legendary",
+    price: 3400,
+    stats: { defense: 90, magicPower: 75, hp: 250, mp: 150 },
+    description: "The peak of holy protection, crafted in the High Sanctum.",
+    equipped: false,
+    allowedClasses: ["priest"]
+  },
+
+  // ── ROGUE GEAR ─────────────────────────────────────────
+  {
+    id: "item-rogue-dagger-bronze",
+    name: "Bronze Dagger",
+    type: "weapon",
+    rarity: "common",
+    price: 45,
+    stats: { attack: 14 },
+    description: "A simple, sharp dagger for quick strikes.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-twinblades",
+    name: "Steel Twinblades",
+    type: "weapon",
+    rarity: "rare",
+    price: 240,
+    stats: { attack: 28 },
+    description: "A pair of perfectly balanced steel blades.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-dirk-serrated",
+    name: "Serrated Dirk",
+    type: "weapon",
+    rarity: "rare",
+    price: 250,
+    stats: { attack: 32 },
+    description: "A maliciously jagged blade that leaves deep wounds.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-shadowfang",
+    name: "Shadow Fang",
+    type: "weapon",
+    rarity: "epic",
+    price: 750,
+    stats: { attack: 50, magicPower: 10 },
+    description: "A dark blade that seems to devour light.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-blade-whispers",
+    name: "Blade of Whispers",
+    type: "weapon",
+    rarity: "legendary",
+    price: 2600,
+    stats: { attack: 90, magicPower: 20 },
+    description: "Legendary daggers that cut as deep as silence.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-leather-tunic",
+    name: "Leather Tunic",
+    type: "armor",
+    rarity: "common",
+    price: 55,
+    stats: { defense: 12 },
+    description: "Lightweight leather protection for agile fighters.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-hard-leather",
+    name: "Hard Leather Armor",
+    type: "armor",
+    rarity: "rare",
+    price: 280,
+    stats: { defense: 30, hp: 30 },
+    description: "Reinforced leather for better combat durability.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-studded-leather",
+    name: "Studded Leather",
+    type: "armor",
+    rarity: "rare",
+    price: 290,
+    stats: { defense: 35, hp: 20 },
+    description: "Leather armor reinforced with steel studs for added deflection.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-assassin-garb",
+    name: "Assassin's Garb",
+    type: "armor",
+    rarity: "epic",
+    price: 850,
+    stats: { defense: 55, hp: 70 },
+    description: "Blackened armor designed for stealth and lethal efficiency.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+  {
+    id: "item-rogue-shadowalker-cloak",
+    name: "Shadowalker's Cloak",
+    type: "armor",
+    rarity: "legendary",
+    price: 3100,
+    stats: { defense: 95, hp: 180, attack: 10 },
+    description: "A cloak made of living shadows that protects its wearer.",
+    equipped: false,
+    allowedClasses: ["rogue"]
+  },
+
+  // ── ARCHER GEAR ────────────────────────────────────────
+  {
+    id: "item-archer-shortbow",
+    name: "Shortbow",
+    type: "weapon",
+    rarity: "common",
+    price: 50,
+    stats: { attack: 13 },
+    description: "A basic shortbow for new hunters.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-longbow",
+    name: "Longbow",
+    type: "weapon",
+    rarity: "rare",
+    price: 260,
+    stats: { attack: 26 },
+    description: "A large bow with great power and range.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-composite-bow",
+    name: "Composite Bow",
+    type: "weapon",
+    rarity: "rare",
+    price: 270,
+    stats: { attack: 30 },
+    description: "A bow made from multiple materials for maximum tension.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-recurve",
+    name: "Recurve Bow",
+    type: "weapon",
+    rarity: "epic",
+    price: 800,
+    stats: { attack: 48 },
+    description: "An advanced recurve bow with incredible tension.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-galepiercer",
+    name: "Gale-Piercer Bow",
+    type: "weapon",
+    rarity: "legendary",
+    price: 2700,
+    stats: { attack: 88, magicPower: 10 },
+    description: "A legendary bow that fires arrows faster than the wind.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-hunters-vest",
+    name: "Hunter's Vest",
+    type: "armor",
+    rarity: "common",
+    price: 50,
+    stats: { defense: 11 },
+    description: "Functional vest for hunters and trackers.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-rangers-jacket",
+    name: "Ranger's Jacket",
+    type: "armor",
+    rarity: "rare",
+    price: 270,
+    stats: { defense: 28, hp: 35 },
+    description: "Durable gear for long periods in the wild.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-reinforced-tunic",
+    name: "Reinforced Tunic",
+    type: "armor",
+    rarity: "rare",
+    price: 280,
+    stats: { defense: 32, hp: 25 },
+    description: "A tracker's tunic reinforced with hide and chain links.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-forest-warden",
+    name: "Forest Warden Leather",
+    type: "armor",
+    rarity: "epic",
+    price: 880,
+    stats: { defense: 52, hp: 85 },
+    description: "Sturdy leather armor favored by forest defenders.",
+    equipped: false,
+    allowedClasses: ["archer"]
+  },
+  {
+    id: "item-archer-windwalker",
+    name: "Wind-Walker Suit",
+    type: "armor",
+    rarity: "legendary",
+    price: 3300,
+    stats: { defense: 105, hp: 220, attack: 15 },
+    description: "Enchanted armor that lets the wearer move with the wind.",
+    equipped: false,
+    allowedClasses: ["archer"]
   }
 ];
 

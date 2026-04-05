@@ -20,6 +20,8 @@ export const CharacterClass = {
   mage: "mage",
   warrior: "warrior",
   priest: "priest",
+  rogue: "rogue",
+  archer: "archer",
 } as const;
 
 export interface Character {
@@ -38,6 +40,10 @@ export interface Character {
   magicPower: number;
   gold: number;
   createdAt: string;
+  skinColor?: string;
+  hairColor?: string;
+  clothingColor?: string;
+  faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
 }
 
 export interface CreateCharacterRequest {

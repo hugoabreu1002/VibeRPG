@@ -11,6 +11,10 @@ interface InventorySpriteProps {
   equippedArmor?: InventoryItem;
   equippedBoot?: InventoryItem;
   equippedHat?: InventoryItem;
+  skinColor?: string;
+  hairColor?: string;
+  clothingColor?: string;
+  faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
 }
 
 export function InventorySprite({
@@ -19,6 +23,10 @@ export function InventorySprite({
   animationType = 'idle',
   equippedWeapon,
   equippedHat,
+  skinColor = '#FDE68A',
+  hairColor = '#8B5CF6',
+  clothingColor,
+  faceStyle = 'heroic',
 }: InventorySpriteProps) {
   const [frame, setFrame] = useState(0);
 
@@ -63,17 +71,84 @@ export function InventorySprite({
 
   const bobOffset = animationType === 'idle' ? Math.sin(frame * 0.3) * 2 : 0;
 
+  const renderFace = () => {
+    switch (faceStyle) {
+      case 'friendly':
+        return (
+          <g>
+            {/* Friendly eyes - large & cute */}
+            <ellipse cx="-4" cy="-12" rx="2.5" ry="3" fill="#1E293B" />
+            <ellipse cx="4" cy="-12" rx="2.5" ry="3" fill="#1E293B" />
+            <circle cx="-4.5" cy="-13" r="1" fill="white" />
+            <circle cx="3.5" cy="-13" r="1" fill="white" />
+            <circle cx="-3" cy="-11" r="0.4" fill="white" />
+            <circle cx="5" cy="-11" r="0.4" fill="white" />
+            {/* Happy eyebrows */}
+            <path d="M-6 -16 Q-4 -18 -2 -16" stroke="#92400E" strokeWidth="0.8" fill="none" />
+            <path d="M6 -16 Q4 -18 2 -16" stroke="#92400E" strokeWidth="0.8" fill="none" />
+            {/* Cute nose */}
+            <circle cx="0" cy="-9" r="0.5" fill="#D97706" />
+            {/* Smile */}
+            <path d="M-2 -6 Q0 -4 2 -6" stroke="#BE123C" strokeWidth="0.8" fill="none" />
+          </g>
+        );
+      case 'fierce':
+        return (
+          <g>
+            {/* Fierce eyes */}
+            <ellipse cx="-4" cy="-12" rx="2" ry="1.5" fill="#1E293B" />
+            <ellipse cx="4" cy="-12" rx="2" ry="1.5" fill="#1E293B" />
+            <circle cx="-4" cy="-12" r="0.5" fill="#EF4444" />
+            <circle cx="4" cy="-12" r="0.5" fill="#EF4444" />
+            {/* Angry eyebrows */}
+            <path d="M-7 -16 L-2 -14.5" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
+            <path d="M7 -16 L2 -14.5" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
+            {/* Snarl line */}
+            <path d="M-1 -8 L1 -9" stroke="#78350F" strokeWidth="0.5" fill="none" />
+            {/* Gritted teeth / angry mouth */}
+            <path d="M-3 -6 L3 -5" stroke="#451A03" strokeWidth="1" />
+          </g>
+        );
+      case 'mysterious':
+        return (
+          <g>
+            {/* Hooded/Shadowed Eyes */}
+            <path d="M-6 -12 L-2 -12 L-2 -11.5 L-6 -11.5 Z" fill="#10B981" />
+            <path d="M6 -12 L2 -12 L2 -11.5 L6 -11.5 Z" fill="#10B981" />
+            {/* Eyebrows resting low */}
+            <path d="M-6 -13 L-1 -13" stroke="#1F2937" strokeWidth="1.2" fill="none" />
+            <path d="M6 -13 L1 -13" stroke="#1F2937" strokeWidth="1.2" fill="none" />
+            {/* Smirk mask/mouth */}
+            <path d="M0 -6 L3 -7" stroke="#1F2937" strokeWidth="0.8" fill="none" />
+          </g>
+        );
+      case 'heroic':
+      default:
+        return (
+          <g>
+            <ellipse cx="-4" cy="-12" rx="2" ry="2.5" fill="#1E293B" />
+            <ellipse cx="4" cy="-12" rx="2" ry="2.5" fill="#1E293B" />
+            <circle cx="-3.5" cy="-12.5" r="0.6" fill="white" />
+            <circle cx="4.5" cy="-12.5" r="0.6" fill="white" />
+            <path d="M-6 -15 L-2 -14" stroke="#451A03" strokeWidth="1" fill="none" />
+            <path d="M6 -15 L2 -14" stroke="#451A03" strokeWidth="1" fill="none" />
+            <path d="M0 -10 L-1.5 -7 L1.5 -7" stroke="#D97706" strokeWidth="0.6" fill="none" />
+            <path d="M-3 -5 L3 -5" stroke="#92400E" strokeWidth="1" strokeLinecap="round" />
+          </g>
+        );
+    }
+  };
+
   const renderMageCharacter = () => (
     <g>
       <defs>
         <linearGradient id="mage-robe" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4C1D95" />
-          <stop offset="50%" stopColor="#5B21B6" />
-          <stop offset="100%" stopColor="#6D28D9" />
+          <stop offset="0%" stopColor={clothingColor || "#4C1D95"} />
+          <stop offset="100%" stopColor={clothingColor || "#6D28D9"} />
         </linearGradient>
         <linearGradient id="mage-skin" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FDE68A" />
-          <stop offset="100%" stopColor="#FCD34D" />
+          <stop offset="0%" stopColor={skinColor} />
+          <stop offset="100%" stopColor={skinColor} stopOpacity={0.8} />
         </linearGradient>
         <radialGradient id="mage-glow" cx="50%" cy="30%" r="60%">
           <stop offset="0%" stopColor="#A78BFA" stopOpacity="0.4" />
@@ -109,30 +184,13 @@ export function InventorySprite({
       
       {/* Head */}
       <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#mage-skin)" />
-      <ellipse cx="0" cy="-12" rx="9" ry="10" fill="#FDE68A" />
       
       {/* Hair */}
-      <path d="M-10 -16 Q-12 -24 -4 -22 Q0 -28 4 -22 Q12 -24 10 -16 Q8 -18 0 -18 Q-8 -18 -10 -16" fill="#8B5CF6" />
-      <path d="M-8 -14 Q-10 -20 -4 -19 Q0 -22 4 -19 Q10 -20 8 -14" fill="#A78BFA" opacity="0.6" />
+      <path d="M-10 -16 Q-12 -24 -4 -22 Q0 -28 4 -22 Q12 -24 10 -16 Q8 -18 0 -18 Q-8 -18 -10 -16" fill={hairColor} />
+      <path d="M-8 -14 Q-10 -20 -4 -19 Q0 -22 4 -19 Q10 -20 8 -14" fill={hairColor} opacity="0.6" />
       
-      {/* Eyes */}
-      <ellipse cx="-4" cy="-12" rx="2.5" ry="3" fill="#1E293B" />
-      <ellipse cx="4" cy="-12" rx="2.5" ry="3" fill="#1E293B" />
-      <circle cx="-4" cy="-13" r="1" fill="#A78BFA" />
-      <circle cx="4" cy="-13" r="1" fill="#A78BFA" />
-      <circle cx="-3.5" cy="-13.5" r="0.4" fill="white" />
-      <circle cx="4.5" cy="-13.5" r="0.4" fill="white" />
-      
-      {/* Eyebrows - serious/concerned */}
-      <path d="M-6 -16 L-2 -15" stroke="#6D28D9" strokeWidth="1" fill="none" />
-      <path d="M6 -16 L2 -15" stroke="#6D28D9" strokeWidth="1" fill="none" />
-      
-      {/* Nose */}
-      <path d="M0 -10 L-1 -8 L1 -8" stroke="#D97706" strokeWidth="0.5" fill="none" />
-      
-      {/* Mouth - neutral/serious line */}
-      <path d="M-3 -6 L3 -6" stroke="#92400E" strokeWidth="1" fill="none" />
-      
+      {renderFace()}
+
       {/* Hat */}
       {equippedHat ? (
         <g>
@@ -145,7 +203,7 @@ export function InventorySprite({
       ) : (
         <g>
           {/* Hair without hat */}
-          <path d="M-10 -18 Q-12 -26 0 -24 Q12 -26 10 -18" fill="#8B5CF6" />
+          <path d="M-10 -18 Q-12 -26 0 -24 Q12 -26 10 -18" fill={hairColor} />
         </g>
       )}
       
@@ -182,15 +240,13 @@ export function InventorySprite({
     <g>
       <defs>
         <linearGradient id="warrior-armor" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#6B7280" />
-          <stop offset="30%" stopColor="#9CA3AF" />
+          <stop offset="0%" stopColor={clothingColor || "#6B7280"} />
           <stop offset="50%" stopColor="#D1D5DB" />
-          <stop offset="70%" stopColor="#9CA3AF" />
-          <stop offset="100%" stopColor="#6B7280" />
+          <stop offset="100%" stopColor={clothingColor || "#6B7280"} />
         </linearGradient>
         <linearGradient id="warrior-skin" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FDE68A" />
-          <stop offset="100%" stopColor="#F59E0B" />
+          <stop offset="0%" stopColor={skinColor} />
+          <stop offset="100%" stopColor={skinColor} stopOpacity={0.8} />
         </linearGradient>
       </defs>
       
@@ -218,27 +274,12 @@ export function InventorySprite({
       
       {/* Head */}
       <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#warrior-skin)" />
-      <ellipse cx="0" cy="-12" rx="9" ry="10" fill="#FDE68A" />
       
       {/* Hair */}
       <path d="M-8 -18 Q0 -22 8 -18 Q6 -20 0 -20 Q-6 -20 -8 -18" fill="#92400E" />
       
-      {/* Eyes */}
-      <ellipse cx="-4" cy="-12" rx="2" ry="2.5" fill="#1E293B" />
-      <ellipse cx="4" cy="-12" rx="2" ry="2.5" fill="#1E293B" />
-      <circle cx="-3.5" cy="-12.5" r="0.6" fill="white" />
-      <circle cx="4.5" cy="-12.5" r="0.6" fill="white" />
-      
-      {/* Angry eyebrows */}
-      <path d="M-7 -16 L-2 -15" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M7 -16 L2 -15" stroke="#78350F" strokeWidth="1.5" strokeLinecap="round" />
-      
-      {/* Nose */}
-      <path d="M0 -10 L-1.5 -7 L1.5 -7" stroke="#D97706" strokeWidth="0.6" fill="none" />
-      
-      {/* Determined mouth */}
-      <path d="M-4 -5 L4 -5" stroke="#92400E" strokeWidth="1.2" strokeLinecap="round" />
-      
+      {renderFace()}
+
       {/* Battle scar */}
       <path d="M-8 -10 L-5 -6" stroke="#B45309" strokeWidth="1" />
       
@@ -285,13 +326,12 @@ export function InventorySprite({
     <g>
       <defs>
         <linearGradient id="priest-robe" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FEFEFE" />
-          <stop offset="50%" stopColor="#F8FAFC" />
-          <stop offset="100%" stopColor="#E5E7EB" />
+          <stop offset="0%" stopColor={clothingColor || "#FEFEFE"} />
+          <stop offset="100%" stopColor={clothingColor || "#E5E7EB"} />
         </linearGradient>
         <linearGradient id="priest-skin" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FEE2E2" />
-          <stop offset="100%" stopColor="#FECACA" />
+          <stop offset="0%" stopColor={skinColor} />
+          <stop offset="100%" stopColor={skinColor} stopOpacity={0.8} />
         </linearGradient>
       </defs>
       
@@ -325,31 +365,13 @@ export function InventorySprite({
       
       {/* Head */}
       <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#priest-skin)" />
-      <ellipse cx="0" cy="-12" rx="9" ry="10" fill="#FEE2E2" />
       
-      {/* Hair - youthful blonde */}
-      <path d="M-9 -16 Q-10 -22 -4 -21 Q0 -24 4 -21 Q10 -22 9 -16 Q6 -19 0 -19 Q-6 -19 -9 -16" fill="#FCD34D" />
-      <path d="M-7 -15 Q-8 -20 -3 -19 Q0 -21 3 -19 Q8 -20 7 -15" fill="#FDE68A" opacity="0.7" />
+      {/* Hair */}
+      <path d="M-9 -16 Q-10 -22 -4 -21 Q0 -24 4 -21 Q10 -22 9 -16 Q6 -19 0 -19 Q-6 -19 -9 -16" fill={hairColor} />
+      <path d="M-7 -15 Q-8 -20 -3 -19 Q0 -21 3 -19 Q8 -20 7 -15" fill={hairColor} opacity="0.7" />
       
-      {/* Young serene eyes - larger and brighter */}
-      <ellipse cx="-4" cy="-11" rx="2.5" ry="2" fill="#1E293B" />
-      <ellipse cx="4" cy="-11" rx="2.5" ry="2" fill="#1E293B" />
-      <circle cx="-4" cy="-11.5" r="1" fill="#60A5FA" />
-      <circle cx="4" cy="-11.5" r="1" fill="#60A5FA" />
-      <circle cx="-3.5" cy="-12" r="0.5" fill="white" />
-      <circle cx="4.5" cy="-12" r="0.5" fill="white" />
-      
-      {/* Serious eyebrows */}
-      <path d="M-6 -14 L-2 -13" stroke="#D97706" strokeWidth="0.8" fill="none" />
-      <path d="M6 -14 L2 -13" stroke="#D97706" strokeWidth="0.8" fill="none" />
-      
-      {/* Nose */}
-      <path d="M0 -9 L-0.5 -7 L0.5 -7" stroke="#FCA5A5" strokeWidth="0.4" fill="none" />
-      
-      {/* Neutral mouth - serious line */}
-      <path d="M-2 -5 L2 -5" stroke="#BE123C" strokeWidth="0.8" fill="none" />
-      
-      
+      {renderFace()}
+
       {/* Sleeves */}
       <path d="M-14 4 L-20 16 L-16 18 L-12 6 Z" fill="url(#priest-robe)" stroke="#D1D5DB" strokeWidth="0.3" />
       <path d="M14 4 L20 16 L16 18 L12 6 Z" fill="url(#priest-robe)" stroke="#D1D5DB" strokeWidth="0.3" />
@@ -374,13 +396,12 @@ export function InventorySprite({
     <g>
       <defs>
         <linearGradient id="rogue-outfit" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#1F2937" />
-          <stop offset="50%" stopColor="#374151" />
-          <stop offset="100%" stopColor="#4B5563" />
+          <stop offset="0%" stopColor={clothingColor || "#1F2937"} />
+          <stop offset="100%" stopColor={clothingColor || "#4B5563"} />
         </linearGradient>
         <linearGradient id="rogue-skin" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#FDE68A" />
-          <stop offset="100%" stopColor="#FCD34D" />
+          <stop offset="0%" stopColor={skinColor} />
+          <stop offset="100%" stopColor={skinColor} stopOpacity={0.8} />
         </linearGradient>
       </defs>
       
@@ -442,12 +463,88 @@ export function InventorySprite({
     </g>
   );
 
+  const renderArcherCharacter = () => (
+    <g>
+      <defs>
+        <linearGradient id="archer-outfit" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={clothingColor || "#166534"} />
+          <stop offset="100%" stopColor={clothingColor || "#14532D"} />
+        </linearGradient>
+        <linearGradient id="archer-skin" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={skinColor} />
+          <stop offset="100%" stopColor={skinColor} stopOpacity={0.8} />
+        </linearGradient>
+      </defs>
+      
+      {/* Body outfit */}
+      <path d="M-12 2 L-14 30 L14 30 L12 2 Q0 -2 -12 2 Z" fill="url(#archer-outfit)" stroke="#064E3B" strokeWidth="0.5" />
+      {/* Leather straps */}
+      <rect x="-10" y="8" width="20" height="2" fill="#78350F" />
+      
+      {/* Belt with quiver strap */}
+      <rect x="-12" y="22" width="24" height="3" fill="#451A03" stroke="#78350F" strokeWidth="0.3" />
+      <path d="M-12 2 L12 22" stroke="#78350F" strokeWidth="2" />
+      
+      {/* Quiver sticking out */}
+      <rect x="10" y="-4" width="6" height="18" fill="#451A03" rx="1" transform="rotate(30) translate(-5, -5)" />
+      {/* Arrows in quiver */}
+      <line x1="8" y1="-8" x2="12" y2="0" stroke="#FDE68A" strokeWidth="1" />
+      <line x1="12" y1="-9" x2="14" y2="0" stroke="#FDE68A" strokeWidth="1" />
+      <line x1="16" y1="-7" x2="15" y2="0" stroke="#FDE68A" strokeWidth="1" />
+      
+      {/* Neck */}
+      <rect x="-4" y="-2" width="8" height="6" fill="url(#archer-skin)" />
+      
+      {/* Head */}
+      <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#archer-skin)" />
+      
+      {/* Hair */}
+      <path d="M-11 -14 Q-12 -22 -4 -20 Q0 -26 4 -20 Q12 -22 11 -14 Q8 -16 0 -16 Q-8 -16 -11 -14" fill={hairColor} />
+      <path d="M-9 -12 Q-10 -18 -4 -17 Q0 -20 4 -17 Q10 -18 9 -12" fill={hairColor} opacity="0.6" />
+      
+      {renderFace()}
+
+      {/* Hat / Hood */}
+      {equippedHat ? (
+        <g>
+          {/* Robin hood style cap */}
+          <path d="M-12 -16 Q0 -28 14 -14 Q8 -12 -12 -16 Z" fill="#166534" stroke="#14532D" strokeWidth="0.5" />
+          <path d="M-10 -14 L-6 -22" stroke="#EF4444" strokeWidth="1.5" />
+        </g>
+      ) : null}
+      
+      {/* Sleeves */}
+      <path d="M-12 4 L-18 14 L-14 16 L-10 6 Z" fill="url(#archer-outfit)" stroke="#064E3B" strokeWidth="0.3" />
+      <path d="M12 4 L18 14 L14 16 L10 6 Z" fill="url(#archer-outfit)" stroke="#064E3B" strokeWidth="0.3" />
+      
+      {/* Small glove/brace on arm */}
+      <rect x="-18" y="10" width="4" height="6" fill="#78350F" transform="rotate(30, -16, 13)" />
+      
+      {/* Hands */}
+      <ellipse cx="-16" cy="15" rx="3" ry="3.5" fill="url(#archer-skin)" />
+      <ellipse cx="16" cy="15" rx="3" ry="3.5" fill="url(#archer-skin)" />
+      
+      {/* Weapon - Bow */}
+      {equippedWeapon && (
+        <g>
+          <path d="M-22 4 Q-30 12 -22 20" fill="none" stroke="#78350F" strokeWidth="2" strokeLinecap="round" />
+          <line x1="-22" y1="4" x2="-22" y2="20" stroke="#FDE68A" strokeWidth="0.5" />
+        </g>
+      )}
+      
+      {/* Boots */}
+      <rect x="-10" y="28" width="8" height="6" fill="#451A03" rx="1" />
+      <rect x="2" y="28" width="8" height="6" fill="#451A03" rx="1" />
+    </g>
+  );
+
   const renderCharacter = () => {
     switch (characterClass) {
       case 'mage': return renderMageCharacter();
       case 'warrior': return renderWarriorCharacter();
       case 'priest': return renderPriestCharacter();
       case 'rogue': return renderRogueCharacter();
+      case 'archer': return renderArcherCharacter();
       default: return renderMageCharacter();
     }
   };
