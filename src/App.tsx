@@ -1,7 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Inventory, MapControls, QuestBattle, WorldMap, Quests, Shop } from "./components/game";
-import { MonsterBattle } from "./components/game/battle/MonsterBattle";
+import { Inventory, WorldMap, Shop } from "./components/game";
+import { InventorySprite } from "./components/game/character/InventorySprite";
+
 import { GuildMenu } from "./components/game/ui/GuildMenu";
 import { QuestBoard } from "./components/game/ui/QuestBoard";
 import { canLeaveRegion } from "./lib/region-utils";
@@ -19,23 +20,25 @@ import {
   ShopTabIcon,
   SwordIcon,
   XPIcon,
-  RankIcon
+  RankIcon,
+  ClassArcherIcon
 } from "./components/game/ui/GameIcons";
 import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { audioManager } from "./lib/audio";
-import { ALL_ITEMS, CHARACTER_CLASSES, ENEMIES, getEnemy, getInitialCharacterStats, getStarterItems, QUEST_ENEMIES, QUESTS, SHOP_ITEMS } from "./lib/game-data";
-import { getQuestMap } from "./lib/map-data";
+import { ALL_ITEMS, CHARACTER_CLASSES, ENEMIES, getInitialCharacterStats, getStarterItems, QUESTS, SHOP_ITEMS } from "./lib/game-data";
+
 import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
 import { RANKS } from "./lib/rank-utils";
 import { getRegionMapData } from "./lib/region-utils";
 import { createCharacter as dbCreateCharacter, updateCharacter as dbUpdateCharacter, deleteCharacter, getAllCharacters, getCurrentCharacter, type CharacterClass } from "./lib/storage";
-import type { Character, Enemy, InventoryItem, NPC, Quest, QuestChoice, QuestResult, QuestState, Tab } from "./types/game";
+import type { Character, InventoryItem, NPC, Quest, Tab } from "./types/game";
 
 const CLASS_ICONS: Record<CharacterClass, React.ReactNode> = {
   mage: <ClassMageIcon size={20} />,
   warrior: <ClassWarriorIcon size={20} />,
   priest: <ClassPriestIcon size={20} />,
   rogue: <ClassRogueIcon size={20} />,
+  archer: <ClassArcherIcon size={20} />,
 };
 
 function statusBar(label: string, value: number, max: number, type: "hp" | "mp" | "xp" | "attack" = "hp") {
@@ -83,21 +86,22 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>("World Map");
   const [createName, setCreateName] = useState("");
   const [createClass, setCreateClass] = useState<CharacterClass>("mage");
+  const [createSkinColor, setCreateSkinColor] = useState("#FDE68A");
+  const [createHairColor, setCreateHairColor] = useState("#8B5CF6");
+  const [createClothingColor, setCreateClothingColor] = useState("#4C1D95");
+  const [createFaceStyle, setCreateFaceStyle] = useState<"heroic" | "friendly" | "fierce" | "mysterious">("heroic");
   const [character, setCharacter] = useState<Character | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [isMusicEnabled, setIsMusicEnabled] = useState(false);
 
-  // Quest state
-  const [questState, setQuestState] = useState<QuestState>("list");
-  const [activeQuest, setActiveQuest] = useState<Quest | null>(null);
-  const [activeEnemy, setActiveEnemy] = useState<Enemy | null>(null);
-  const [questResult, setQuestResult] = useState<QuestResult | null>(null);
   const [completedQuests, setCompletedQuests] = useState<string[]>([]);
+  const [activeQuest, setActiveQuest] = useState<Quest | null>(null);
+  const [questState, setQuestState] = useState<"list" | "map" | "active" | "battle" | "result">("list");
   const [showCharacterSelect, setShowCharacterSelect] = useState(false);
   const [allCharacters, setAllCharacters] = useState<Character[]>([]);
-  const [selectedChoice, setSelectedChoice] = useState<QuestChoice | null>(null);
+
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 
 
@@ -255,210 +259,52 @@ function AppContent() {
     }
   };
 
-  const startQuest = (quest: Quest) => {
-    if (!character) return;
-    acceptQuestFromNPC(character, quest);
-  };
 
-  const attemptQuestChoice = (choice: QuestChoice) => {
-    if (!character || !activeQuest) return;
 
-    // Store the selected choice
-    setSelectedChoice(choice);
 
-    // Get the enemy for this quest
-    const enemyId = QUEST_ENEMIES[activeQuest.id];
-    const enemy = enemyId ? getEnemy(enemyId) : null;
-    if (enemy) {
-      // Start battle!
-      setActiveEnemy(enemy);
-      setQuestState("battle");
-    } else {
-      // Fallback to old behavior if no enemy found
-      resolveQuest(choice, false, "You encounter an unexpected enemy!");
-    }
-  };
 
-  const resolveQuest = (choice: QuestChoice, success: boolean, battleMessage?: string) => {
-    if (!character || !activeQuest) return;
 
-    let message = battleMessage || "";
-
-    if (success) {
-      message += choice.successMessage;
-      const newXp = character.xp + choice.xpReward;
-      const newGold = character.gold + choice.goldReward;
-
-      // Handle item reward
-      let rewardedItem: InventoryItem | undefined;
-      if (choice.rewardItemId) {
-        const itemTemplate = ALL_ITEMS.find(i => i.id === choice.rewardItemId);
-        if (itemTemplate) {
-          rewardedItem = { ...itemTemplate, id: `${itemTemplate.id}-${Date.now()}` };
-          setInventory(prev => [...prev, rewardedItem!]);
-        }
-      }
-
-      // Handle skill reward
-      const newSkills = [...character.skills];
-      if (choice.rewardSkill && !newSkills.includes(choice.rewardSkill)) {
-        newSkills.push(choice.rewardSkill);
-      }
-
-      setCharacter({
-        ...character,
-        xp: newXp,
-        gold: newGold,
-        skills: newSkills,
-        inventory: rewardedItem ? [...inventory, rewardedItem] : inventory,
-        ...(newXp >= character.xpToNext ? {
-          level: character.level + 1,
-          xp: newXp - character.xpToNext,
-          xpToNext: Math.floor(character.xpToNext * 1.5),
-          maxHp: character.maxHp + 10,
-          hp: character.maxHp + 10,
-          maxMp: character.maxMp + 5,
-          mp: character.maxMp + 5,
-          attack: character.attack + 2,
-          defense: character.defense + 1,
-        } : {})
-      });
-
-      setQuestResult({
-        success: true,
-        message,
-        xp: choice.xpReward,
-        gold: choice.goldReward,
-        rewardItem: rewardedItem,
-        rewardSkill: choice.rewardSkill
-      });
-    } else {
-      message += choice.failureMessage;
-      setQuestResult({
-        success: false,
-        message,
-        xp: 0,
-        gold: 0
-      });
-    }
-
-    if (activeQuest && !completedQuests.includes(activeQuest.id)) {
-      const newCompleted = [...completedQuests, activeQuest.id];
-      setCompletedQuests(newCompleted);
-      if (character) setCharacter({ ...character, completedQuests: newCompleted });
-    }
-
-    setQuestState("result");
-  };
-
-  const handleBattleVictory = (xpReward: number, goldReward: number) => {
+  /** Called when the hero defeats a wild mob directly on the map (new in-world combat) */
+  const handleMobKilled = (enemyId: string, xp: number, gold: number) => {
     if (!character) return;
 
-    // Check for bounty progress
+    // Bounty tracking
     let updatedCharacter = { ...character };
-    if (activeQuest?.bounty && activeEnemy) {
-      if (activeEnemy.id === activeQuest.bounty.targetMonsterId) {
-        const currentProgress = (character.questProgress || {})[activeQuest.id] || 0;
-        const newProgress = currentProgress + 1;
-
-        updatedCharacter = {
-          ...updatedCharacter,
-          questProgress: {
-            ...(character.questProgress || {}),
-            [activeQuest.id]: newProgress
-          }
-        };
-
-        if (newProgress >= activeQuest.bounty.targetCount) {
-          setToast({ message: `Bounty Target Reached! Return to Guild.`, icon: "🎯" });
-          audioManager.playSfx("victory");
-        } else {
-          setToast({ message: `Bounty Progress: ${newProgress}/${activeQuest.bounty.targetCount}`, icon: "⚔️" });
-        }
+    if (activeQuest?.bounty && activeQuest.bounty.targetMonsterId === enemyId) {
+      const current = (character.questProgress || {})[activeQuest.id] || 0;
+      const next = current + 1;
+      updatedCharacter = {
+        ...updatedCharacter,
+        questProgress: { ...(character.questProgress || {}), [activeQuest.id]: next },
+      };
+      if (next >= activeQuest.bounty.targetCount) {
+        setToast({ message: `Bounty Complete! Return to Guild.`, icon: "🎯" });
+        audioManager.playSfx("victory");
+      } else {
+        setToast({ message: `Bounty: ${next}/${activeQuest.bounty.targetCount}`, icon: "⚔️" });
       }
     }
 
-    const newXp = updatedCharacter.xp + xpReward;
+    // XP & gold
+    const newXp = updatedCharacter.xp + xp;
     let newLevel = updatedCharacter.level;
     let newXpToNext = updatedCharacter.xpToNext;
-
     if (newXp >= updatedCharacter.xpToNext) {
       newLevel++;
       newXpToNext = Math.floor(updatedCharacter.xpToNext * 1.5);
-      setToast({ message: "Level Up!", icon: "✨" });
+      setCelebration({ type: "level-up", title: "Level Up!", subtitle: `You reached Level ${newLevel}!` });
       audioManager.playSfx("victory");
     }
 
-    const finalCharacter = {
+    const finalChar = {
       ...updatedCharacter,
       xp: newXp,
       level: newLevel,
       xpToNext: newXpToNext,
-      gold: updatedCharacter.gold + goldReward
+      gold: updatedCharacter.gold + gold,
     };
-
-    setCharacter(finalCharacter);
-    saveCharacter(finalCharacter);
-    setQuestState("map");
-  };
-
-  const handleBattleDefeat = () => {
-    if (!character) return;
-
-    // Wild mob defeat
-    if (!selectedChoice) {
-      const newHp = Math.max(1, Math.floor(character.maxHp / 2));
-      setCharacter({
-        ...character,
-        hp: newHp
-      });
-      setActiveEnemy(null);
-      setQuestState("map");
-      setActiveTab("World Map");
-      setToast({ message: "Defeated by a wild monster!", icon: "💀" });
-      return;
-    }
-
-    // Take HP damage on defeat - restore half HP
-    const newHp = Math.max(1, Math.floor(character.maxHp / 2));
-
-    // Reset quest state instead of completing it - quest can be attempted again
-    setCharacter({
-      ...character,
-      hp: newHp,
-      questState: "list" as QuestState
-    });
-
-    // Clear quest state without marking quest as completed
-    setActiveQuest(null);
-    setQuestState("list");
-    setActiveEnemy(null);
-    setSelectedChoice(null);
-
-    // Redirect to shop on defeat to allow buying healing items
-    setActiveTab("Shop");
-    setQuestToast({
-      message: "Defeated! Visit the shop to buy healing items, then try the quest again.",
-      icon: "💀"
-    });
-  };
-
-  const handleBattleFlee = () => {
-    setActiveEnemy(null);
-    setQuestState("map");
-    if (!selectedChoice) {
-      setActiveTab("World Map");
-    }
-  };
-
-  const handleMobBattle = (enemyId: string) => {
-    const enemyTemplate = ENEMIES[enemyId];
-    if (enemyTemplate && character) {
-      setActiveEnemy({ ...enemyTemplate });
-      setSelectedChoice(null); // Explicitly clear for wild battle
-      setQuestState("battle");
-      audioManager.playSfx("click");
-    }
+    setCharacter(finalChar);
+    saveCharacter(finalChar);
   };
 
   const handleUpdateCharacter = useCallback((updates: Partial<Character>) => {
@@ -501,11 +347,7 @@ function AppContent() {
     }
   };
 
-  const resetQuest = () => {
-    setQuestState("list");
-    setActiveQuest(null);
-    setQuestResult(null);
-  };
+
 
   useEffect(() => {
     getCurrentCharacter().then((char) => {
@@ -561,15 +403,7 @@ function AppContent() {
     setPreviousLevel(character.level);
   }, [character?.level]);
 
-  // Show toast for quest completion
-  useEffect(() => {
-    if (questState === "result" && questResult?.success) {
-      setToast({
-        message: `Quest Complete! +${questResult.xp} XP, +${questResult.gold} Gold`,
-        icon: "🏆"
-      });
-    }
-  }, [questState, questResult]);
+
 
   const handleToggleEquip = (item: InventoryItem) => {
     const newEquipped = !item.equipped;
@@ -661,6 +495,10 @@ function AppContent() {
       completedQuests: [],
       acceptedQuests: [],
       discoveredTiles: {},
+      skinColor: createSkinColor,
+      hairColor: createHairColor,
+      clothingColor: createClothingColor,
+      faceStyle: createFaceStyle,
       rank: "F" as const,
       activeQuestId: undefined,
       questState: "list",
@@ -830,8 +668,20 @@ function AppContent() {
               <p className="text-xs text-slate-500 text-center mb-4">Create a new character</p>
 
               <div className="border-t border-slate-700/50 pt-4">
-                <h3 className="font-semibold mb-2 text-amber-200/80" style={{ fontFamily: "'Cinzel', serif" }}>Create a new character</h3>
-                <form className="space-y-2" onSubmit={async (e) => {
+                <h3 className="font-semibold text-amber-200/80 mb-3" style={{ fontFamily: "'Cinzel', serif" }}>Create a new character</h3>
+                <div className="flex gap-3 items-start">
+                  <div className="w-20 h-24 bg-slate-900/60 rounded-lg border border-slate-700/50 flex justify-center items-center shrink-0 shadow-inner overflow-hidden">
+                    <div className="transform scale-[1.5] translate-y-2">
+                      <InventorySprite
+                        characterClass={createClass}
+                        skinColor={createSkinColor}
+                        hairColor={createHairColor}
+                        clothingColor={createClothingColor}
+                        faceStyle={createFaceStyle}
+                      />
+                    </div>
+                  </div>
+                  <form className="flex-1 space-y-2" onSubmit={async (e) => {
                   e.preventDefault();
                   if (!createName.trim()) return;
                   const stats = getInitialCharacterStats(createClass);
@@ -848,6 +698,10 @@ function AppContent() {
                     acceptedQuests: [],
                     questState: "list",
                     rank: "F" as const,
+                    skinColor: createSkinColor,
+                    hairColor: createHairColor,
+                    clothingColor: createClothingColor,
+                    faceStyle: createFaceStyle,
                     ...stats,
                   };
                   const created = await dbCreateCharacter(newCharacter);
@@ -877,7 +731,52 @@ function AppContent() {
                     </select>
                     <button type="submit" className="btn-fantasy rounded-lg px-4 py-2 text-sm font-semibold">Create</button>
                   </div>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-amber-200/60 mb-0.5 font-medium">Skin Tone</label>
+                      <input
+                        type="color"
+                        value={createSkinColor}
+                        onChange={(e) => setCreateSkinColor(e.target.value)}
+                        className="w-full h-8 rounded border border-slate-700 bg-slate-800/60 p-0.5 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-amber-200/60 mb-0.5 font-medium">Hair Color</label>
+                      <input
+                        type="color"
+                        value={createHairColor}
+                        onChange={(e) => setCreateHairColor(e.target.value)}
+                        className="w-full h-8 rounded border border-slate-700 bg-slate-800/60 p-0.5 cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-2">
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-amber-200/60 mb-0.5 font-medium">Outfit Color</label>
+                      <input
+                        type="color"
+                        value={createClothingColor}
+                        onChange={(e) => setCreateClothingColor(e.target.value)}
+                        className="w-full h-8 rounded border border-slate-700 bg-slate-800/60 p-0.5 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[10px] text-amber-200/60 mb-0.5 font-medium">Face Type</label>
+                      <select
+                        value={createFaceStyle}
+                        onChange={(e) => setCreateFaceStyle(e.target.value as any)}
+                        className="w-full h-8 rounded border border-slate-700 bg-slate-800/60 px-1 text-[10px] text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                      >
+                        <option value="heroic">Heroic</option>
+                        <option value="friendly">Friendly</option>
+                        <option value="fierce">Fierce</option>
+                        <option value="mysterious">Mysterious</option>
+                      </select>
+                    </div>
+                  </div>
                 </form>
+               </div>
               </div>
 
               {/* Delete Confirmation Dialog */}
@@ -942,27 +841,35 @@ function AppContent() {
             </div>
           </div>
         ) : !character ? (
-          <main className="mx-auto max-w-lg">
+          <main className="mx-auto max-w-3xl">
             <motion.div
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              className="fantasy-card rounded-xl p-8"
+              className="fantasy-card rounded-xl p-8 flex flex-col md:flex-row gap-8 items-center md:items-start"
             >
-              <div className="text-center mb-6">
-                <motion.div
-                  animate={{ scale: [1, 1.1, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="text-5xl mb-3"
-                >
-                  ⚔️
-                </motion.div>
-                <h2 className="text-2xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
-                  Begin Your Adventure
-                </h2>
-                <p className="text-sm text-slate-400">Create your first hero to start your journey</p>
+              <div className="w-48 h-56 bg-slate-900/60 rounded-xl border border-slate-700/50 flex justify-center items-center shrink-0 shadow-inner overflow-hidden pb-4">
+                <div className="transform scale-[2.5] translate-y-2">
+                  <InventorySprite
+                    characterClass={createClass}
+                    skinColor={createSkinColor}
+                    hairColor={createHairColor}
+                    clothingColor={createClothingColor}
+                    faceStyle={createFaceStyle}
+                    animationType="idle"
+                    rank="F"
+                  />
+                </div>
               </div>
-              <form className="space-y-4" onSubmit={submitCreate}>
-                <div>
+              
+              <div className="flex-1 w-full">
+                <div className="text-center md:text-left mb-6">
+                  <h2 className="text-2xl font-bold text-gold mb-2" style={{ fontFamily: "'Cinzel', serif" }}>
+                    Begin Your Adventure
+                  </h2>
+                  <p className="text-sm text-slate-400">Create your first hero to start your journey</p>
+                </div>
+                <form className="space-y-4" onSubmit={submitCreate}>
+                  <div>
                   <label className="block text-xs text-amber-200/60 mb-1 font-medium">Hero Name</label>
                   <input
                     value={createName}
@@ -983,6 +890,50 @@ function AppContent() {
                     ))}
                   </select>
                 </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-amber-200/60 mb-1 font-medium">Skin Tone</label>
+                    <input
+                      type="color"
+                      value={createSkinColor}
+                      onChange={(e) => setCreateSkinColor(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-slate-700 bg-slate-800/60 p-1 cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-amber-200/60 mb-1 font-medium">Hair Color</label>
+                    <input
+                      type="color"
+                      value={createHairColor}
+                      onChange={(e) => setCreateHairColor(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-slate-700 bg-slate-800/60 p-1 cursor-pointer"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-amber-200/60 mb-1 font-medium">Outfit Color</label>
+                    <input
+                      type="color"
+                      value={createClothingColor}
+                      onChange={(e) => setCreateClothingColor(e.target.value)}
+                      className="w-full h-10 rounded-lg border border-slate-700 bg-slate-800/60 p-1 cursor-pointer"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-amber-200/60 mb-1 font-medium">Face Type</label>
+                    <select
+                      value={createFaceStyle}
+                      onChange={(e) => setCreateFaceStyle(e.target.value as any)}
+                      className="w-full h-10 rounded-lg border border-slate-700 bg-slate-800/60 px-3 text-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500/50"
+                    >
+                      <option value="heroic">Heroic</option>
+                      <option value="friendly">Friendly</option>
+                      <option value="fierce">Fierce</option>
+                      <option value="mysterious">Mysterious</option>
+                    </select>
+                  </div>
+                </div>
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -993,6 +944,7 @@ function AppContent() {
                   Create Character
                 </motion.button>
               </form>
+             </div>
             </motion.div>
           </main>
         ) : (
@@ -1058,28 +1010,8 @@ function AppContent() {
             {/* Main Content */}
             <section className="md:col-span-9 h-full flex flex-col min-h-[400px]">
               <AnimatePresence mode="wait">
-                {/* Monster Battle - Takes priority over normal tabs */}
-                {questState === "battle" && activeEnemy && character && (
-                  <motion.div
-                    key="monster-battle"
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.95 }}
-                    transition={{ duration: 0.3 }}
-                    className="h-full"
-                  >
-                    <MonsterBattle
-                      character={character}
-                      enemy={activeEnemy}
-                      onVictory={handleBattleVictory}
-                      onDefeat={handleBattleDefeat}
-                      onFlee={handleBattleFlee}
-                      onUpdateCharacter={handleUpdateCharacter}
-                    />
-                  </motion.div>
-                )}
 
-                {activeTab === "Inventory" && questState !== "battle" && (
+                {activeTab === "Inventory" && (
                   <motion.div
                     key="inventory"
                     initial={{ opacity: 0, x: 20 }}
@@ -1096,11 +1028,16 @@ function AppContent() {
                       onConsumeFood={handleConsumeFood}
                       onSellItem={handleSellItem}
                       characterClass={character.class}
+                      rank={character.rank}
+                      skinColor={character.skinColor}
+                      hairColor={character.hairColor}
+                      clothingColor={character.clothingColor}
+                      faceStyle={character.faceStyle}
                     />
                   </motion.div>
                 )}
 
-                {activeTab === "Shop" && character && questState !== "battle" && (
+                {activeTab === "Shop" && character && (
                   <motion.div
                     key="shop"
                     initial={{ opacity: 0, x: 20 }}
@@ -1110,13 +1047,13 @@ function AppContent() {
                   >
                     <Shop
                       gold={character.gold}
-                      shopItems={SHOP_ITEMS}
+                      shopItems={SHOP_ITEMS.filter(item => !item.allowedClasses || item.allowedClasses.includes(character.class))}
                       onBuyItem={handleBuyItem}
                     />
                   </motion.div>
                 )}
 
-                {activeTab === "Guild" && character && questState !== "battle" && (
+                {activeTab === "Guild" && character && (
                   <motion.div
                     key="guild"
                     initial={{ opacity: 0, x: 20 }}
@@ -1192,6 +1129,7 @@ function AppContent() {
                             mapData={mapData}
                             character={character}
                             playerClass={character.class}
+                            playerRank={character.rank}
                             inventory={inventory}
                             onNPCInteract={(npc: NPC) => {
                               if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
@@ -1209,7 +1147,7 @@ function AppContent() {
                             allQuests={QUESTS}
                             onBack={() => { }}
                             onNavigateToRegion={handleRegionChange}
-                            onMobInteract={handleMobBattle}
+                            onMobKilled={handleMobKilled}
                             onUpdateCharacter={(updates) => character && setCharacter({ ...character, ...updates })}
                           />
                         );

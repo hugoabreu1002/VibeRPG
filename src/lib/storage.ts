@@ -1,6 +1,6 @@
 import type { InventoryItem } from "../types/game";
 
-export type CharacterClass = "mage" | "warrior" | "priest" | "rogue";
+export type CharacterClass = "mage" | "warrior" | "priest" | "rogue" | "archer";
 
 export interface Character {
   id: number;
@@ -18,6 +18,7 @@ export interface Character {
   attack: number;
   defense: number;
   magicPower: number;
+  speed: number;
   rank: "F" | "E" | "D" | "C" | "B" | "A" | "S";
   skills: string[];
   inventory: InventoryItem[];
@@ -25,6 +26,10 @@ export interface Character {
   acceptedQuests: string[];
   currentRegion: string;
   discoveredTiles?: Record<string, string[]>;
+  skinColor?: string;
+  hairColor?: string;
+  clothingColor?: string;
+  faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
   activeQuestId?: string;
   questState: "list" | "map" | "active" | "battle" | "result";
 }

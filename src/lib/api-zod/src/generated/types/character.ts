@@ -23,4 +23,8 @@ export interface Character {
   magicPower: number;
   gold: number;
   createdAt: Date;
+  skinColor?: string;
+  hairColor?: string;
+  clothingColor?: string;
+  faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
 }

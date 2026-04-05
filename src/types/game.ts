@@ -58,6 +58,7 @@ export interface Quest {
   description: string;
   class: CharacterClass;
   choices?: QuestChoice[];
+  rewardSkill?: string;
   minLevel: number;
   region: string;
   bounty?: {
@@ -87,6 +88,7 @@ export interface InventoryItem {
   };
   equipped: boolean;
   description: string;
+  allowedClasses?: CharacterClass[];
 }
 
 export interface Character {
@@ -113,6 +115,10 @@ export interface Character {
   acceptedQuests: string[];
   currentRegion: string;
   discoveredTiles?: Record<string, string[]>;
+  skinColor?: string;
+  hairColor?: string;
+  clothingColor?: string;
+  faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
   activeQuestId?: string;
   questState: QuestState;
   questProgress?: Record<string, number>;

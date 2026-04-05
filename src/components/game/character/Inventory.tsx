@@ -49,9 +49,13 @@ interface InventoryProps {
   onSellItem?: (item: InventoryItem) => void;
   characterClass?: CharacterClass;
   rank?: string;
+  clothingColor?: string;
+  faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
+  skinColor?: string;
+  hairColor?: string;
 }
 
-export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, onSellItem, characterClass, rank = 'F' }: InventoryProps) {
+export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip, onConsumeFood, onSellItem, characterClass, rank = 'F', clothingColor, faceStyle, skinColor, hairColor }: InventoryProps) {
   const equippedWeapon = inventory.find(i => i.type === "weapon" && i.equipped);
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
@@ -140,6 +144,10 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                     equippedArmor={equippedArmor}
                     equippedBoot={equippedBoot}
                     equippedHat={equippedHat}
+                    skinColor={skinColor}
+                    hairColor={hairColor}
+                    clothingColor={clothingColor}
+                    faceStyle={faceStyle}
                   />
                 )}
               </div>

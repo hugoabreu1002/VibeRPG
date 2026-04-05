@@ -13,4 +13,6 @@ export const CharacterClass = {
   mage: "mage",
   warrior: "warrior",
   priest: "priest",
+  rogue: "rogue",
+  archer: "archer",
 } as const;

@@ -178,6 +178,14 @@ export function ClassRogueIcon({ className, size = 24 }: IconProps) {
   );
 }
 
+export function ClassArcherIcon({ className, size = 24 }: IconProps) {
+  return (
+    <span className={className} style={{ fontSize: size, lineHeight: 1 }}>
+      🏹
+    </span>
+  );
+}
+
 // --- WORLD MAP TILE ICONS ---
 
 export function TileTreeIcon({ className, size = 32 }: IconProps) {
