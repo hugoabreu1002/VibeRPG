@@ -184,7 +184,6 @@ export function InventorySprite({
       
       {/* Head */}
       <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#mage-skin)" />
-      <ellipse cx="0" cy="-12" rx="9" ry="10" fill="#FDE68A" />
       
       {/* Hair */}
       <path d="M-10 -16 Q-12 -24 -4 -22 Q0 -28 4 -22 Q12 -24 10 -16 Q8 -18 0 -18 Q-8 -18 -10 -16" fill={hairColor} />
@@ -275,7 +274,6 @@ export function InventorySprite({
       
       {/* Head */}
       <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#warrior-skin)" />
-      <ellipse cx="0" cy="-12" rx="9" ry="10" fill="#FDE68A" />
       
       {/* Hair */}
       <path d="M-8 -18 Q0 -22 8 -18 Q6 -20 0 -20 Q-6 -20 -8 -18" fill="#92400E" />
@@ -367,7 +365,6 @@ export function InventorySprite({
       
       {/* Head */}
       <ellipse cx="0" cy="-12" rx="10" ry="11" fill="url(#priest-skin)" />
-      <ellipse cx="0" cy="-12" rx="9" ry="10" fill="#FEE2E2" />
       
       {/* Hair */}
       <path d="M-9 -16 Q-10 -22 -4 -21 Q0 -24 4 -21 Q10 -22 9 -16 Q6 -19 0 -19 Q-6 -19 -9 -16" fill={hairColor} />
