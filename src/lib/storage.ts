@@ -32,6 +32,7 @@ export interface Character {
   faceStyle?: "heroic" | "friendly" | "fierce" | "mysterious";
   activeQuestId?: string;
   questState: "list" | "map" | "active" | "battle" | "result";
+  lastPosition?: { x: number; y: number };
 }
 
 const STORAGE_KEY = "viberpg-characters";

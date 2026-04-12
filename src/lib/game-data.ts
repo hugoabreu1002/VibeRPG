@@ -197,11 +197,11 @@ export function getStarterItems(charClass: CharacterClass): InventoryItem[] {
 export function getInitialCharacterStats(charClass: CharacterClass) {
   switch (charClass) {
     case "mage":
-      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, speed: 10, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Northern Village" };
+      return { hp: 60, maxHp: 60, mp: 100, maxMp: 100, attack: 15, defense: 5, magicPower: 20, speed: 10, rank: "F" as const, skills: ["bolt", "defend", "flee"], currentRegion: "Hub Town" };
     case "warrior":
       return { hp: 100, maxHp: 100, mp: 30, maxMp: 30, attack: 20, defense: 15, magicPower: 5, speed: 10, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
     case "priest":
-      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, speed: 10, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Southern Village" };
+      return { hp: 80, maxHp: 80, mp: 80, maxMp: 80, attack: 12, defense: 10, magicPower: 15, speed: 10, rank: "F" as const, skills: ["smite", "defend", "flee"], currentRegion: "Hub Town" };
     case "rogue":
       return { hp: 75, maxHp: 75, mp: 50, maxMp: 50, attack: 18, defense: 8, magicPower: 10, speed: 15, rank: "F" as const, skills: ["slash", "defend", "flee"], currentRegion: "Hub Town" };
     case "archer":
@@ -1272,7 +1272,7 @@ export const QUESTS: Quest[] = [
     description: "The village library has been overtaken by wild magic books. Exterminate the possessed Grimoires to restore order.",
     class: "mage",
     minLevel: 1,
-    region: "Northern Village",
+    region: "Northern Field",
     bounty: {
       targetMonsterId: "arcane-book",
       targetCount: 5
@@ -1357,7 +1357,7 @@ export const QUESTS: Quest[] = [
     description: "Bandits are raiding the Northern Village. Defeat their leaders to protect the villagers.",
     class: "warrior",
     minLevel: 1,
-    region: "Northern Village",
+    region: "Northern Field",
     bounty: {
       targetMonsterId: "bandit-leader",
       targetCount: 5
@@ -1439,10 +1439,10 @@ export const QUESTS: Quest[] = [
   {
     id: "priest-plague",
     title: "The Plague Beasts",
-    description: "A mysterious plague is being spread by foul beasts in the Southern Village. Eradicate them to stop the infection.",
+    description: "A mysterious plague is being spread by foul beasts in the Southern Field. Eradicate them to stop the infection.",
     class: "priest",
     minLevel: 1,
-    region: "Southern Village",
+    region: "Southern Field",
     bounty: {
       targetMonsterId: "plague-beast",
       targetCount: 6
@@ -1466,11 +1466,11 @@ export const QUESTS: Quest[] = [
   },
   {
     id: "priest-blessing",
-    title: "The Village Blessing",
+    title: "The Field Blessing",
     description: "The village elder asks you to perform a blessing ritual to protect the village from evil forces.",
     class: "priest",
     minLevel: 2,
-    region: "Northern Village",
+    region: "Northern Field",
     bounty: {
       targetMonsterId: "dark-corrupter",
       targetCount: 5
@@ -1639,21 +1639,24 @@ export const QUESTS: Quest[] = [
 
 // Map regions to the mobs that can spawn there
 export const REGION_MOBS: Record<string, string[]> = {
-  "Hub Town": ["green-slime", "giant-rat", "skeleton-soldier", "wild-spirit", "bandit-leader", "plague-beast"],
-  "Northern Village": ["green-slime", "giant-rat", "goblin", "bandit-leader", "arcane-book", "restless-ghost"],
+  "Hub Town": [],
+  // Northern Field: bandits & dark magic — target for warrior-village, mage-library, priest-blessing quests.
+  "Northern Field": ["bandit-leader", "orc-warrior", "arcane-book", "dark-corrupter", "giant-rat"],
   "Whispering Woods": ["wild-boar", "terror-hawk", "mushroom-horror", "treant", "wild-spirit"],
   "Mountain Pass": ["thunder-hawk", "earth-elemental", "ice-golem"],
-  "Trade Route": ["wolf-pack", "bandit-leader", "orc-warrior"],
+  // Starter combat route also supports early guild bounties from Hub Town.
+  "Trade Route": ["green-slime", "giant-rat", "skeleton-soldier", "wolf-pack", "bandit-leader", "orc-warrior"],
   "Training Grounds": ["honor-knight", "skeleton-soldier"],
   "Dark Forest": ["orc-warrior", "dire-bear", "dark-mage", "mantis-warrior"],
   "Dragon Peak": ["fire-sprite", "wyvern", "drake"],
-  "Southern Village": ["green-slime", "giant-rat", "plague-beast"],
+  // Southern Field: plague beasts and undead terrorize the grasslands — target for priest-plague quest.
+  "Southern Field": ["plague-beast", "zombie", "skeleton-soldier", "dark-corrupter"],
   "Abandoned Church": ["restless-ghost", "skeleton-soldier", "zombie"],
   "Sacred Catacombs": ["skeleton-soldier", "zombie", "wraith", "death-knight"],
   "Cursed Ruins": ["imp", "hellhound", "succubus", "arch-demon"],
   "Crystal Caverns": ["giant-spider", "mimic", "wild-spirit", "crystal-dragon"],
   "Shadow Tower": ["dark-mage", "wraith", "lich", "shadow-fiend"],
-  "Capital City": ["skeleton-soldier", "bandit-leader"],
+  "Capital City": [],
   "Astral Observatory": ["wild-spirit", "arcane-book", "storm-djinn", "void-terror"],
   "Celestial Shrine": ["wild-spirit", "priest-robes", "fallen-angel"], // Use priest as base for angel
 };
@@ -1708,7 +1711,7 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       description: t("quests.mage-library.description"),
       class: "mage",
       minLevel: 1,
-      region: "Northern Village",
+      region: "Northern Field",
       bounty: {
         targetMonsterId: "arcane-book",
         targetCount: 5
@@ -1852,7 +1855,7 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       description: t("quests.priest-plague.description"),
       class: "priest",
       minLevel: 1,
-      region: "Southern Village",
+      region: "Southern Field",
       bounty: {
         targetMonsterId: "plague-beast",
         targetCount: 6
@@ -1880,7 +1883,7 @@ export function getTranslatedQuests(t: (key: string) => string): Quest[] {
       description: t("quests.priest-blessing.description"),
       class: "priest",
       minLevel: 2,
-      region: "Northern Village",
+      region: "Northern Field",
       bounty: {
         targetMonsterId: "dark-corrupter",
         targetCount: 5

@@ -15,6 +15,9 @@ interface ShopProps {
   gold: number;
   shopItems: InventoryItem[];
   onBuyItem: (item: InventoryItem) => void;
+  title?: string;
+  subtitle?: string;
+  onClose?: () => void;
 }
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
@@ -44,7 +47,7 @@ const getRarityLabel = (rarity: InventoryItem["rarity"]) => {
   }
 };
 
-export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
+export function Shop({ gold, shopItems, onBuyItem, title = "Shop", subtitle, onClose }: ShopProps) {
   // const { t } = useI18n();
   const [purchasedItem, setPurchasedItem] = useState<string | null>(null);
 
@@ -63,12 +66,25 @@ export function Shop({ gold, shopItems, onBuyItem }: ShopProps) {
       transition={{ duration: 0.3 }}
       className="fantasy-card rounded-xl p-5"
     >
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-bold text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
-          <ShopTabIcon size={28} /> Shop
-        </h2>
-        <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30 flex items-center gap-2 shadow-inner">
-          <GoldIcon size={20} /> {gold} Gold
+      <div className="flex justify-between items-center mb-6 gap-4">
+        <div>
+          <h2 className="text-xl font-bold text-gold flex items-center gap-2" style={{ fontFamily: "'Cinzel', serif" }}>
+            <ShopTabIcon size={28} /> {title}
+          </h2>
+          {subtitle && <p className="text-xs text-slate-400 mt-1">{subtitle}</p>}
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="font-bold text-amber-400 bg-amber-950/40 px-4 py-1.5 rounded-lg border border-amber-700/30 flex items-center gap-2 shadow-inner">
+            <GoldIcon size={20} /> {gold} Gold
+          </div>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="px-3 py-2 rounded-lg border border-slate-700/50 bg-slate-900/50 text-slate-300 text-sm font-semibold hover:bg-slate-800/70 transition-colors"
+            >
+              Back to Map
+            </button>
+          )}
         </div>
       </div>
 

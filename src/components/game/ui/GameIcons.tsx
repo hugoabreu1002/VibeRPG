@@ -96,6 +96,18 @@ export function MapTabIcon({ className, size = 24 }: IconProps) {
   );
 }
 
+export function WorldTabIcon({ className, size = 24 }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="12" cy="12" r="9" fill="#0F172A" stroke="currentColor" strokeWidth="1.5" />
+      <path d="M3.5 12h17" stroke="currentColor" strokeWidth="1.2" opacity="0.85" />
+      <path d="M12 3.5c2.6 2.1 4 5.2 4 8.5s-1.4 6.4-4 8.5c-2.6-2.1-4-5.2-4-8.5s1.4-6.4 4-8.5z" stroke="currentColor" strokeWidth="1.2" />
+      <path d="M6 7.5c1.7 1 3.8 1.5 6 1.5s4.3-.5 6-1.5" stroke="currentColor" strokeWidth="1.1" opacity="0.7" />
+      <path d="M6 16.5c1.7-1 3.8-1.5 6-1.5s4.3.5 6 1.5" stroke="currentColor" strokeWidth="1.1" opacity="0.7" />
+    </svg>
+  );
+}
+
 export function QuestTabIcon({ className, size = 24 }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" width={size} height={size} className={className} fill="none" xmlns="http://www.w3.org/2000/svg">

@@ -22,7 +22,8 @@ export function QuestBoard({ character, completedQuests, onAcceptQuest, onComple
     if (!quest) return false;
 
     // Class match
-    if (quest.class !== character.class) return false;
+    // Unified quest system: remove class restriction
+    return true;
 
     // Not completed
     if (completedQuests.includes(questId)) return false;

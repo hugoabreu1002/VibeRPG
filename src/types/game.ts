@@ -1,7 +1,7 @@
 import type { CharacterClass } from "../lib/storage";
 export type { CharacterClass };
 
-export type Tab = "Inventory" | "World Map" | "Quests" | "Shop" | "Guild" | "Quest Board";
+export type Tab = "Inventory" | "World" | "Quests" | "Shop" | "Guild" | "Quest Board";
 
 export type QuestState = "list" | "map" | "active" | "battle" | "result";
 
@@ -14,7 +14,11 @@ export interface NPC {
   sprite: string;
   dialog: string[];
   questId?: string;
+  service?: "shop" | "guild";
 }
+
+/** Map category used for rendering style and combat rules. */
+export type MapCategory = "town" | "field" | "dungeon";
 
 export interface QuestMapData {
   width: number;
@@ -23,6 +27,8 @@ export interface QuestMapData {
   npcs: NPC[];
   playerStart: { x: number; y: number };
   name: string;
+  /** Determines visual style and whether monsters spawn. */
+  mapType: MapCategory;
 }
 
 export interface Enemy {
@@ -122,6 +128,7 @@ export interface Character {
   activeQuestId?: string;
   questState: QuestState;
   questProgress?: Record<string, number>;
+  lastPosition?: { x: number; y: number };
 }
 export interface QuestResult {
   success: boolean;

@@ -6,7 +6,7 @@ import { acceptQuestFromNPC, hasFinishedMainStory } from "../../../lib/quest-log
 import type { Character, CharacterClass, InventoryItem, NPC, Quest, QuestMapData } from "../../../types/game";
 import { EnemySpriteBody } from "../battle/EnemySprites";
 import { InventorySprite } from "../character/InventorySprite";
-import { ExclamationIndicator } from "../ui/GameIcons";
+import { ExclamationIndicator, GuildTabIcon, ShopTabIcon } from "../ui/GameIcons";
 import { NPCSprite } from "./NPCSprites";
 
 const TILE_SIZE = 80;
@@ -14,6 +14,10 @@ const WANDER_RADIUS = 5;
 const COMBAT_INTERVAL_MS = 850;
 const MOB_COUNT_MIN = 4;
 const MOB_COUNT_MAX = 6;
+// A map is a safe settlement (no monsters) when its mapType is "town".
+// Fields and dungeons are combat zones.
+const isSafeSettlementMap = (mapType: string) => mapType === "town";
+
 
 interface WorldMapProps {
   mapData: QuestMapData;
@@ -114,12 +118,11 @@ function findPath(
 
 // ─── Canvas tile renderer (memoised, only redraws on camera/map change) ──────
 const MapCanvas = memo(({
-  mapData, tileSize, playerPos, discoveredTiles
+  mapData, tileSize, playerPos
 }: {
   mapData: QuestMapData;
   tileSize: number;
   playerPos: { x: number; y: number };
-  discoveredTiles: string[];
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dimsRef   = useRef({ width: 0, height: 0 });
@@ -130,6 +133,9 @@ const MapCanvas = memo(({
     x: (x - y) * (tileSize / 2),
     y: (x + y) * (tileSize / 4),
   }), [tileSize]);
+
+  const isSettlementMap = mapData.mapType === "town";
+  const isHubTown = mapData.name === "Hub Town";
 
   // Resize observer — update dims ref and trigger redraw
   useEffect(() => {
@@ -148,7 +154,7 @@ const MapCanvas = memo(({
   }, []);
 
   // Trigger redraw when camera-relevant props change
-  useEffect(() => { scheduleRedraw(); }, [mapData, playerPos, discoveredTiles]);
+  useEffect(() => { scheduleRedraw(); }, [mapData, playerPos]);
 
   function scheduleRedraw() {
     cancelAnimationFrame(rafRef.current);
@@ -171,7 +177,7 @@ const MapCanvas = memo(({
     if (!ctx) return;
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    ctx.fillStyle = "#0a1710";
+    ctx.fillStyle = mapData.mapType === "dungeon" ? "#05070d" : "#0a1710";
     ctx.fillRect(0, 0, width, height);
 
     ctx.save();
@@ -182,6 +188,201 @@ const MapCanvas = memo(({
 
     const cullBuf = Math.max(width, height) * 0.8;
 
+    const isTile = (x: number, y: number, type: QuestMapData["tiles"][0][0]) => mapData.tiles[y]?.[x] === type;
+
+    const hubTownBuildings = [
+      { id: "elder-hall", x: 12, y: 1, w: 6, h: 3, style: "manor" as const },
+      { id: "market", x: 8, y: 6, w: 4, h: 3, style: "market" as const },
+      { id: "temple", x: 2, y: 7, w: 5, h: 3, style: "temple" as const },
+      { id: "guild", x: 18, y: 6, w: 5, h: 3, style: "guild" as const },
+      { id: "barracks", x: 22, y: 7, w: 5, h: 3, style: "barracks" as const },
+      { id: "tower", x: 13, y: 12, w: 4, h: 3, style: "tower" as const },
+    ];
+
+    const drawSettlementStreet = (ctx: CanvasRenderingContext2D, ix: number, iy: number, x: number, y: number) => {
+      ctx.strokeStyle = "rgba(241, 245, 249, 0.18)";
+      ctx.lineWidth = 1;
+      for (let offset = -12; offset <= 12; offset += 8) {
+        ctx.beginPath();
+        ctx.moveTo(ix - 10 + offset / 3, iy - 5 + Math.abs(offset) / 9);
+        ctx.lineTo(ix - 4 + offset / 3, iy - 1 + Math.abs(offset) / 11);
+        ctx.stroke();
+      }
+
+      if ((x + y) % 2 === 0) {
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.fillRect(ix - 8, iy - 2, 4, 2);
+        ctx.fillRect(ix + 2, iy + 1, 4, 2);
+      }
+    };
+
+    const isLargeTownBuildingAnchor = (x: number, y: number) =>
+      isTile(x, y, "town") &&
+      x % 2 === 0 &&
+      y % 2 === 0 &&
+      isTile(x + 1, y, "town") &&
+      isTile(x, y + 1, "town") &&
+      isTile(x + 1, y + 1, "town");
+
+    const drawTownBuilding = (ctx: CanvasRenderingContext2D, ix: number, iy: number, x: number, y: number) => {
+      const variant = Math.abs((x * 17 + y * 31) % 3);
+      const centerX = ix;
+      const centerY = iy + tileSize / 4;
+      const width = 42 + variant * 6;
+      const height = 28 + variant * 3;
+      const roofLift = 16 + variant * 2;
+      const wallColors = ["#D6C6A5", "#CBB694", "#BFA27A"];
+      const roofColors = ["#9A3412", "#7C2D12", "#92400E"];
+      const wallColor = wallColors[variant];
+      const roofColor = roofColors[variant];
+      const hasStreetFront = isTile(x + 1, y, "path") || isTile(x - 1, y, "path") || isTile(x, y + 1, "path") || isTile(x, y - 1, "path");
+
+      ctx.fillStyle = "rgba(0,0,0,0.18)";
+      ctx.fillRect(centerX - width / 2, centerY - 5, width, 5);
+
+      ctx.fillStyle = wallColor;
+      ctx.fillRect(centerX - width / 2, centerY - height, width, height);
+      ctx.strokeStyle = "#5B4636";
+      ctx.lineWidth = 0.8;
+      ctx.strokeRect(centerX - width / 2, centerY - height, width, height);
+
+      ctx.fillStyle = roofColor;
+      ctx.beginPath();
+      ctx.moveTo(centerX - width / 2 - 5, centerY - height + 4);
+      ctx.lineTo(centerX, centerY - height - roofLift);
+      ctx.lineTo(centerX + width / 2 + 5, centerY - height + 4);
+      ctx.lineTo(centerX + width / 2 - 2, centerY - height + 13);
+      ctx.lineTo(centerX - width / 2 + 2, centerY - height + 13);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#451A03";
+      ctx.stroke();
+
+      ctx.fillStyle = "#FDE68A";
+      ctx.fillRect(centerX - width / 2 + 7, centerY - height + 8, 5, 5);
+      ctx.fillRect(centerX + width / 2 - 12, centerY - height + 8, 5, 5);
+
+      if (hasStreetFront) {
+        ctx.fillStyle = "#78350F";
+        ctx.fillRect(centerX - 3, centerY - 10, 6, 10);
+        ctx.fillStyle = "#B45309";
+        ctx.fillRect(centerX - 10, centerY - 4, 20, 3);
+      }
+
+      if (variant === 2) {
+        ctx.fillStyle = "#6B7280";
+        ctx.fillRect(centerX + width / 2 - 8, centerY - height - roofLift + 8, 5, 12);
+      }
+    };
+
+    const drawHubTownBuilding = (
+      ctx: CanvasRenderingContext2D,
+      building: typeof hubTownBuildings[number]
+    ) => {
+      const center = getIso(building.x + building.w / 2 - 0.5, building.y + building.h / 2 - 0.2);
+      const centerX = center.x;
+      const centerY = center.y + tileSize / 4;
+      const width = (building.w + building.h) * (tileSize * 0.34);
+      const height =
+        building.style === "tower"
+          ? 112
+          : building.style === "manor"
+            ? 82
+            : 68;
+      const roofLift =
+        building.style === "tower"
+          ? 54
+          : building.style === "temple"
+            ? 34
+            : 28;
+
+      const styleMap = {
+        manor: { wall: "#CBB694", roof: "#7C2D12", trim: "#FBBF24", banner: "#7C3AED" },
+        market: { wall: "#BFA27A", roof: "#92400E", trim: "#FDE68A", banner: "#10B981" },
+        temple: { wall: "#E7E5E4", roof: "#D97706", trim: "#FBBF24", banner: "#F8FAFC" },
+        guild: { wall: "#9CA3AF", roof: "#78350F", trim: "#F59E0B", banner: "#B45309" },
+        barracks: { wall: "#94A3B8", roof: "#475569", trim: "#E2E8F0", banner: "#DC2626" },
+        tower: { wall: "#C4B5FD", roof: "#5B21B6", trim: "#DDD6FE", banner: "#8B5CF6" },
+      } as const;
+
+      const palette = styleMap[building.style];
+
+      ctx.fillStyle = "rgba(0,0,0,0.22)";
+      ctx.fillRect(centerX - width / 2, centerY - 6, width, 6);
+
+      if (building.style === "tower") {
+        const towerWidth = width * 0.5;
+        ctx.fillStyle = palette.wall;
+        ctx.fillRect(centerX - towerWidth / 2, centerY - height, towerWidth, height);
+        ctx.strokeStyle = "#4C1D95";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(centerX - towerWidth / 2, centerY - height, towerWidth, height);
+
+        ctx.fillStyle = palette.roof;
+        ctx.beginPath();
+        ctx.moveTo(centerX - towerWidth / 2 - 4, centerY - height + 10);
+        ctx.lineTo(centerX, centerY - height - roofLift);
+        ctx.lineTo(centerX + towerWidth / 2 + 4, centerY - height + 10);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = palette.trim;
+        ctx.fillRect(centerX - 4, centerY - height + 18, 8, 16);
+        ctx.fillRect(centerX - 8, centerY - height + 46, 5, 5);
+        ctx.fillRect(centerX + 3, centerY - height + 46, 5, 5);
+        return;
+      }
+
+      ctx.fillStyle = palette.wall;
+      ctx.fillRect(centerX - width / 2, centerY - height, width, height);
+      ctx.strokeStyle = "#4B5563";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(centerX - width / 2, centerY - height, width, height);
+
+      ctx.fillStyle = palette.roof;
+      ctx.beginPath();
+      ctx.moveTo(centerX - width / 2 - 8, centerY - height + 8);
+      ctx.lineTo(centerX, centerY - height - roofLift);
+      ctx.lineTo(centerX + width / 2 + 8, centerY - height + 8);
+      ctx.lineTo(centerX + width / 2 - 4, centerY - height + 20);
+      ctx.lineTo(centerX - width / 2 + 4, centerY - height + 20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#451A03";
+      ctx.stroke();
+
+      ctx.fillStyle = palette.trim;
+      ctx.fillRect(centerX - width / 2 + 12, centerY - height + 16, 8, 8);
+      ctx.fillRect(centerX + width / 2 - 20, centerY - height + 16, 8, 8);
+
+      if (building.style === "market") {
+        ctx.fillStyle = "#DC2626";
+        ctx.fillRect(centerX - width / 2 + 10, centerY - height + 34, width - 20, 7);
+        ctx.fillStyle = "#FDE68A";
+        for (let stripe = -2; stripe <= 2; stripe++) {
+          ctx.fillRect(centerX + stripe * 12 - 4, centerY - height + 34, 8, 7);
+        }
+      }
+
+      if (building.style === "guild" || building.style === "barracks" || building.style === "manor") {
+        ctx.fillStyle = palette.banner;
+        ctx.fillRect(centerX - 4, centerY - height + 24, 8, 26);
+        ctx.fillStyle = palette.trim;
+        ctx.fillRect(centerX - 4, centerY - height + 48, 8, 6);
+      }
+
+      if (building.style === "temple") {
+        ctx.fillStyle = palette.trim;
+        ctx.fillRect(centerX - 3, centerY - height - 6, 6, 20);
+        ctx.fillRect(centerX - 10, centerY - height + 2, 20, 5);
+      }
+
+      ctx.fillStyle = "#78350F";
+      ctx.fillRect(centerX - 6, centerY - 16, 12, 16);
+      ctx.fillStyle = "#B45309";
+      ctx.fillRect(centerX - 14, centerY - 8, 28, 5);
+    };
+
     for (let y = 0; y < mapData.height; y++) {
       for (let x = 0; x < mapData.width; x++) {
         const { x: ix, y: iy } = getIso(x, y);
@@ -191,17 +392,23 @@ const MapCanvas = memo(({
         const sy = iy - camY + height / 2;
         if (sx < -cullBuf || sx > width + cullBuf || sy < -cullBuf || sy > height + cullBuf) continue;
 
-        const disc = discoveredTiles.includes(`${x},${y}`);
         ctx.save();
-        if (!disc) { ctx.globalAlpha = 0.2; ctx.filter = "grayscale(1) brightness(0.1)"; }
 
-        // Shadow under tile
-        ctx.fillStyle = "rgba(0,0,0,0.25)";
+        // Side face (Depth)
+        ctx.fillStyle = "rgba(0,0,0,0.35)";
         ctx.beginPath();
         ctx.moveTo(ix - tileSize / 2, iy);
         ctx.lineTo(ix, iy + tileSize / 4);
-        ctx.lineTo(ix, iy + tileSize / 4 + 7);
-        ctx.lineTo(ix - tileSize / 2, iy + 7);
+        ctx.lineTo(ix, iy + tileSize / 4 + 6);
+        ctx.lineTo(ix - tileSize / 2, iy + 6);
+        ctx.fill();
+
+        ctx.fillStyle = "rgba(0,0,0,0.2)";
+        ctx.beginPath();
+        ctx.moveTo(ix + tileSize / 2, iy);
+        ctx.lineTo(ix, iy + tileSize / 4);
+        ctx.lineTo(ix, iy + tileSize / 4 + 6);
+        ctx.lineTo(ix + tileSize / 2, iy + 6);
         ctx.fill();
 
         // Top face
@@ -215,16 +422,21 @@ const MapCanvas = memo(({
         const tile = mapData.tiles[y]?.[x] || "grass";
         const grad = ctx.createLinearGradient(ix, iy - tileSize / 4, ix, iy + tileSize / 4);
         const palette: Record<string, [string, string]> = {
-          grass:    ["#166534", "#14532D"],
-          water:    ["#1D4ED8", "#1E3A8A"],
-          lava:     ["#B91C1C", "#7F1D1D"],
-          mountain: ["#44403C", "#1C1917"],
-          forest:   ["#064E3B", "#022C22"],
+          grass:    ["#1a7a3a", "#145c2a"],
+          water:    ["#1a56e8", "#1530a0"],
+          lava:     ["#cc1a10", "#8c1208"],
+          mountain: ["#5c5652", "#2c2a28"],
+          forest:   ["#0c6040", "#053828"],
           town:     ["#92400E", "#78350F"],
-          path:     ["#78350F", "#451A03"],
-          cave:     ["#374151", "#1F2937"],
+          path:     ["#8a6040", "#604028"],
+          cave:     ["#2a3340", "#141c24"],
         };
-        const [c0, c1] = palette[tile] ?? palette.grass;
+        const [c0, c1] =
+          tile === "town" && isSettlementMap
+            ? ["#7C6F64", "#5B5148"]
+            : tile === "path" && isSettlementMap
+              ? ["#8B7355", "#6E5A46"]
+              : palette[tile] ?? palette.grass;
         grad.addColorStop(0, c0);
         grad.addColorStop(1, c1);
         ctx.fillStyle = grad;
@@ -235,30 +447,120 @@ const MapCanvas = memo(({
 
         // Decorations
         if (tile === "forest") {
-          ctx.fillStyle = "#022C22";
+          // Rich layered tree — dark trunk + canopy
+          const variant = (x * 13 + y * 7) % 3;
+          ctx.fillStyle = variant === 0 ? "#065e28" : variant === 1 ? "#044a20" : "#0a6a30";
           ctx.beginPath();
-          ctx.moveTo(ix, iy - 16); ctx.lineTo(ix + 10, iy + 4); ctx.lineTo(ix - 10, iy + 4);
+          ctx.moveTo(ix, iy - 20); ctx.lineTo(ix + 12, iy + 4); ctx.lineTo(ix - 12, iy + 4);
           ctx.fill();
+          ctx.fillStyle = variant === 0 ? "#086830" : "#0a5428";
+          ctx.beginPath();
+          ctx.moveTo(ix, iy - 28); ctx.lineTo(ix + 8, iy - 10); ctx.lineTo(ix - 8, iy - 10);
+          ctx.fill();
+          // Trunk
+          ctx.fillStyle = "#5c3a10";
+          ctx.fillRect(ix - 2, iy + 2, 4, 6);
         } else if (tile === "mountain") {
-          ctx.fillStyle = "#292524";
+          const variant = (x * 11 + y * 19) % 3;
+          // Shadow face
+          ctx.fillStyle = "#1c1a18";
           ctx.beginPath();
-          ctx.moveTo(ix, iy - 22); ctx.lineTo(ix + 18, iy + 4); ctx.lineTo(ix - 18, iy + 4);
+          ctx.moveTo(ix + 6, iy - 22); ctx.lineTo(ix + 20, iy + 4); ctx.lineTo(ix + 6, iy + 4);
           ctx.fill();
-        } else if (tile === "town") {
-          ctx.fillStyle = "#451A03";
+          // Main face
+          ctx.fillStyle = variant === 0 ? "#5c5250" : variant === 1 ? "#504c48" : "#605a58";
           ctx.beginPath();
-          ctx.moveTo(ix - 8, iy - 12); ctx.lineTo(ix, iy - 20); ctx.lineTo(ix + 8, iy - 12);
+          ctx.moveTo(ix, iy - 26); ctx.lineTo(ix + 20, iy + 4); ctx.lineTo(ix - 20, iy + 4);
           ctx.fill();
+          // Snow cap
+          ctx.fillStyle = "rgba(255,255,255,0.85)";
+          ctx.beginPath();
+          ctx.moveTo(ix, iy - 26); ctx.lineTo(ix + 6, iy - 14); ctx.lineTo(ix - 6, iy - 14);
+          ctx.fill();
+        } else if (tile === "grass") {
+          // Field/dungeon grass detail — scattered blades
+          if ((x + y) % 3 === 0) {
+            ctx.strokeStyle = "rgba(60,200,80,0.25)";
+            ctx.lineWidth = 0.8;
+            for (let b = -6; b <= 6; b += 4) {
+              ctx.beginPath();
+              ctx.moveTo(ix + b, iy + 2);
+              ctx.lineTo(ix + b - 1, iy - 5);
+              ctx.stroke();
+            }
+          }
+        } else if (tile === "lava") {
+          // Lava glow pulse spots
+          if ((x + y) % 2 === 0) {
+            const grd = ctx.createRadialGradient(ix, iy - 2, 0, ix, iy - 2, 12);
+            grd.addColorStop(0, "rgba(255,120,0,0.55)");
+            grd.addColorStop(1, "rgba(180,20,0,0)");
+            ctx.fillStyle = grd;
+            ctx.beginPath(); ctx.arc(ix, iy - 2, 12, 0, Math.PI * 2); ctx.fill();
+          }
         } else if (tile === "cave") {
-          ctx.fillStyle = "#111827";
+          // Cave stalactite
+          ctx.fillStyle = "#0a1220";
           ctx.beginPath();
-          ctx.arc(ix, iy - 8, 8, 0, Math.PI * 2);
+          ctx.arc(ix, iy - 10, 10, 0, Math.PI * 2);
+          ctx.fill();
+          if ((x + y) % 2 === 0) {
+            ctx.fillStyle = "rgba(80,160,220,0.18)";
+            ctx.fillRect(ix - 2, iy - 14, 3, 8);
+          }
+        } else if (tile === "water") {
+          // Water shimmer
+          if ((x * 3 + y) % 4 === 0) {
+            ctx.strokeStyle = "rgba(120,200,255,0.35)";
+            ctx.lineWidth = 0.7;
+            ctx.beginPath();
+            ctx.moveTo(ix - 8, iy - 1); ctx.lineTo(ix + 8, iy - 1);
+            ctx.stroke();
+          }
+        } else if (tile === "town") {
+          if (isSettlementMap) {
+            if (isHubTown) {
+              ctx.fillStyle = "rgba(255,255,255,0.04)";
+              ctx.fillRect(ix - 10, iy - 3, 20, 4);
+            } else if (isLargeTownBuildingAnchor(x, y)) {
+              drawTownBuilding(ctx, ix, iy, x, y);
+            } else {
+              ctx.fillStyle = "rgba(255,255,255,0.05)";
+              ctx.beginPath();
+              ctx.arc(ix, iy, 4, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+        
+        // Final Shadow Pass for groundedness
+        if (tile === "forest" || tile === "mountain") {
+          ctx.fillStyle = "rgba(0,0,0,0.2)";
+          ctx.beginPath();
+          ctx.ellipse(ix, iy + 8, 14, 6, 0, 0, Math.PI * 2);
           ctx.fill();
         }
+
         ctx.restore();
       }
     }
-    ctx.restore();
+
+    if (isHubTown) {
+      hubTownBuildings
+        .slice()
+        .sort((a, b) => (a.y + a.h) - (b.y + b.h))
+        .forEach(building => drawHubTownBuilding(ctx, building));
+    }
+
+    // Atmospheric Overlay
+    ctx.restore(); // Back to screen space
+    const grd = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.7);
+    grd.addColorStop(0, "rgba(0,0,0,0)");
+    grd.addColorStop(1, mapData.mapType === "dungeon" ? "rgba(0,0,0,0.7)" : "rgba(10,23,16,0.5)");
+    ctx.fillStyle = grd;
+    ctx.fillRect(0, 0, width, height);
+
+    ctx.restore(); // Final balance
   }
 
   return (
@@ -293,7 +595,7 @@ export function WorldMap({
 }: WorldMapProps) {
   const [selectedNPC,    setSelectedNPC]    = useState<NPC | null>(null);
   const [dialogIndex,    setDialogIndex]    = useState(0);
-  const [playerPos,      setPlayerPos]      = useState(mapData.playerStart);
+  const [playerPos,      setPlayerPos]      = useState(character.lastPosition || mapData.playerStart);
   const [mobs,           setMobs]           = useState<MapMob[]>([]);
   const [activeCombatId, setActiveCombatId] = useState<string | null>(null);
   const [timeOfDay,      setTimeOfDay]      = useState<"morning" | "day" | "dusk" | "night">("day");
@@ -321,12 +623,22 @@ export function WorldMap({
   useEffect(() => { walkPathRef.current     = walkPath;       }, [walkPath]);
   useEffect(() => { chasingMobRef.current   = chasingMobId;   }, [chasingMobId]);
 
-  const regionDiscovery = character.discoveredTiles?.[mapData.name] || [];
+  const isSafeSettlement = isSafeSettlementMap(mapData.mapType);
+
 
   const equippedWeapon = inventory?.find(i => i.type === "weapon" && i.equipped);
   const equippedHat    = inventory?.find(i => i.type === "hat"    && i.equipped);
   const equippedArmor  = inventory?.find(i => i.type === "armor"  && i.equipped);
   const equippedBoot   = inventory?.find(i => i.type === "boot"   && i.equipped);
+
+  // Sync player position back to character state periodically or when moving
+  useEffect(() => {
+    if (activeCombatId) return; // Don't sync during combat to avoid jitter
+    const timer = setTimeout(() => {
+      onUpdateCharacter({ lastPosition: playerPos });
+    }, 1000); // 1s debounce to prevent database spam
+    return () => clearTimeout(timer);
+  }, [playerPos, activeCombatId, onUpdateCharacter]);
 
   // ── Walking step interval (A* path following) ─────────────────────────────
   useEffect(() => {
@@ -373,19 +685,6 @@ export function WorldMap({
     return () => clearInterval(id);
   }, []);
 
-  // ── Tile discovery ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    const key = `${playerPos.x},${playerPos.y}`;
-    if (!regionDiscovery.includes(key)) {
-      onUpdateCharacter?.({
-        discoveredTiles: {
-          ...(character.discoveredTiles || {}),
-          [mapData.name]: [...regionDiscovery, key],
-        },
-      });
-    }
-  }, [playerPos.x, playerPos.y, mapData.name]);
-
   // ── Time of day ─────────────────────────────────────────────────────────────
   useEffect(() => {
     const update = () => {
@@ -411,6 +710,12 @@ export function WorldMap({
 
   // ── Mob spawning ────────────────────────────────────────────────────────────
   useEffect(() => {
+    if (isSafeSettlement) {
+      setMobs([]);
+      setActiveCombatId(null);
+      return;
+    }
+
     const possible = REGION_MOBS[mapData.name] || ["green-slime"];
     const bountyTarget = activeQuestId && allQuests.find(q => q.id === activeQuestId)?.bounty?.targetMonsterId;
     const numMobs = MOB_COUNT_MIN + Math.floor(Math.random() * (MOB_COUNT_MAX - MOB_COUNT_MIN + 1));
@@ -438,7 +743,7 @@ export function WorldMap({
     }
     setMobs(newMobs);
     setActiveCombatId(null);
-  }, [mapData, activeQuestId]);
+  }, [mapData, activeQuestId, isSafeSettlement]);
 
   // ── Monster AI — runs every 2 s (reduced tick for performance) ──────────────
   useEffect(() => {
@@ -582,6 +887,12 @@ export function WorldMap({
         ? [`Head to ${next.region} to continue your journey.`]
         : ["You have become a legend. There are no more challenges for you."];
     }
+    if (npc.service === "shop") {
+      return [...npc.dialog, "Take a look at my wares whenever you're ready."];
+    }
+    if (npc.service === "guild") {
+      return [...npc.dialog, "Step inside and I'll open the guild records for you."];
+    }
     return npc.dialog;
   }, [completedQuests, allQuests]);
 
@@ -637,7 +948,6 @@ export function WorldMap({
           mapData={mapData}
           tileSize={TILE_SIZE}
           playerPos={playerPos}
-          discoveredTiles={regionDiscovery}
         />
       </div>
 
@@ -662,25 +972,60 @@ export function WorldMap({
       >
         {/* NPCs */}
         {mapData.npcs.map(npc => {
-          if (npc.questId) {
-            const qd = allQuests.find(q => q.id === npc.questId);
-            if (qd && qd.class !== character.class && !hasFinishedMainStory(character)) return null;
-          }
           const { x: ix, y: iy } = getIsoPos(npc.position.x, npc.position.y);
           return (
             <div
               key={npc.id}
               className="absolute cursor-pointer pointer-events-auto"
               style={{ left: ix, top: iy, width: TILE_SIZE, height: TILE_SIZE / 2, zIndex: npc.position.x + npc.position.y + 1 }}
-              onClick={e => { e.stopPropagation(); setSelectedNPC(npc); setDialogIndex(0); }}
+              onClick={e => {
+                e.stopPropagation();
+                if (npc.service) {
+                  // Service NPCs → directly open, no dialog required
+                  onNPCInteract(npc);
+                } else {
+                  setSelectedNPC(npc);
+                  setDialogIndex(0);
+                }
+              }}
             >
               <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
                 <div className="translate-y-[-24px] drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">
                   <NPCSprite type={npc.sprite} className="w-12 h-12" />
                 </div>
+                {/* Guild balloon — single floating pip above the NPC */}
+                {npc.service === "guild" && (
+                  <motion.div
+                    animate={{ y: [-4, 0, -4] }}
+                    transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
+                    className="absolute -top-14 left-1/2 -translate-x-1/2 pointer-events-none"
+                  >
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="bg-amber-500/90 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-wide">
+                        Guild
+                      </div>
+                      <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-amber-500/90" />
+                    </div>
+                  </motion.div>
+                )}
+                {/* Shop balloon */}
+                {npc.service === "shop" && (
+                  <motion.div
+                    animate={{ y: [-4, 0, -4] }}
+                    transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
+                    className="absolute -top-14 left-1/2 -translate-x-1/2 pointer-events-none"
+                  >
+                    <div className="flex flex-col items-center gap-0.5">
+                      <div className="bg-emerald-500/90 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-wide">
+                        Shop
+                      </div>
+                      <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500/90" />
+                    </div>
+                  </motion.div>
+                )}
                 {npc.questId && (
                   <motion.div
-                    animate={{ y: [-10, 0, -10] }}
+                    animate={{ y: [-8, 0, -8] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
                     className={`absolute -top-20 left-1/2 -translate-x-1/2 ${completedQuests.includes(npc.questId) ? "text-emerald-400" : activeQuestId === npc.questId ? "text-cyan-400" : "text-amber-400"}`}
                   >
@@ -695,7 +1040,7 @@ export function WorldMap({
         })}
 
         {/* Wild Mobs */}
-        {mobs.map(mob => {
+        {!isSafeSettlement && mobs.map(mob => {
           const { x: ix, y: iy } = getIsoPos(mob.position.x, mob.position.y);
           const enemyData   = ENEMIES[mob.enemyId];
           const hpPct       = mob.hp / mob.maxHp;
@@ -890,9 +1235,13 @@ export function WorldMap({
         <div className="px-6 py-2.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/10 flex gap-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest shadow-2xl">
           <span className="flex items-center gap-2">🖱️ Click to Move</span>
           <span className="w-px h-4 bg-white/10" />
-          <span className={`flex items-center gap-2 ${activeCombatId ? "text-red-400 animate-pulse font-black" : ""}`}>
-            ⚔️ {activeCombatId ? "Fighting! (click mob to flee)" : "Click Monster to Fight"}
-          </span>
+          {isSafeSettlement ? (
+            <span className="flex items-center gap-2 text-emerald-300">🏛️ Safe City • Visit NPCs</span>
+          ) : (
+            <span className={`flex items-center gap-2 ${activeCombatId ? "text-red-400 animate-pulse font-black" : ""}`}>
+              ⚔️ {activeCombatId ? "Fighting! (click mob to flee)" : "Click Monster to Fight"}
+            </span>
+          )}
           <span className="w-px h-4 bg-white/10" />
           <span className={`font-black ${timeOfDay === "night" ? "text-blue-400" : "text-amber-400"}`}>{timeOfDay.toUpperCase()}</span>
         </div>
@@ -918,7 +1267,9 @@ export function WorldMap({
                   </div>
                   <div>
                     <h3 className="font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>{selectedNPC.name}</h3>
-                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest font-bold">NPC</p>
+                    <p className="text-[10px] text-amber-500/60 uppercase tracking-widest font-bold">
+                      {selectedNPC.service === "shop" ? "City Merchant" : selectedNPC.service === "guild" ? "Guild Officer" : "NPC"}
+                    </p>
                   </div>
                 </div>
                 <p className="text-sm text-slate-300 leading-relaxed mb-4 min-h-[48px]">

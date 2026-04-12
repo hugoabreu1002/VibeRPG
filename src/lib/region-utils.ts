@@ -21,13 +21,13 @@ export const REGIONS: Record<string, Region> = {
     description: "The central town where adventurers gather. All classes start here.",
     unlockedBy: [],
     availableQuests: ["guild-bounty-slimes", "guild-bounty-rats", "guild-bounty-undead", "warrior-village", "rogue-stolen-cargo"],
-    nextRegions: ["Whispering Woods", "Trade Route", "Abandoned Church", "Northern Village", "Southern Village"],
+    nextRegions: ["Whispering Woods", "Trade Route", "Abandoned Church", "Northern Field", "Southern Field"],
     requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
-  "Northern Village": {
-    id: "Northern Village",
-    name: "Northern Village",
-    description: "A peaceful village under threat from bandits and monsters.",
+  "Northern Field": {
+    id: "Northern Field",
+    name: "Northern Field",
+    description: "Open fields north of the city where bandits and dark magic have taken hold.",
     unlockedBy: [], // Now unlocked by default or accessible
     availableQuests: ["mage-library", "priest-blessing"],
     nextRegions: ["Trade Route", "Sacred Catacombs", "Hub Town"],
@@ -105,10 +105,10 @@ export const REGIONS: Record<string, Region> = {
     nextRegions: ["Astral Observatory"],
     requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
-  "Southern Village": {
-    id: "Southern Village",
-    name: "Southern Village",
-    description: "Village suffering from a mysterious plague.",
+  "Southern Field": {
+    id: "Southern Field",
+    name: "Southern Field",
+    description: "Southern grasslands plagued by disease-carrying creatures and dark spirits.",
     unlockedBy: [], // Now unlocked by default or accessible
     availableQuests: ["priest-plague"],
     nextRegions: ["Abandoned Church", "Hub Town"],
@@ -120,7 +120,7 @@ export const REGIONS: Record<string, Region> = {
     description: "Old church haunted by a restless spirit.",
     unlockedBy: ["priest-plague"],
     availableQuests: ["priest-ghost"],
-    nextRegions: ["Northern Village"],
+    nextRegions: ["Northern Field"],
     requiredQuestsToComplete: undefined // Complete ALL quests to advance
   },
   "Sacred Catacombs": {
@@ -246,18 +246,18 @@ export function getAvailableRegions(character: Character): Region[] {
   const completedQuests = character.completedQuests;
   const unlockedRegions: Region[] = [];
 
-  // Hub Town is ALWAYS unlocked (Quest Hub)
-  unlockedRegions.push(REGIONS["Hub Town"]);
-
-  // Default unlocked areas based on class
-  if (character.class === "mage") unlockedRegions.push(REGIONS["Northern Village"]);
-  else if (character.class === "priest") unlockedRegions.push(REGIONS["Southern Village"]);
+  // Starter world: safe hubs + at least two wilderness maps so combat is always available.
+  const starterRegions = ["Hub Town", "Northern Field", "Southern Field", "Whispering Woods", "Trade Route"];
+  starterRegions.forEach(regionId => {
+    const region = REGIONS[regionId];
+    if (region) unlockedRegions.push(region);
+  });
 
   // If the player has finished the main story, unlock the intro towns for other classes
   if (hasFinishedMainStory(character)) {
     if (!unlockedRegions.some(r => r.id === "Hub Town")) unlockedRegions.push(REGIONS["Hub Town"]);
-    if (!unlockedRegions.some(r => r.id === "Northern Village")) unlockedRegions.push(REGIONS["Northern Village"]);
-    if (!unlockedRegions.some(r => r.id === "Southern Village")) unlockedRegions.push(REGIONS["Southern Village"]);
+    if (!unlockedRegions.some(r => r.id === "Northern Field")) unlockedRegions.push(REGIONS["Northern Field"]);
+    if (!unlockedRegions.some(r => r.id === "Southern Field")) unlockedRegions.push(REGIONS["Southern Field"]);
   }
 
   // Check each region to see if it's unlocked
@@ -281,17 +281,12 @@ export function getAvailableQuestsForRegion(regionId: string, character: Charact
   const region = REGIONS[regionId];
   if (!region) return [];
 
-  // Filter quests by class and level requirements
+  // All quests in the region are available to all classes — no class gate.
   return region.availableQuests.filter(questId => {
     const quest = QUESTS.find(q => q.id === questId);
     if (!quest) return false;
-
-    // Check class requirement
-    if (quest.class !== character.class) return false;
-
-    // Check if already completed
+    // Skip if already completed
     if (character.completedQuests.includes(questId)) return false;
-
     return true;
   });
 }
@@ -346,15 +341,10 @@ export function getRegionProgress(character: Character): { current: number; tota
   const allRegionQuests = currentRegion.availableQuests;
   const completedQuests = character.completedQuests;
 
-  // Count all quests in the region that match the character's class and level
+  // All quests count regardless of class — unified progression.
   const validQuests = allRegionQuests.filter(questId => {
     const quest = QUESTS.find(q => q.id === questId);
-    if (!quest) return false;
-
-    // Check class requirement
-    if (quest.class !== character.class) return false;
-
-    return true;
+    return !!quest;
   });
 
   const completedInRegion = validQuests.filter(questId => completedQuests.includes(questId)).length;
@@ -367,14 +357,11 @@ export function getRegionProgress(character: Character): { current: number; tota
 }
 
 export function canLeaveRegion(character: Character): { can: boolean; reason?: string } {
-  const progress = getRegionProgress(character);
-  const currentRegion = getCurrentRegion(character);
-  const requiredCount = currentRegion.requiredQuestsToComplete ?? Math.max(1, progress.total);
-
-  if (progress.current < requiredCount) {
+  const availableRegions = getAvailableRegions(character);
+  if (availableRegions.length === 0) {
     return {
       can: false,
-      reason: `Complete at least ${requiredCount} guild quests in ${currentRegion.name} to advance (Progress: ${progress.current}/${requiredCount})`
+      reason: "No travel routes are available yet."
     };
   }
 

@@ -14,28 +14,29 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
   // ── OUTDOOR MAPS (30×20) ─────────────────────────────────────────────────
   "Hub Town": {
     name: "Hub Town",
+    mapType: "town" as const,
     width: 30, height: 20,
     tiles: makeGrid([
-      r('G', 30),
-      `G${r('T', 28)}G`,
-      `GT${r('G', 26)}TG`,
-      `GTG${r('P', 24)}GTG`,
-      `GTGP${r('T', 22)}PGTG`,
-      `GTGP${r('G', 22)}PGTG`,
-      `GTGPG${r('P', 20)}GPGTG`,
-      `GTGPG${r('T', 20)}GPGTG`,
-      `GTGPGT${r('G', 18)}TGPGTG`,
-      `GTGPGTG${r('F', 16)}GTGPGTG`,
-      `GTGPGTG${r('F', 16)}GTGPGTG`,
-      `GTGPGTG${r('F', 16)}GTGPGTG`,
-      `GTGPGT${r('G', 18)}TGPGTG`,
-      `GTGPG${r('T', 20)}GPGTG`,
-      `GTGPG${r('P', 20)}GPGTG`,
-      `GTGP${r('G', 22)}PGTG`,
-      `GTGP${r('T', 22)}PGTG`,
-      `GTG${r('P', 24)}GTG`,
-      `GT${r('G', 26)}TG`,
-      r('G', 30),
+      `G${r('T', 12)}${r('P', 4)}${r('T', 12)}G`,
+      `G${r('T', 12)}${r('P', 4)}${r('T', 12)}G`,
+      `G${r('T', 12)}${r('P', 4)}${r('T', 12)}G`,
+      `G${r('T', 8)}${r('P', 12)}${r('T', 8)}G`,
+      `G${r('T', 8)}${r('P', 12)}${r('T', 8)}G`,
+      `G${r('T', 8)}${r('P', 4)}${r('T', 4)}${r('P', 4)}${r('T', 8)}G`,
+      `G${r('T', 8)}${r('P', 4)}${r('T', 4)}${r('P', 4)}${r('T', 8)}G`,
+      `G${r('P', 28)}G`,
+      `G${r('P', 10)}${r('T', 8)}${r('P', 10)}G`,
+      `G${r('P', 10)}${r('T', 8)}${r('P', 10)}G`,
+      `G${r('P', 28)}G`,
+      `G${r('P', 10)}${r('T', 8)}${r('P', 10)}G`,
+      `G${r('P', 10)}${r('T', 8)}${r('P', 10)}G`,
+      `G${r('T', 8)}${r('P', 4)}${r('T', 4)}${r('P', 4)}${r('T', 8)}G`,
+      `G${r('T', 8)}${r('P', 4)}${r('T', 4)}${r('P', 4)}${r('T', 8)}G`,
+      `G${r('T', 8)}${r('P', 12)}${r('T', 8)}G`,
+      `G${r('T', 8)}${r('P', 12)}${r('T', 8)}G`,
+      `G${r('T', 12)}${r('P', 4)}${r('T', 12)}G`,
+      `G${r('T', 12)}${r('P', 4)}${r('T', 12)}G`,
+      `G${r('T', 12)}${r('P', 4)}${r('T', 12)}G`,
     ]),
     playerStart: { x: 15, y: 10 },
     npcs: [
@@ -54,14 +55,20 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
         dialog: ["I sense great potential in you.", "Mages who seek knowledge should talk to me."],
         questId: "mage-apprentice",
       },
-      { id: "guild-master", name: "Guild Master", position: { x: 20, y: 10 }, sprite: "knight",
+      { id: "guild-master", name: "Guild Master", position: { x: 20, y: 9 }, sprite: "knight",
         dialog: ["Greetings, adventurer!", "The Adventurer's Guild is always looking for talent."],
+        service: "guild",
+      },
+      { id: "merchant-hub", name: "Quartermaster Bronn", position: { x: 10, y: 9 }, sprite: "merchant",
+        dialog: ["Fresh supplies for the road.", "If you need gear or provisions, I can help."],
+        service: "shop",
       },
     ],
   },
 
-  "Northern Village": {
-    name: "Northern Village",
+  "Northern Field": {
+    name: "Northern Field",
+    mapType: "field" as const,
     width: 28, height: 18,
     tiles: makeGrid([
       r('F', 28),
@@ -85,7 +92,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
     ]),
     playerStart: { x: 5, y: 9 },
     npcs: [
-      { id: "elder", name: "Village Elder", position: { x: 14, y: 3 }, sprite: "elder",
+      { id: "elder", name: "Field Elder", position: { x: 14, y: 3 }, sprite: "elder",
         dialog: ["Welcome, adventurer. Our village is in danger.", "Will you help us?"],
       },
       { id: "guard", name: "Gate Guard", position: { x: 7, y: 9 }, sprite: "guard",
@@ -93,9 +100,10 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
         questId: "warrior-village",
       },
       { id: "merchant-nv", name: "Traveling Merchant", position: { x: 20, y: 6 }, sprite: "merchant",
-        dialog: ["Greetings! Be careful out there."],
+        dialog: ["Greetings! Be careful out there.", "I've stocked what this village needs to survive."],
+        service: "shop",
       },
-      { id: "priest-nv", name: "Village Priest", position: { x: 14, y: 6 }, sprite: "priest",
+      { id: "priest-nv", name: "Field Priest", position: { x: 14, y: 6 }, sprite: "priest",
         dialog: ["The village needs protection from evil.", "Can you help perform a blessing ritual?"],
         questId: "priest-blessing",
       },
@@ -104,6 +112,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Whispering Woods": {
     name: "Whispering Woods",
+    mapType: "field" as const,
     width: 30, height: 20,
     tiles: makeGrid([
       r('F', 30),
@@ -142,6 +151,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Mountain Pass": {
     name: "Mountain Pass",
+    mapType: "field" as const,
     width: 28, height: 18,
     tiles: makeGrid([
       r('M', 28),
@@ -174,6 +184,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Trade Route": {
     name: "Trade Route",
+    mapType: "field" as const,
     width: 30, height: 18,
     tiles: makeGrid([
       r('G', 30),
@@ -206,6 +217,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Training Grounds": {
     name: "Training Grounds",
+    mapType: "field" as const,
     width: 28, height: 18,
     tiles: makeGrid([
       r('G', 28),
@@ -238,6 +250,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Dark Forest": {
     name: "Dark Forest",
+    mapType: "field" as const,
     width: 30, height: 20,
     tiles: makeGrid([
       r('F', 30),
@@ -272,6 +285,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Dragon Peak": {
     name: "Dragon Peak",
+    mapType: "field" as const,
     width: 28, height: 18,
     tiles: makeGrid([
       r('M', 28),
@@ -302,8 +316,9 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
     ],
   },
 
-  "Southern Village": {
-    name: "Southern Village",
+  "Southern Field": {
+    name: "Southern Field",
+    mapType: "field" as const,
     width: 28, height: 18,
     tiles: makeGrid([
       r('G', 28),
@@ -327,7 +342,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
     ]),
     playerStart: { x: 3, y: 9 },
     npcs: [
-      { id: "healer-sv", name: "Village Healer", position: { x: 14, y: 8 }, sprite: "priest",
+      { id: "healer-sv", name: "Field Healer", position: { x: 14, y: 8 }, sprite: "priest",
         dialog: ["The plague is spreading fast!", "Can you purify the water source?"],
         questId: "priest-plague",
       },
@@ -337,6 +352,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
   // ── DUNGEON / INTERIOR MAPS (~18×14) ─────────────────────────────────────
   "Abandoned Church": {
     name: "Abandoned Church",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('G', 18),
@@ -365,6 +381,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Sacred Catacombs": {
     name: "Sacred Catacombs",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('C', 18),
@@ -393,6 +410,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Cursed Ruins": {
     name: "Cursed Ruins",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('C', 18),
@@ -421,6 +439,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Crystal Caverns": {
     name: "Crystal Caverns",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('C', 18),
@@ -449,6 +468,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Shadow Tower": {
     name: "Shadow Tower",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('F', 18),
@@ -477,22 +497,23 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Capital City": {
     name: "Capital City",
+    mapType: "town" as const,
     width: 18, height: 14,
     tiles: makeGrid([
-      r('F', 18),
-      `F${r('C', 16)}F`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 4)}G${r('T', 4)}G${r('T', 4)}CF`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 4)}G${r('T', 4)}G${r('T', 4)}CF`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 14)}CF`,
-      `FC${r('T', 14)}CF`,
-      `F${r('C', 16)}F`,
-      r('F', 18),
+      r('T', 18),
+      `T${r('P', 16)}T`,
+      `TP${r('T', 14)}PT`,
+      `TP${r('T', 14)}PT`,
+      `TP${r('T', 4)}G${r('T', 4)}G${r('T', 4)}PT`,
+      `TP${r('T', 14)}PT`,
+      `TP${r('P', 14)}PT`,
+      `TP${r('T', 14)}PT`,
+      `TP${r('T', 4)}G${r('T', 4)}G${r('T', 4)}PT`,
+      `TP${r('T', 14)}PT`,
+      `TP${r('T', 14)}PT`,
+      `TP${r('T', 14)}PT`,
+      `T${r('P', 16)}T`,
+      r('T', 18),
     ]),
     playerStart: { x: 9, y: 12 },
     npcs: [
@@ -505,6 +526,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Astral Observatory": {
     name: "Astral Observatory",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('M', 18),
@@ -533,6 +555,7 @@ export const QUEST_MAPS: Record<string, QuestMapData> = {
 
   "Celestial Shrine": {
     name: "Celestial Shrine",
+    mapType: "dungeon" as const,
     width: 18, height: 14,
     tiles: makeGrid([
       r('W', 18),

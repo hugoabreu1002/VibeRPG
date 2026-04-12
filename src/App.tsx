@@ -1,11 +1,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import { Inventory, WorldMap, Shop } from "./components/game";
+import { Inventory, MapSelection, WorldMap, Shop } from "./components/game";
 import { InventorySprite } from "./components/game/character/InventorySprite";
 
 import { GuildMenu } from "./components/game/ui/GuildMenu";
 import { QuestBoard } from "./components/game/ui/QuestBoard";
-import { canLeaveRegion } from "./lib/region-utils";
 import { CelebrationOverlay, QuickToast } from "./components/game/ui/CelebrationOverlay";
 import {
   ClassMageIcon,
@@ -21,7 +20,8 @@ import {
   SwordIcon,
   XPIcon,
   RankIcon,
-  ClassArcherIcon
+  ClassArcherIcon,
+  WorldTabIcon
 } from "./components/game/ui/GameIcons";
 import { GuildEvolution } from "./components/game/ui/GuildEvolution";
 import { audioManager } from "./lib/audio";
@@ -29,7 +29,7 @@ import { ALL_ITEMS, CHARACTER_CLASSES, ENEMIES, getInitialCharacterStats, getSta
 
 import { acceptQuestFromNPC, completeQuestAfterBattle, hasFinishedMainStory } from "./lib/quest-logic";
 import { RANKS } from "./lib/rank-utils";
-import { getRegionMapData } from "./lib/region-utils";
+import { getAvailableRegions, getRegionMapData } from "./lib/region-utils";
 import { createCharacter as dbCreateCharacter, updateCharacter as dbUpdateCharacter, deleteCharacter, getAllCharacters, getCurrentCharacter, type CharacterClass } from "./lib/storage";
 import type { Character, InventoryItem, NPC, Quest, Tab } from "./types/game";
 
@@ -83,7 +83,7 @@ function statusBar(label: string, value: number, max: number, type: "hp" | "mp" 
 }
 
 function AppContent() {
-  const [activeTab, setActiveTab] = useState<Tab>("World Map");
+  const [activeTab, setActiveTab] = useState<Tab>("World");
   const [createName, setCreateName] = useState("");
   const [createClass, setCreateClass] = useState<CharacterClass>("mage");
   const [createSkinColor, setCreateSkinColor] = useState("#FDE68A");
@@ -114,6 +114,8 @@ function AppContent() {
 
   const [toast, setToast] = useState<{ message: string; icon: string } | null>(null);
   const [questToast, setQuestToast] = useState<{ message: string; icon: string } | null>(null);
+  const [cityServiceContext, setCityServiceContext] = useState<{ service: "shop" | "guild"; npcName: string; regionName: string } | null>(null);
+  const [showTeleportMenu, setShowTeleportMenu] = useState(false);
 
   // Celebration state
   const [previousLevel, setPreviousLevel] = useState<number | null>(null);
@@ -132,7 +134,7 @@ function AppContent() {
 
     if (isMusicEnabled) {
       audioManager.start();
-      if (activeTab === "World Map" || activeTab === "Inventory" || activeTab === "Shop" || activeTab === "Guild") {
+      if (activeTab === "World" || activeTab === "Inventory" || activeTab === "Shop" || activeTab === "Guild") {
         audioManager.playBgm("main");
       }
     } else {
@@ -198,7 +200,8 @@ function AppContent() {
       setCharacter(result.updatedCharacter);
       setActiveQuest(quest);
       setQuestState("active");
-      setActiveTab("World Map");
+      setCityServiceContext(null);
+      setActiveTab("World");
       setQuestToast({
         message: `New Quest: ${quest.title}`,
         icon: "⚔️"
@@ -230,9 +233,10 @@ function AppContent() {
     // Clear active quest and reset state
     setActiveQuest(null);
     setQuestState("list");
+    setCityServiceContext(null);
 
-    // Redirect to World Map
-    setActiveTab("World Map");
+    // Redirect to World
+    setActiveTab("World");
 
     // Show completion toast
     setQuestToast({
@@ -251,9 +255,10 @@ function AppContent() {
 
     // Handle redirect to shop on defeat
     if (result.redirectToShop) {
-      setActiveTab("Shop");
+      setActiveTab("World");
+      setCityServiceContext(null);
       setQuestToast({
-        message: "Defeated! Visit the shop to buy healing items, then try the quest again.",
+        message: "Defeated! Return to a city merchant for healing supplies, then try the quest again.",
         icon: "💀"
       });
     }
@@ -373,19 +378,56 @@ function AppContent() {
   const handleRegionChange = (regionId: string) => {
     if (!character) return;
 
-    // Check if player can leave the current region
-    const canLeave = canLeaveRegion(character);
-    if (!canLeave.can) {
-      setToast({ message: canLeave.reason || "Complete region quests first!", icon: "🔒" });
+    const unlockedRegions = getAvailableRegions(character);
+    const canTravelTo = unlockedRegions.some(region => region.id === regionId);
+    if (!canTravelTo) {
+      setToast({ message: "That destination is still locked.", icon: "🔒" });
       audioManager.playSfx("click");
       return;
     }
 
+    if (regionId === character.currentRegion) {
+      setShowTeleportMenu(false);
+      return;
+    }
+
     const updatedCharacter = { ...character, currentRegion: regionId };
+    delete updatedCharacter.lastPosition; // Reset position for new region
     setCharacter(updatedCharacter);
+    setCityServiceContext(null);
+    setShowTeleportMenu(false);
     saveCharacter(updatedCharacter);
-    setToast({ message: `Traveling to ${regionId}...`, icon: "🗺️" });
+    setActiveTab("World");
+    setToast({ message: `Teleporting to ${regionId}...`, icon: "🗺️" });
   };
+
+  const handleOpenCityService = useCallback((npc: NPC) => {
+    if (!character || !npc.service) return;
+
+    setCityServiceContext({
+      service: npc.service,
+      npcName: npc.name,
+      regionName: character.currentRegion,
+    });
+    setActiveTab(npc.service === "shop" ? "Shop" : "Guild");
+  }, [character]);
+
+  const handleCloseCityService = useCallback(() => {
+    setCityServiceContext(null);
+    setActiveTab("World");
+  }, []);
+
+  const handleOpenInventory = useCallback(() => {
+    setCityServiceContext(null);
+    setShowTeleportMenu(false);
+    setActiveTab("Inventory");
+  }, []);
+
+  const handleOpenWorld = useCallback(() => {
+    setCityServiceContext(null);
+    setShowTeleportMenu(false);
+    setActiveTab("World");
+  }, []);
 
   // Celebration triggers for quest completion and level ups
   useEffect(() => {
@@ -529,7 +571,7 @@ function AppContent() {
             </motion.div>
           </div>
 
-          {/* Audio Controls */}
+          {/* Header Controls */}
           <div className="flex items-center gap-2 mr-auto ml-4">
             <motion.button
               whileHover={{ scale: 1.15 }}
@@ -545,6 +587,32 @@ function AppContent() {
                 {isMusicEnabled ? "🔊" : "🔇"}
               </span>
             </motion.button>
+
+                {character && (
+              <>
+                <button
+                  onClick={handleOpenWorld}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "World" ? "bg-amber-600/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-900/10" : "bg-slate-900/50 text-slate-400 border border-slate-700/40 hover:text-slate-200 hover:bg-slate-800/60"}`}
+                >
+                  <WorldTabIcon size={16} />
+                  World
+                </button>
+                <button
+                  onClick={() => setShowTeleportMenu(prev => !prev)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${showTeleportMenu ? "bg-emerald-600/20 text-emerald-200 border border-emerald-500/30 shadow-lg shadow-emerald-900/10" : "bg-slate-900/50 text-slate-400 border border-slate-700/40 hover:text-slate-200 hover:bg-slate-800/60"}`}
+                >
+                  <MapTabIcon size={16} />
+                  Teleport
+                </button>
+                <button
+                  onClick={handleOpenInventory}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold transition-all ${activeTab === "Inventory" ? "bg-amber-600/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-900/10" : "bg-slate-900/50 text-slate-400 border border-slate-700/40 hover:text-slate-200 hover:bg-slate-800/60"}`}
+                >
+                  <InventoryTabIcon size={16} />
+                  Inventory
+                </button>
+              </>
+            )}
           </div>
 
           {character && (
@@ -951,38 +1019,19 @@ function AppContent() {
           <div className="w-full min-h-full grid gap-2 md:grid-cols-12">
             {/* Sidebar */}
             <aside className="md:col-span-3 flex flex-col gap-2 overflow-y-auto min-h-0 max-h-[calc(100vh-120px)] custom-scrollbar">
-              <div className="fantasy-card rounded-xl p-4">
-                <div className="flex flex-wrap md:flex-col gap-1">
-                  <button
-                    onClick={() => setActiveTab("World Map")}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all relative ${activeTab === "World Map" ? "bg-amber-600/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-900/10" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`}
-                  >
-                    <MapTabIcon size={18} />
-                    World Map
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("Inventory")}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all relative ${activeTab === "Inventory" ? "bg-amber-600/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-900/10" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`}
-                  >
-                    <InventoryTabIcon size={18} />
-                    Inventory
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("Shop")}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all relative ${activeTab === "Shop" ? "bg-amber-600/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-900/10" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`}
-                  >
-                    <ShopTabIcon size={18} />
-                    Shop
-                  </button>
-                  <button
-                    onClick={() => setActiveTab("Guild")}
-                    className={`flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-bold transition-all relative ${activeTab === "Guild" ? "bg-amber-600/20 text-amber-200 border border-amber-500/30 shadow-lg shadow-amber-900/10" : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"}`}
-                  >
-                    <RankIcon size={18} className="translate-y-[-1px]" />
-                    Guild
-                  </button>
+              {cityServiceContext && (
+                <div className="fantasy-card rounded-xl p-3 border border-amber-500/20">
+                  <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-500/60 mb-1">
+                    City Service
+                  </div>
+                  <div className="text-sm font-bold text-amber-100">
+                    {cityServiceContext.service === "shop" ? "Merchant Stall" : "Guild Hall"}
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">
+                    {cityServiceContext.npcName} is assisting you in {cityServiceContext.regionName}.
+                  </p>
                 </div>
-              </div>
+              )}
 
               {/* Character Info */}
               <div className="fantasy-card rounded-xl p-2">
@@ -1000,7 +1049,8 @@ function AppContent() {
                 completedQuests={completedQuests}
                 onAcceptQuest={(quest) => {
                   handleAcceptQuestFromNPC(quest);
-                  setActiveTab("World Map");
+                  setCityServiceContext(null);
+                  setActiveTab("World");
                 }}
                 onCompleteQuest={handleCompleteQuest}
                 activeQuestId={activeQuest?.id}
@@ -1049,6 +1099,9 @@ function AppContent() {
                       gold={character.gold}
                       shopItems={SHOP_ITEMS.filter(item => !item.allowedClasses || item.allowedClasses.includes(character.class))}
                       onBuyItem={handleBuyItem}
+                      title={cityServiceContext?.npcName ? `${cityServiceContext.npcName}'s Goods` : "Shop"}
+                      subtitle={cityServiceContext ? `${cityServiceContext.regionName} marketplace` : undefined}
+                      onClose={handleCloseCityService}
                     />
                   </motion.div>
                 )}
@@ -1073,15 +1126,16 @@ function AppContent() {
                       }}
                       onAcceptQuest={(quest) => {
                         handleAcceptQuestFromNPC(quest);
-                        setActiveTab("World Map");
+                        setCityServiceContext(null);
+                        setActiveTab("World");
                       }}
                       onCompleteQuest={handleCompleteQuest}
-                      onClose={() => setActiveTab("World Map")}
+                      onClose={handleCloseCityService}
                     />
                   </motion.div>
                 )}
 
-                {activeTab === "World Map" && character && questState !== "battle" && (
+                {activeTab === "World" && character && questState !== "battle" && (
                   <motion.div
                     key="world-map"
                     initial={{ opacity: 0, x: 20 }}
@@ -1132,9 +1186,13 @@ function AppContent() {
                             playerRank={character.rank}
                             inventory={inventory}
                             onNPCInteract={(npc: NPC) => {
+                              if (npc.service) {
+                                handleOpenCityService(npc);
+                                return;
+                              }
                               if (npc.questId && !completedQuests.includes(npc.questId) && activeQuest?.id !== npc.questId) {
                                 const quest = QUESTS.find(q => q.id === npc.questId);
-                                if (quest && (quest.class === character.class || hasFinishedMainStory(character))) {
+                                if (quest) {
                                   handleAcceptQuestFromNPC(quest);
                                 }
                               }
@@ -1165,6 +1223,40 @@ function AppContent() {
 
 
       {/* Celebration Overlay */}
+      <AnimatePresence>
+        {showTeleportMenu && character && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+            onClick={() => setShowTeleportMenu(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.96, y: 16 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.96, y: 16 }}
+              className="fantasy-card rounded-xl p-5 max-w-2xl w-full max-h-[80vh] overflow-y-auto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2 className="text-xl font-bold text-gold" style={{ fontFamily: "'Cinzel', serif" }}>Teleport</h2>
+                  <p className="text-sm text-slate-400">Travel instantly to any unlocked region.</p>
+                </div>
+                <button onClick={() => setShowTeleportMenu(false)} className="text-slate-500 hover:text-slate-300 text-xl transition-colors">✕</button>
+              </div>
+
+              <MapSelection
+                character={character}
+                currentRegion={character.currentRegion}
+                onRegionChange={handleRegionChange}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {celebration && (
           <CelebrationOverlay

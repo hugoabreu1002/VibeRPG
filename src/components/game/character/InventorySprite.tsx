@@ -48,8 +48,8 @@ export function InventorySprite({
   const idleVariants = {
     initial: { y: 0 },
     animate: { 
-      y: [0, -2, 0, -1, 0],
-      transition: { repeat: Infinity, duration: 2, ease: "easeInOut" as const }
+      y: 0,
+      transition: { duration: 0 }
     }
   };
 
@@ -69,7 +69,7 @@ export function InventorySprite({
     }
   };
 
-  const bobOffset = animationType === 'idle' ? Math.sin(frame * 0.3) * 2 : 0;
+  const bobOffset = 0; // Removed floating animation
 
   const renderFace = () => {
     switch (faceStyle) {
