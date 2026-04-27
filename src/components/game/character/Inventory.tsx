@@ -10,7 +10,7 @@ import { HatIcon } from "../items/HatIcon";
 import { BootIcon } from "../items/BootIcon";
 import { FoodIcon } from "../items/FoodIcon";
 import { InventorySprite } from "./InventorySprite";
-import { InventoryTabIcon, SwordIcon, ShieldIcon, HealthIcon, ManaIcon } from "../ui/GameIcons";
+import { SwordIcon, ShieldIcon, HealthIcon, ManaIcon } from "../ui/GameIcons";
 import { toast } from "../../../hooks/use-toast";
 
 const getRarityBorder = (rarity: InventoryItem["rarity"]) => {
@@ -40,6 +40,31 @@ const getRarityLabel = (rarity: InventoryItem["rarity"]) => {
   }
 };
 
+const getSlotLabel = (type: InventoryItem["type"]) => {
+  switch (type) {
+    case "weapon": return "Weapon";
+    case "armor": return "Armor";
+    case "hat": return "Hat";
+    case "boot": return "Boots";
+    case "food": return "Bag";
+  }
+};
+
+const getItemIcon = (item: InventoryItem) => {
+  switch (item.type) {
+    case "weapon":
+      return <WeaponIcon weaponId={item.id} size="w-6 h-6" />;
+    case "armor":
+      return <ArmorIcon armorId={item.id} size="w-6 h-6" />;
+    case "hat":
+      return <HatIcon hatId={item.id} size="w-6 h-6" />;
+    case "boot":
+      return <BootIcon bootId={item.id} size="w-6 h-6" />;
+    case "food":
+      return <FoodIcon foodId={item.id} size="w-6 h-6" />;
+  }
+};
+
 interface InventoryProps {
   inventory: InventoryItem[];
   selectedItem: InventoryItem | null;
@@ -60,9 +85,16 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
   const equippedArmor = inventory.find(i => i.type === "armor" && i.equipped);
   const equippedBoot = inventory.find(i => i.type === "boot" && i.equipped);
   const equippedHat = inventory.find(i => i.type === "hat" && i.equipped);
+  const equippedItems = [equippedWeapon, equippedArmor, equippedBoot, equippedHat].filter((item): item is InventoryItem => Boolean(item));
 
   const equipments = inventory.filter(i => i.type !== "food");
   const bagItems = inventory.filter(i => i.type === "food");
+  const totalAttack = equippedItems.reduce((sum, item) => sum + (item.stats.attack || 0), 0);
+  const totalDefense = equippedItems.reduce((sum, item) => sum + (item.stats.defense || 0), 0);
+  const totalHp = equippedItems.reduce((sum, item) => sum + (item.stats.hp || 0), 0);
+  const totalMp = equippedItems.reduce((sum, item) => sum + (item.stats.mp || 0), 0);
+  const totalMagicPower = equippedItems.reduce((sum, item) => sum + (item.stats.magicPower || 0), 0);
+  const totalPower = equippedItems.reduce((sum, item) => sum + (item.stats.attack || 0) + (item.stats.defense || 0), 0);
 
   const [spriteAnimation, setSpriteAnimation] = useState<"idle" | "spell">("idle");
 
@@ -110,77 +142,123 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
         {/* Left Column: Currently Equipped & Preview */}
         <div className="lg:w-1/3 space-y-4">
           <div className="bg-slate-900/40 p-5 rounded-xl border border-slate-700/30">
-            <h3 className="text-[10px] font-bold mb-4 text-amber-200/60 uppercase tracking-wider text-center">Currently Equipped</h3>
-            <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[240px] mx-auto items-center justify-items-center">
-              <div className="text-xs text-slate-400 text-center mb-2">Hat</div>
-              {/* Top: Hat */}
-              <div className="col-start-2 row-start-1 flex justify-center">
-                <EquipmentSlot
-                  type="hat"
-                  item={equippedHat}
-                  items={inventory.filter(i => i.type === "hat")}
-                  onSelect={(item) => onSelectItem(item)}
-                />
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div>
+                <h3 className="text-[10px] font-bold text-amber-200/60 uppercase tracking-wider">Hero Loadout</h3>
+                <p className="mt-1 text-xs text-slate-400">Preview your current gear directly on the hero.</p>
               </div>
-
-              <div className="text-xs text-slate-400 text-center mb-2">Weapon</div>
-              <div className="col-start-1 row-start-2 flex justify-center">
-                <EquipmentSlot
-                  type="weapon"
-                  item={equippedWeapon}
-                  items={inventory.filter(i => i.type === "weapon")}
-                  onSelect={(item) => onSelectItem(item)}
-                />
-              </div>
-
-              {/* Center: Character */}
-              <div className="col-start-2 row-start-2 flex justify-center min-w-[80px] min-h-[80px] scale-120">
-                {characterClass && (
-                  <InventorySprite
-                    characterClass={characterClass}
-                    rank={rank}
-                    animationType={spriteAnimation as any}
-                    equippedWeapon={equippedWeapon}
-                    equippedArmor={equippedArmor}
-                    equippedBoot={equippedBoot}
-                    equippedHat={equippedHat}
-                    skinColor={skinColor}
-                    hairColor={hairColor}
-                    clothingColor={clothingColor}
-                    faceStyle={faceStyle}
-                  />
-                )}
-              </div>
-
-              <div className="text-xs text-slate-400 text-center mb-2">Armor</div>
-              <div className="col-start-3 row-start-2 flex justify-center">
-                <EquipmentSlot
-                  type="armor"
-                  item={equippedArmor}
-                  items={inventory.filter(i => i.type === "armor")}
-                  onSelect={(item) => onSelectItem(item)}
-                />
-              </div>
-
-              <div className="text-xs text-slate-400 text-center mb-2">Boots</div>
-              <div className="col-start-2 row-start-3 flex justify-center">
-                <EquipmentSlot
-                  type="boot"
-                  item={equippedBoot}
-                  items={inventory.filter(i => i.type === "boot")}
-                  onSelect={(item) => onSelectItem(item)}
-                />
+              <div className="rounded-full border border-emerald-500/20 bg-emerald-950/30 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+                {equippedItems.length}/4 equipped
               </div>
             </div>
 
-            <div className="mt-6 pt-4 border-t border-slate-700/30 space-y-2">
-              <div className="flex justify-between text-xs">
-                <span className="text-slate-400">Total Power</span>
-                <span className="text-amber-400 font-bold">
-                  {inventory.filter(i => i.equipped).reduce((sum, i) => sum + (i.stats.attack || 0) + (i.stats.defense || 0), 0)}
-                </span>
+            <div className="rounded-2xl border border-slate-700/40 bg-[radial-gradient(circle_at_top,_rgba(251,191,36,0.12),_transparent_45%),linear-gradient(180deg,rgba(15,23,42,0.9),rgba(2,6,23,0.75))] p-4">
+              <div className="grid grid-cols-3 grid-rows-3 gap-4 max-w-[260px] mx-auto items-center justify-items-center">
+                <div className="col-start-2 row-start-1 flex justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <EquipmentSlot
+                      type="hat"
+                      item={equippedHat}
+                      items={inventory.filter(i => i.type === "hat")}
+                      onSelect={(item) => onSelectItem(item)}
+                    />
+                    {!equippedHat && (
+                      <span className="text-[11px] font-medium text-slate-500">Hat</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-start-1 row-start-2 flex justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <EquipmentSlot
+                      type="weapon"
+                      item={equippedWeapon}
+                      items={inventory.filter(i => i.type === "weapon")}
+                      onSelect={(item) => onSelectItem(item)}
+                    />
+                    {!equippedWeapon && (
+                      <span className="text-[11px] font-medium text-slate-500">Weapon</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-start-2 row-start-2 flex justify-center min-w-[96px] min-h-[96px]">
+                  <div className="relative flex h-28 w-28 items-center justify-center rounded-full border border-amber-400/15 bg-amber-400/5 shadow-[0_0_40px_rgba(251,191,36,0.08)]">
+                    {characterClass && (
+                      <InventorySprite
+                        characterClass={characterClass}
+                        rank={rank}
+                        animationType={spriteAnimation as any}
+                        equippedWeapon={equippedWeapon}
+                        equippedArmor={equippedArmor}
+                        equippedBoot={equippedBoot}
+                        equippedHat={equippedHat}
+                        skinColor={skinColor}
+                        hairColor={hairColor}
+                        clothingColor={clothingColor}
+                        faceStyle={faceStyle}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-start-3 row-start-2 flex justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <EquipmentSlot
+                      type="armor"
+                      item={equippedArmor}
+                      items={inventory.filter(i => i.type === "armor")}
+                      onSelect={(item) => onSelectItem(item)}
+                    />
+                    {!equippedArmor && (
+                      <span className="text-[11px] font-medium text-slate-500">Armor</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="col-start-2 row-start-3 flex justify-center">
+                  <div className="flex flex-col items-center gap-2">
+                    <EquipmentSlot
+                      type="boot"
+                      item={equippedBoot}
+                      items={inventory.filter(i => i.type === "boot")}
+                      onSelect={(item) => onSelectItem(item)}
+                    />
+                    {!equippedBoot && (
+                      <span className="text-[11px] font-medium text-slate-500">Boots</span>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
+
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="rounded-xl border border-slate-700/40 bg-slate-950/40 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wide text-slate-500">Power</div>
+                <div className="mt-1 text-lg font-bold text-amber-300">{totalPower}</div>
+              </div>
+              <div className="rounded-xl border border-slate-700/40 bg-slate-950/40 px-3 py-2">
+                <div className="text-[10px] uppercase tracking-wide text-slate-500">Magic</div>
+                <div className="mt-1 text-lg font-bold text-violet-300">+{totalMagicPower}</div>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-700/40 bg-slate-950/40 px-3 py-2 text-xs">
+                <span className="flex items-center gap-1 text-slate-400"><SwordIcon size={12} /> ATK</span>
+                <span className="font-bold text-amber-300">+{totalAttack}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-700/40 bg-slate-950/40 px-3 py-2 text-xs">
+                <span className="flex items-center gap-1 text-slate-400"><ShieldIcon size={12} /> DEF</span>
+                <span className="font-bold text-blue-300">+{totalDefense}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-700/40 bg-slate-950/40 px-3 py-2 text-xs">
+                <span className="flex items-center gap-1 text-slate-400"><HealthIcon size={12} /> HP</span>
+                <span className="font-bold text-emerald-300">+{totalHp}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-xl border border-slate-700/40 bg-slate-950/40 px-3 py-2 text-xs">
+                <span className="flex items-center gap-1 text-slate-400"><ManaIcon size={12} /> MP</span>
+                <span className="font-bold text-cyan-300">+{totalMp}</span>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -188,9 +266,14 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
         <div className="lg:w-2/3 space-y-8">
           {/* Equipments Grid */}
           <div className="space-y-3">
-            <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider flex justify-between items-center">
-              <span>Equipments ({equipments.length})</span>
-            </h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xs font-bold text-amber-200/60 uppercase tracking-wider">
+                Equipments ({equipments.length})
+              </h3>
+              <div className="text-[11px] text-slate-500">
+                Equipped: <span className="font-semibold text-emerald-400">{equipments.filter(item => item.equipped).length}</span>
+              </div>
+            </div>
             <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar content-start">
               <AnimatePresence>
                 {equipments.map((item, index) => (
@@ -208,15 +291,23 @@ export function Inventory({ inventory, selectedItem, onSelectItem, onToggleEquip
                         : `${getRarityBorder(item.rarity)} ${getRarityBg(item.rarity)}`
                       }`}
                   >
+                    <div className="mb-2 flex items-start justify-between gap-3">
+                      <span className="rounded-full border border-slate-700/40 bg-slate-900/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300">
+                        {getSlotLabel(item.type)}
+                      </span>
+                      <span className={`text-[10px] font-semibold uppercase tracking-wide ${getRarityLabel(item.rarity)}`}>
+                        {item.rarity}
+                      </span>
+                    </div>
                     <div className="flex items-center gap-2 mb-2">
                       <div className="w-8 h-8 rounded-lg bg-slate-900/60 border border-slate-700/30 flex items-center justify-center">
-                        {item.type === "weapon" && <WeaponIcon weaponId={item.id} size="w-6 h-6" />}
-                        {item.type === "armor" && <ArmorIcon armorId={item.id} size="w-6 h-6" />}
-                        {item.type === "hat" && <HatIcon hatId={item.id} size="w-6 h-6" />}
-                        {item.type === "boot" && <BootIcon bootId={item.id} size="w-6 h-6" />}
+                        {getItemIcon(item)}
                       </div>
                       <div className="flex-1 overflow-hidden">
                         <span className="font-semibold text-sm text-slate-100 block truncate">{item.name}</span>
+                        <span className="block truncate text-[11px] text-slate-500">
+                          {item.equipped ? "Currently worn by hero" : "Tap to inspect or equip"}
+                        </span>
                       </div>
                       {item.equipped && (
                         <div className="w-2 h-2 bg-emerald-500 rounded-full" />

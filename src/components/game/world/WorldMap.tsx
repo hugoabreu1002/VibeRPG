@@ -631,6 +631,20 @@ export function WorldMap({
   const equippedArmor  = inventory?.find(i => i.type === "armor"  && i.equipped);
   const equippedBoot   = inventory?.find(i => i.type === "boot"   && i.equipped);
 
+  useEffect(() => {
+    const spawnPosition = character.lastPosition || mapData.playerStart;
+    setPlayerPos(spawnPosition);
+    playerPosRef.current = spawnPosition;
+    setWalkPath([]);
+    walkPathRef.current = [];
+    setDestination(null);
+    setSelectedNPC(null);
+    setDialogIndex(0);
+    setChasingMobId(null);
+    chasingMobRef.current = null;
+    setActiveCombatId(null);
+  }, [character.lastPosition, mapData.name, mapData.playerStart]);
+
   // Sync player position back to character state periodically or when moving
   useEffect(() => {
     if (activeCombatId) return; // Don't sync during combat to avoid jitter

@@ -114,6 +114,11 @@ function AppContent() {
 
   const [toast, setToast] = useState<{ message: string; icon: string } | null>(null);
   const [questToast, setQuestToast] = useState<{ message: string; icon: string } | null>(null);
+  const [deathNotice, setDeathNotice] = useState<{
+    title: string;
+    message: string;
+    buttonLabel: string;
+  } | null>(null);
   const [cityServiceContext, setCityServiceContext] = useState<{ service: "shop" | "guild"; npcName: string; regionName: string } | null>(null);
   const [showTeleportMenu, setShowTeleportMenu] = useState(false);
 
@@ -197,13 +202,20 @@ function AppContent() {
 
     const result = await acceptQuestFromNPC(character, quest);
     if (result.success) {
-      setCharacter(result.updatedCharacter);
+      const questRegionCharacter: Character = {
+        ...result.updatedCharacter,
+        currentRegion: quest.region,
+        questState: "map",
+        lastPosition: undefined,
+      };
+      const savedCharacter = await dbUpdateCharacter(questRegionCharacter);
+      setCharacter(savedCharacter);
       setActiveQuest(quest);
-      setQuestState("active");
+      setQuestState("map");
       setCityServiceContext(null);
       setActiveTab("World");
       setQuestToast({
-        message: `New Quest: ${quest.title}`,
+        message: `New Quest: ${quest.title} - Travel to ${quest.region}`,
         icon: "⚔️"
       });
     }
@@ -313,8 +325,66 @@ function AppContent() {
   };
 
   const handleUpdateCharacter = useCallback((updates: Partial<Character>) => {
-    setCharacter(prev => prev ? { ...prev, ...updates } : null);
-  }, []);
+    setCharacter(prev => {
+      if (!prev) return null;
+
+      const updatedCharacter = { ...prev, ...updates };
+      if ((updates.hp ?? updatedCharacter.hp) > 0) {
+        return updatedCharacter;
+      }
+
+      const respawnedCharacter: Character = {
+        ...updatedCharacter,
+        hp: updatedCharacter.maxHp,
+        mp: updatedCharacter.maxMp,
+        currentRegion: "Hub Town",
+        lastPosition: undefined,
+      };
+
+      setActiveTab("World");
+      setCityServiceContext(null);
+      setShowTeleportMenu(false);
+      setDeathNotice({
+        title: "You Died",
+        message: "You died... and your body was found by the closest villagers, who began a resurrection ritual and brought you back in Hub Town.",
+        buttonLabel: "Awaken in Hub Town",
+      });
+      audioManager.playSfx("defeat");
+
+      void dbUpdateCharacter({
+        ...respawnedCharacter,
+        inventory,
+      });
+
+      return respawnedCharacter;
+    });
+  }, [inventory]);
+
+  const handleAwakenInHubTown = useCallback(() => {
+    setCharacter(prev => {
+      if (!prev) return null;
+
+      const awakenedCharacter: Character = {
+        ...prev,
+        hp: prev.maxHp,
+        mp: prev.maxMp,
+        currentRegion: "Hub Town",
+        lastPosition: undefined,
+      };
+
+      void dbUpdateCharacter({
+        ...awakenedCharacter,
+        inventory,
+      });
+
+      return awakenedCharacter;
+    });
+
+    setActiveTab("World");
+    setCityServiceContext(null);
+    setShowTeleportMenu(false);
+    setDeathNotice(null);
+  }, [inventory]);
 
   const handleCompleteQuest = async (quest: Quest) => {
     if (!character) return;
@@ -369,10 +439,23 @@ function AppContent() {
         setCharacter(enrichedChar);
         setInventory(enrichedChar.inventory);
         setCompletedQuests(enrichedChar.completedQuests);
+        setQuestState(enrichedChar.questState || "list");
+        setActiveQuest(enrichedChar.activeQuestId ? (QUESTS.find(q => q.id === enrichedChar.activeQuestId) || null) : null);
       }
       setIsLoading(false);
     });
   }, []);
+
+  useEffect(() => {
+    if (!character) {
+      setActiveQuest(null);
+      setQuestState("list");
+      return;
+    }
+
+    setQuestState(character.questState || (character.activeQuestId ? "map" : "list"));
+    setActiveQuest(character.activeQuestId ? (QUESTS.find(q => q.id === character.activeQuestId) || null) : null);
+  }, [character]);
 
   // Map selection handler
   const handleRegionChange = (regionId: string) => {
@@ -1206,7 +1289,7 @@ function AppContent() {
                             onBack={() => { }}
                             onNavigateToRegion={handleRegionChange}
                             onMobKilled={handleMobKilled}
-                            onUpdateCharacter={(updates) => character && setCharacter({ ...character, ...updates })}
+                            onUpdateCharacter={handleUpdateCharacter}
                           />
                         );
                       })()}
@@ -1252,6 +1335,49 @@ function AppContent() {
                 currentRegion={character.currentRegion}
                 onRegionChange={handleRegionChange}
               />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {deathNotice && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 24 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 24 }}
+              className="fantasy-card w-full max-w-lg rounded-2xl border border-red-500/30 bg-[radial-gradient(circle_at_top,_rgba(239,68,68,0.18),_transparent_50%),linear-gradient(180deg,rgba(15,23,42,0.96),rgba(2,6,23,0.98))] p-6 shadow-2xl"
+            >
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-red-500/30 bg-red-950/40 text-3xl shadow-[0_0_40px_rgba(239,68,68,0.18)]">
+                  💀
+                </div>
+                <h2
+                  className="mb-3 text-2xl font-bold text-red-300"
+                  style={{ fontFamily: "'Cinzel', serif" }}
+                >
+                  {deathNotice.title}
+                </h2>
+                <p className="mx-auto max-w-md text-sm leading-6 text-slate-300">
+                  {deathNotice.message}
+                </p>
+              </div>
+
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleAwakenInHubTown}
+                  className="rounded-xl border border-amber-500/40 bg-amber-500/15 px-5 py-3 text-sm font-bold text-amber-100 transition hover:bg-amber-500/25"
+                >
+                  {deathNotice.buttonLabel}
+                </button>
+              </div>
             </motion.div>
           </motion.div>
         )}

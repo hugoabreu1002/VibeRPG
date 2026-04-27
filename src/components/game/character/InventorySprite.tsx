@@ -22,6 +22,8 @@ export function InventorySprite({
   rank = 'F',
   animationType = 'idle',
   equippedWeapon,
+  equippedArmor,
+  equippedBoot,
   equippedHat,
   skinColor = '#FDE68A',
   hairColor = '#8B5CF6',
@@ -70,6 +72,189 @@ export function InventorySprite({
   };
 
   const bobOffset = 0; // Removed floating animation
+  const equippedCount = [equippedWeapon, equippedArmor, equippedBoot, equippedHat].filter(Boolean).length;
+
+  const getRarityAccent = (item?: InventoryItem) => {
+    switch (item?.rarity) {
+      case 'rare':
+        return { primary: '#60A5FA', secondary: '#1D4ED8', glow: '#93C5FD' };
+      case 'epic':
+        return { primary: '#A855F7', secondary: '#6D28D9', glow: '#D8B4FE' };
+      case 'legendary':
+        return { primary: '#F59E0B', secondary: '#D97706', glow: '#FDE68A' };
+      default:
+        return { primary: '#94A3B8', secondary: '#475569', glow: '#E2E8F0' };
+    }
+  };
+
+  const armorAccent = getRarityAccent(equippedArmor);
+  const bootAccent = getRarityAccent(equippedBoot);
+  const weaponAccent = getRarityAccent(equippedWeapon);
+
+  const renderEquipmentSparkles = () => {
+    if (equippedCount === 0) return null;
+
+    return (
+      <g opacity={0.8}>
+        <motion.circle
+          cx="-16"
+          cy="-6"
+          r="1"
+          fill={weaponAccent.glow}
+          animate={{ opacity: [0.2, 0.9, 0.2], y: [0, -1.5, 0] }}
+          transition={{ repeat: Infinity, duration: 2.2 }}
+        />
+        <motion.circle
+          cx="15"
+          cy="6"
+          r="0.9"
+          fill={armorAccent.glow}
+          animate={{ opacity: [0.1, 0.7, 0.1], y: [0, 1.2, 0] }}
+          transition={{ repeat: Infinity, duration: 2.6, delay: 0.4 }}
+        />
+        {equippedCount > 2 && (
+          <motion.circle
+            cx="0"
+            cy="24"
+            r="0.9"
+            fill={bootAccent.glow}
+            animate={{ opacity: [0.2, 0.8, 0.2], scale: [1, 1.3, 1] }}
+            transition={{ repeat: Infinity, duration: 1.8, delay: 0.2 }}
+          />
+        )}
+      </g>
+    );
+  };
+
+  const renderArmorOverlay = () => {
+    if (!equippedArmor) return null;
+
+    if (characterClass === 'mage' || characterClass === 'priest') {
+      return (
+        <g>
+          <path d="M-10 8 L-12 28 L12 28 L10 8 Q0 5 -10 8 Z" fill={armorAccent.primary} opacity="0.24" />
+          <path d="M-6 10 L0 16 L6 10" fill="none" stroke={armorAccent.glow} strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M0 10 L0 26" fill="none" stroke={armorAccent.glow} strokeWidth="0.9" opacity="0.75" />
+        </g>
+      );
+    }
+
+    if (characterClass === 'warrior') {
+      return (
+        <g>
+          <path d="M-11 4 L-13 25 L13 25 L11 4 Q0 1 -11 4 Z" fill={armorAccent.primary} opacity="0.22" />
+          <path d="M-8 8 L0 4 L8 8 L6 20 L0 24 L-6 20 Z" fill="none" stroke={armorAccent.glow} strokeWidth="1.1" />
+          <circle cx="0" cy="14" r="2" fill={armorAccent.glow} opacity="0.85" />
+        </g>
+      );
+    }
+
+    return (
+      <g>
+        <path d="M-9 6 L-11 24 L11 24 L9 6 Q0 3 -9 6 Z" fill={armorAccent.primary} opacity="0.2" />
+        <path d="M-8 9 L8 9 M-6 16 L6 16" stroke={armorAccent.glow} strokeWidth="1" opacity="0.8" />
+      </g>
+    );
+  };
+
+  const renderBootOverlay = () => {
+    if (!equippedBoot) {
+      const defaultFill = characterClass === 'warrior'
+        ? '#4B5563'
+        : characterClass === 'rogue'
+          ? '#1F2937'
+          : characterClass === 'archer'
+            ? '#451A03'
+            : characterClass === 'priest'
+              ? '#78350F'
+              : '#5D4037';
+
+      const height = characterClass === 'mage' || characterClass === 'priest' ? 4 : 6;
+
+      return (
+        <g>
+          <rect x="-10" y="28" width="8" height={height} fill={defaultFill} rx="1" />
+          <rect x="2" y="28" width="8" height={height} fill={defaultFill} rx="1" />
+        </g>
+      );
+    }
+
+    return (
+      <g>
+        <rect x="-10" y="28" width="8" height="6" fill={bootAccent.primary} rx="1" opacity="0.95" />
+        <rect x="2" y="28" width="8" height="6" fill={bootAccent.primary} rx="1" opacity="0.95" />
+        <rect x="-11" y="33" width="10" height="1.5" fill={bootAccent.secondary} rx="0.75" />
+        <rect x="1" y="33" width="10" height="1.5" fill={bootAccent.secondary} rx="0.75" />
+      </g>
+    );
+  };
+
+  const renderWeaponOverlay = () => {
+    if (!equippedWeapon) return null;
+
+    const weaponId = String(equippedWeapon.id);
+
+    if (weaponId.includes('staff')) {
+      return (
+        <g>
+          <rect x="20" y="-16" width="3" height="48" fill="#78350F" stroke="#451A03" strokeWidth="0.3" />
+          <circle cx="21.5" cy="-20" r="6" fill={weaponAccent.primary} stroke={weaponAccent.glow} strokeWidth="0.5" />
+          <circle cx="21.5" cy="-20" r="3" fill={weaponAccent.glow} />
+          <motion.circle
+            cx="21.5"
+            cy="-20"
+            r="1.5"
+            fill="#FFFFFF"
+            animate={{ opacity: [0.4, 1, 0.4] }}
+            transition={{ repeat: Infinity, duration: 1.5 }}
+          />
+        </g>
+      );
+    }
+
+    if (weaponId.includes('sword')) {
+      return (
+        <g>
+          <rect x="22" y="4" width="4" height="18" fill="#78350F" stroke="#451A03" strokeWidth="0.3" />
+          <path d="M22 -8 L24 -16 L26 -8 L26 4 L22 4 Z" fill={weaponAccent.glow} stroke={weaponAccent.primary} strokeWidth="0.3" />
+          <path d="M23 -6 L24 -12 L25 -6" fill="white" opacity="0.5" />
+          <rect x="20" y="2" width="8" height="3" fill={weaponAccent.secondary} stroke={weaponAccent.primary} strokeWidth="0.3" />
+        </g>
+      );
+    }
+
+    if (weaponId.includes('mace')) {
+      return (
+        <g>
+          <rect x="20.5" y="2" width="3" height="24" fill="#78350F" stroke="#451A03" strokeWidth="0.3" />
+          <circle cx="22" cy="-2" r="5" fill={weaponAccent.primary} stroke={weaponAccent.secondary} strokeWidth="0.5" />
+          <path d="M18 -2 L26 -2 M22 -6 L22 2" stroke={weaponAccent.glow} strokeWidth="0.8" />
+        </g>
+      );
+    }
+
+    if (weaponId.includes('bow')) {
+      return (
+        <g>
+          <path d="M-22 4 Q-30 12 -22 20" fill="none" stroke="#78350F" strokeWidth="2" strokeLinecap="round" />
+          <line x1="-22" y1="4" x2="-22" y2="20" stroke={weaponAccent.glow} strokeWidth="0.7" />
+        </g>
+      );
+    }
+
+    if (weaponId.includes('dagger')) {
+      return (
+        <g>
+          <rect x="-20" y="10" width="2" height="12" fill="#78350F" />
+          <path d="M-20 2 L-19 -4 L-18 2 L-18 10 L-20 10 Z" fill={weaponAccent.glow} stroke={weaponAccent.primary} strokeWidth="0.3" />
+          <rect x="18" y="10" width="2" height="12" fill="#78350F" />
+          <path d="M18 2 L19 -4 L20 2 L20 10 L18 10 Z" fill={weaponAccent.glow} stroke={weaponAccent.primary} strokeWidth="0.3" />
+        </g>
+      );
+    }
+
+    return null;
+  };
 
   const renderFace = () => {
     switch (faceStyle) {
@@ -168,6 +353,7 @@ export function InventorySprite({
       <path d="M-14 4 L-16 32 L16 32 L14 4 Q0 0 -14 4 Z" fill="url(#mage-robe)" stroke="#4C1D95" strokeWidth="0.5" />
       {/* Robe overlay */}
       <path d="M-12 6 L-14 30 L14 30 L12 6 Q0 2 -12 6 Z" fill="#5B21B6" opacity="0.6" />
+      {renderArmorOverlay()}
       
       {/* Belt */}
       <rect x="-14" y="20" width="28" height="3" fill="#78350F" stroke="#451A03" strokeWidth="0.5" />
@@ -215,24 +401,8 @@ export function InventorySprite({
       <ellipse cx="-18" cy="19" rx="3" ry="3.5" fill="url(#mage-skin)" />
       <ellipse cx="18" cy="19" rx="3" ry="3.5" fill="url(#mage-skin)" />
       
-      {/* Weapon */}
-      {equippedWeapon && String(equippedWeapon.id).includes("staff") && (
-        <g>
-          <rect x="20" y="-16" width="3" height="48" fill="#78350F" stroke="#451A03" strokeWidth="0.3" />
-          <circle cx="21.5" cy="-20" r="6" fill="#8B5CF6" stroke="#A78BFA" strokeWidth="0.5" />
-          <circle cx="21.5" cy="-20" r="3" fill="#A78BFA" />
-          <motion.circle 
-            cx="21.5" cy="-20" r="1.5" 
-            fill="#C4B5FD"
-            animate={{ opacity: [0.5, 1, 0.5] }}
-            transition={{ repeat: Infinity, duration: 1.5 }}
-          />
-        </g>
-      )}
-      
-      {/* Boots */}
-      <rect x="-10" y="30" width="8" height="4" fill="#5D4037" rx="1" />
-      <rect x="2" y="30" width="8" height="4" fill="#5D4037" rx="1" />
+      {renderWeaponOverlay()}
+      {renderBootOverlay()}
     </g>
   );
 
@@ -254,6 +424,7 @@ export function InventorySprite({
       <path d="M-14 2 L-16 30 L16 30 L14 2 Q0 -2 -14 2 Z" fill="url(#warrior-armor)" stroke="#4B5563" strokeWidth="0.5" />
       {/* Chest plate */}
       <path d="M-12 4 L-14 26 L14 26 L12 4 Q0 0 -12 4 Z" fill="#9CA3AF" stroke="#6B7280" strokeWidth="0.3" />
+      {renderArmorOverlay()}
       
       {/* Shoulder pads */}
       <ellipse cx="-16" cy="6" rx="6" ry="4" fill="#6B7280" stroke="#4B5563" strokeWidth="0.5" />
@@ -306,19 +477,8 @@ export function InventorySprite({
       <ellipse cx="-20" cy="17" rx="4" ry="4" fill="#6B7280" stroke="#4B5563" strokeWidth="0.3" />
       <ellipse cx="20" cy="17" rx="4" ry="4" fill="#6B7280" stroke="#4B5563" strokeWidth="0.3" />
       
-      {/* Weapon */}
-      {equippedWeapon && String(equippedWeapon.id).includes("sword") && (
-        <g>
-          <rect x="22" y="4" width="4" height="18" fill="#78350F" stroke="#451A03" strokeWidth="0.3" />
-          <path d="M22 -8 L24 -16 L26 -8 L26 4 L22 4 Z" fill="#D1D5DB" stroke="#9CA3AF" strokeWidth="0.3" />
-          <path d="M23 -6 L24 -12 L25 -6" fill="white" opacity="0.5" />
-          <rect x="20" y="2" width="8" height="3" fill="#9CA3AF" stroke="#6B7280" strokeWidth="0.3" />
-        </g>
-      )}
-      
-      {/* Boots */}
-      <rect x="-10" y="28" width="8" height="6" fill="#4B5563" rx="1" />
-      <rect x="2" y="28" width="8" height="6" fill="#4B5563" rx="1" />
+      {renderWeaponOverlay()}
+      {renderBootOverlay()}
     </g>
   );
 
@@ -348,6 +508,7 @@ export function InventorySprite({
       <path d="M-14 2 L-16 32 L16 32 L14 2 Q0 -2 -14 2 Z" fill="url(#priest-robe)" stroke="#D1D5DB" strokeWidth="0.5" />
       {/* Robe overlay */}
       <path d="M-12 4 L-14 30 L14 30 L12 4 Q0 0 -12 4 Z" fill="#FEFEFE" opacity="0.8" />
+      {renderArmorOverlay()}
       
       {/* Golden trim */}
       <path d="M-14 10 L14 10" stroke="#F59E0B" strokeWidth="2" />
@@ -385,10 +546,8 @@ export function InventorySprite({
       <rect x="17" y="13" width="6" height="8" fill="#8B5CF6" />
       <rect x="18" y="14" width="4" height="6" fill="#DDD6FE" />
       <line x1="20" y1="14" x2="20" y2="20" stroke="#7C3AED" strokeWidth="0.3" />
-      
-      {/* Boots */}
-      <rect x="-10" y="30" width="8" height="4" fill="#78350F" rx="1" />
-      <rect x="2" y="30" width="8" height="4" fill="#78350F" rx="1" />
+      {renderWeaponOverlay()}
+      {renderBootOverlay()}
     </g>
   );
 
@@ -407,6 +566,7 @@ export function InventorySprite({
       
       {/* Body outfit */}
       <path d="M-12 2 L-14 30 L14 30 L12 2 Q0 -2 -12 2 Z" fill="url(#rogue-outfit)" stroke="#111827" strokeWidth="0.5" />
+      {renderArmorOverlay()}
       {/* Leather straps */}
       <rect x="-12" y="8" width="24" height="2" fill="#78350F" />
       <rect x="-10" y="16" width="20" height="2" fill="#78350F" />
@@ -446,20 +606,8 @@ export function InventorySprite({
       <ellipse cx="-16" cy="15" rx="3" ry="3.5" fill="#1F2937" />
       <ellipse cx="16" cy="15" rx="3" ry="3.5" fill="#1F2937" />
       
-      {/* Weapons - dual daggers */}
-      {equippedWeapon && (
-        <g>
-          <rect x="-20" y="10" width="2" height="12" fill="#78350F" />
-          <path d="M-20 2 L-19 -4 L-18 2 L-18 10 L-20 10 Z" fill="#9CA3AF" stroke="#6B7280" strokeWidth="0.3" />
-          
-          <rect x="18" y="10" width="2" height="12" fill="#78350F" />
-          <path d="M18 2 L19 -4 L20 2 L20 10 L18 10 Z" fill="#9CA3AF" stroke="#6B7280" strokeWidth="0.3" />
-        </g>
-      )}
-      
-      {/* Boots */}
-      <rect x="-10" y="28" width="8" height="6" fill="#1F2937" rx="1" />
-      <rect x="2" y="28" width="8" height="6" fill="#1F2937" rx="1" />
+      {renderWeaponOverlay()}
+      {renderBootOverlay()}
     </g>
   );
 
@@ -478,6 +626,7 @@ export function InventorySprite({
       
       {/* Body outfit */}
       <path d="M-12 2 L-14 30 L14 30 L12 2 Q0 -2 -12 2 Z" fill="url(#archer-outfit)" stroke="#064E3B" strokeWidth="0.5" />
+      {renderArmorOverlay()}
       {/* Leather straps */}
       <rect x="-10" y="8" width="20" height="2" fill="#78350F" />
       
@@ -524,17 +673,8 @@ export function InventorySprite({
       <ellipse cx="-16" cy="15" rx="3" ry="3.5" fill="url(#archer-skin)" />
       <ellipse cx="16" cy="15" rx="3" ry="3.5" fill="url(#archer-skin)" />
       
-      {/* Weapon - Bow */}
-      {equippedWeapon && (
-        <g>
-          <path d="M-22 4 Q-30 12 -22 20" fill="none" stroke="#78350F" strokeWidth="2" strokeLinecap="round" />
-          <line x1="-22" y1="4" x2="-22" y2="20" stroke="#FDE68A" strokeWidth="0.5" />
-        </g>
-      )}
-      
-      {/* Boots */}
-      <rect x="-10" y="28" width="8" height="6" fill="#451A03" rx="1" />
-      <rect x="2" y="28" width="8" height="6" fill="#451A03" rx="1" />
+      {renderWeaponOverlay()}
+      {renderBootOverlay()}
     </g>
   );
 
@@ -598,6 +738,7 @@ export function InventorySprite({
         className="overflow-visible"
         style={{ transform: `translateY(${bobOffset}px)` }}
       >
+        {renderEquipmentSparkles()}
         {renderCharacter()}
       </svg>
     </motion.div>
