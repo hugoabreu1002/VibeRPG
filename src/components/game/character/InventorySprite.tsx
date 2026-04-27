@@ -694,7 +694,7 @@ export function InventorySprite({
       variants={getAnimationVariant()}
       initial="initial"
       animate="animate"
-      className="relative flex flex-col items-center"
+      className="pixel-sprite relative flex flex-col items-center"
       style={{ scale: rankVisuals.scale }}
     >
       {/* Rank Aura */}
@@ -712,7 +712,7 @@ export function InventorySprite({
               repeat: Infinity, 
               ease: "linear" 
             }}
-            className="absolute inset-[-12px] rounded-full z-0 pointer-events-none"
+            className="absolute inset-[-12px] z-0 pointer-events-none"
             style={{ 
               background: `radial-gradient(circle, ${rankVisuals.aura} 0%, transparent 70%)`,
               border: `1px dashed ${rankVisuals.border}`
@@ -726,7 +726,7 @@ export function InventorySprite({
         <motion.div
           animate={{ opacity: [0.2, 0.5, 0.2] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute inset-[-20px] bg-red-500/10 blur-xl rounded-full z-0"
+          className="absolute inset-[-20px] bg-red-500/10 blur-xl z-0"
         />
       )}
 
@@ -735,8 +735,8 @@ export function InventorySprite({
         width="64"
         height="64"
         viewBox="-24 -24 48 48"
-        className="overflow-visible"
-        style={{ transform: `translateY(${bobOffset}px)` }}
+        className="overflow-visible pixel-sprite"
+        style={{ transform: `translateY(${bobOffset}px)`, shapeRendering: "crispEdges" }}
       >
         {renderEquipmentSparkles()}
         {renderCharacter()}

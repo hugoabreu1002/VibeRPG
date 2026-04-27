@@ -7,10 +7,11 @@ interface NPCSpriteProps {
 }
 
 export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) => {
+  const spriteClass = `pixel-sprite overflow-visible ${className}`.trim();
   switch (type) {
     case 'elder':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M22 28 Q20 40 24 50 L40 50 Q44 40 42 28" fill="#E5E7EB" />
           <path d="M24 30 Q22 42 26 48 L38 48 Q42 42 40 30" fill="#D1D5DB" />
           <circle cx="32" cy="22" r="12" fill="#FDE68A" />
@@ -37,7 +38,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'guard':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M22 12 L42 12 L44 24 L20 24 Z" fill="#6B7280" />
           <path d="M24 12 L40 12 L38 8 L26 8 Z" fill="#9CA3AF" />
           <rect x="20" y="20" width="24" height="4" fill="#4B5563" />
@@ -63,7 +64,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'merchant':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M20 18 Q32 8 44 18 Q44 28 32 26 Q20 28 20 18" fill="#F59E0B" />
           <path d="M22 20 Q32 12 42 20 Q42 26 32 24 Q22 26 22 20" fill="#FBBF24" />
           <circle cx="32" cy="15" r="3" fill="#EF4444" />
@@ -94,7 +95,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'wizard':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M20 22 L44 22 L32 2 Z" fill="#4C1D95" />
           <path d="M22 22 L42 22 L32 6 Z" fill="#5B21B6" />
           <path d="M24 22 L40 22 L32 10 Z" fill="#6D28D9" />
@@ -135,7 +136,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'knight':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M22 8 L42 8 L46 26 L18 26 Z" fill="#9CA3AF" />
           <path d="M24 8 L40 8 L42 24 L22 24 Z" fill="#D1D5DB" />
           <rect x="22" y="16" width="20" height="6" fill="#4B5563" />
@@ -167,7 +168,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'priest':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <ellipse cx="32" cy="10" rx="10" ry="3" fill="#FDE68A" opacity="0.8" />
           <ellipse cx="32" cy="10" rx="8" ry="2" fill="#FBBF24" />
           <circle cx="32" cy="22" r="10" fill="#FEE2E2" />
@@ -200,7 +201,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'fairy':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <circle cx="32" cy="32" r="20" fill="#F9A8D4" opacity="0.2" className="animate-pulse" />
           <motion.g animate={{ opacity: [0.4, 0.8, 0.4] }} transition={{ duration: 1.5, repeat: Infinity }}>
             <path d="M32 30 Q10 15 8 35 Q10 50 32 40 Z" fill="#FBCFE8" stroke="#F472B6" strokeWidth="1" />
@@ -233,7 +234,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'monster':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <ellipse cx="32" cy="40" rx="18" ry="20" fill="#7F1D1D" />
           <ellipse cx="32" cy="40" rx="16" ry="18" fill="#991B1B" />
           <circle cx="26" cy="35" r="3" fill="#7F1D1D" />
@@ -274,7 +275,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'warrior':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M22 12 L42 12 L44 26 L20 26 Z" fill="#92400E" />
           <path d="M24 12 L40 12 L42 24 L22 24 Z" fill="#B45309" />
           <rect x="30" y="14" width="4" height="12" fill="#78350F" />
@@ -305,7 +306,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'mage':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M22 18 L42 18 L32 2 Z" fill="#1E3A8A" />
           <path d="M24 18 L40 18 L32 6 Z" fill="#1E40AF" />
           <path d="M26 18 L38 18 L32 10 Z" fill="#2563EB" />
@@ -346,7 +347,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     case 'rogue':
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <path d="M18 16 Q32 4 46 16 L48 32 Q32 28 16 32 Z" fill="#111827" />
           <path d="M20 18 Q32 8 44 18 L46 30 Q32 26 18 30 Z" fill="#1F2937" />
           <path d="M22 22 Q32 18 42 22 L40 32 Q32 30 24 32 Z" fill="#0F172A" opacity="0.7" />
@@ -375,7 +376,7 @@ export const NPCSprite: React.FC<NPCSpriteProps> = ({ type, className = "" }) =>
       );
     default:
       return (
-        <svg viewBox="0 0 64 64" className={className}>
+        <svg viewBox="-16 -16 96 96" className={spriteClass}>
           <circle cx="32" cy="24" r="10" fill="#FDE68A" />
           <circle cx="32" cy="24" r="9" fill="#FEF3C7" />
           <ellipse cx="28" cy="23" rx="2" ry="2" fill="#1E293B" />

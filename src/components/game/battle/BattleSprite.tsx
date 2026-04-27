@@ -136,11 +136,11 @@ export function BattleSprite({
       variants={getAnimationVariant()}
       initial="initial"
       animate="animate"
-      className="relative flex flex-col items-center"
+      className="pixel-sprite relative flex flex-col items-center"
     >
       {/* Name label */}
       <div className={`absolute -top-12 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-black tracking-widest uppercase text-amber-200 drop-shadow-[0_2px_4px_rgba(0,0,0,1)] ${
-        isPlayer ? '' : 'bg-black/20 px-2 py-0.5 rounded-full border border-amber-500/10'
+        isPlayer ? '' : 'bg-black/20 px-2 py-0.5 rounded-sm border border-amber-500/10'
       }`}>
         {displayName}
       </div>
@@ -156,7 +156,7 @@ export function BattleSprite({
                 opacity: [0.3, 0.6 * (1.2 - hpFactor * 0.2), 0.3]
               }}
               transition={{ duration: 2 + hpFactor * 2, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute inset-0 rounded-full blur-3xl -z-10"
+              className="absolute inset-0 blur-3xl -z-10"
               style={{ backgroundColor: baseAura, transform: 'scale(1.8) translateY(10px)' }}
             />
             
@@ -188,7 +188,7 @@ export function BattleSprite({
 
             {/* Ground Reflection */}
             <div 
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-32 h-6 rounded-full blur-xl -z-20 opacity-30"
+              className="absolute -bottom-6 left-1/2 h-6 w-32 -translate-x-1/2 blur-xl -z-20 opacity-30"
               style={{ 
                 background: `radial-gradient(circle, ${colors.accent} 0%, transparent 70%)` 
               }}
@@ -206,11 +206,11 @@ export function BattleSprite({
           />
         ) : (
           <svg
-            width="64"
-            height="64"
-            viewBox="-24 -24 48 48"
-            className="overflow-visible"
-            style={{ transform: `translateY(${bobOffset}px)` }}
+            width="100"
+            height="100"
+            viewBox="-50 -50 100 100"
+            className="overflow-visible pixel-sprite"
+            style={{ transform: `translateY(${bobOffset}px)`, shapeRendering: "crispEdges", marginLeft: "-18px", marginTop: "-18px" }}
           >
             <EnemySpriteBody sprite={enemySprite || 'default'} />
           </svg>

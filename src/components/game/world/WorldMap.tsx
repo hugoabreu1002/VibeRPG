@@ -9,11 +9,66 @@ import { InventorySprite } from "../character/InventorySprite";
 import { ExclamationIndicator, GuildTabIcon, ShopTabIcon } from "../ui/GameIcons";
 import { NPCSprite } from "./NPCSprites";
 
-const TILE_SIZE = 80;
+const TILE_SIZE = 64;
 const WANDER_RADIUS = 5;
 const COMBAT_INTERVAL_MS = 850;
+const WALK_STEP_MS = 220;
 const MOB_COUNT_MIN = 4;
 const MOB_COUNT_MAX = 6;
+const SCENE_TILT = "perspective(1700px) rotateX(17deg) scale(1.04)";
+
+type LandmarkStyle = "house" | "tower" | "guild" | "shrine" | "ruin" | "camp";
+
+interface MapLandmark {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  style: LandmarkStyle;
+}
+
+const MAP_LANDMARKS: Record<string, MapLandmark[]> = {
+  "Hub Town": [
+    { x: 11, y: 1, w: 3, h: 3, style: "guild" },
+    { x: 16, y: 1, w: 3, h: 3, style: "tower" },
+    { x: 7, y: 6, w: 3, h: 3, style: "house" },
+    { x: 20, y: 6, w: 3, h: 3, style: "house" },
+    { x: 13, y: 12, w: 4, h: 3, style: "shrine" },
+  ],
+  "Northern Field": [
+    { x: 4, y: 3, w: 3, h: 2, style: "house" },
+    { x: 18, y: 4, w: 3, h: 2, style: "camp" },
+  ],
+  "Whispering Woods": [
+    { x: 10, y: 7, w: 3, h: 3, style: "ruin" },
+    { x: 20, y: 5, w: 2, h: 3, style: "tower" },
+  ],
+  "Mountain Pass": [
+    { x: 13, y: 3, w: 3, h: 2, style: "camp" },
+    { x: 8, y: 11, w: 3, h: 3, style: "ruin" },
+  ],
+  "Trade Route": [
+    { x: 10, y: 3, w: 3, h: 2, style: "house" },
+    { x: 19, y: 10, w: 3, h: 2, style: "camp" },
+  ],
+  "Training Grounds": [
+    { x: 12, y: 7, w: 4, h: 3, style: "guild" },
+    { x: 5, y: 12, w: 3, h: 2, style: "camp" },
+  ],
+  "Dark Forest": [
+    { x: 8, y: 8, w: 3, h: 3, style: "ruin" },
+    { x: 18, y: 6, w: 2, h: 3, style: "tower" },
+  ],
+  "Dragon Peak": [
+    { x: 12, y: 2, w: 4, h: 3, style: "shrine" },
+    { x: 7, y: 8, w: 3, h: 2, style: "camp" },
+  ],
+  "Capital City": [
+    { x: 7, y: 4, w: 4, h: 3, style: "guild" },
+    { x: 12, y: 4, w: 4, h: 3, style: "shrine" },
+    { x: 4, y: 10, w: 3, h: 2, style: "house" },
+  ],
+};
 // A map is a safe settlement (no monsters) when its mapType is "town".
 // Fields and dungeons are combat zones.
 const isSafeSettlementMap = (mapType: string) => mapType === "town";
@@ -128,16 +183,13 @@ const MapCanvas = memo(({
   const dimsRef   = useRef({ width: 0, height: 0 });
   const rafRef    = useRef<number>(0);
 
-  // Cache iso positions
-  const getIso = useCallback((x: number, y: number) => ({
-    x: (x - y) * (tileSize / 2),
-    y: (x + y) * (tileSize / 4),
+  const getGrid = useCallback((x: number, y: number) => ({
+    x: x * tileSize + tileSize / 2,
+    y: y * tileSize + tileSize / 2,
   }), [tileSize]);
 
   const isSettlementMap = mapData.mapType === "town";
-  const isHubTown = mapData.name === "Hub Town";
 
-  // Resize observer — update dims ref and trigger redraw
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas?.parentElement) return;
@@ -153,7 +205,6 @@ const MapCanvas = memo(({
     return () => obs.disconnect();
   }, []);
 
-  // Trigger redraw when camera-relevant props change
   useEffect(() => { scheduleRedraw(); }, [mapData, playerPos]);
 
   function scheduleRedraw() {
@@ -164,409 +215,338 @@ const MapCanvas = memo(({
   function draw() {
     const canvas = canvasRef.current;
     if (!canvas) return;
+
     const { width, height } = dimsRef.current;
-    if (width === 0) return;
+    if (width === 0 || height === 0) return;
 
     const dpr = window.devicePixelRatio || 1;
     if (canvas.width !== Math.round(width * dpr) || canvas.height !== Math.round(height * dpr)) {
-      canvas.width  = Math.round(width * dpr);
+      canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
     }
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    ctx.fillStyle = mapData.mapType === "dungeon" ? "#05070d" : "#0a1710";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = mapData.mapType === "dungeon" ? "#05080a" : "#101514";
     ctx.fillRect(0, 0, width, height);
+
+    const palette: Record<string, { base: string; shade: string; detail: string }> = {
+      grass: { base: "#2f6f2f", shade: "#214d21", detail: "#4c9f4c" },
+      path: { base: "#8a7756", shade: "#66573f", detail: "#b09a6e" },
+      town: { base: "#6f6760", shade: "#4f4842", detail: "#938981" },
+      forest: { base: "#1e4a2f", shade: "#143222", detail: "#347c46" },
+      water: { base: "#215c8b", shade: "#163f61", detail: "#4da0d4" },
+      mountain: { base: "#6b6765", shade: "#4c4947", detail: "#95908c" },
+      cave: { base: "#343b44", shade: "#21262c", detail: "#566272" },
+      lava: { base: "#9f351a", shade: "#702413", detail: "#ff8a3d" },
+    };
+
+    const drawLandmark = (landmark: MapLandmark) => {
+      const bx = landmark.x * tileSize + 3;
+      const by = landmark.y * tileSize - tileSize * 0.78;
+      const bw = landmark.w * tileSize - 6;
+      const bh = landmark.h * tileSize + 6;
+
+      const stylePalette: Record<LandmarkStyle, {
+        wall: string;
+        wallDark: string;
+        roof: string;
+        roofDark: string;
+        trim: string;
+        window: string;
+        door: string;
+      }> = {
+        house: {
+          wall: "#c8b497",
+          wallDark: "#9e8c76",
+          roof: "#8b4f31",
+          roofDark: "#6b3a24",
+          trim: "#e7cfad",
+          window: "#f6df9b",
+          door: "#5d3a26",
+        },
+        tower: {
+          wall: "#a9a8b2",
+          wallDark: "#7b7a85",
+          roof: "#5f3f32",
+          roofDark: "#472f26",
+          trim: "#d7d7de",
+          window: "#efe7bd",
+          door: "#4a3427",
+        },
+        guild: {
+          wall: "#8b909f",
+          wallDark: "#646a75",
+          roof: "#73422d",
+          roofDark: "#5a3223",
+          trim: "#f0cd73",
+          window: "#f2e2ac",
+          door: "#473126",
+        },
+        shrine: {
+          wall: "#d8d5cb",
+          wallDark: "#acaaa0",
+          roof: "#9b6a39",
+          roofDark: "#7d532d",
+          trim: "#f2ddaf",
+          window: "#f8ecc8",
+          door: "#66513e",
+        },
+        ruin: {
+          wall: "#8b8279",
+          wallDark: "#625b53",
+          roof: "#6f6a63",
+          roofDark: "#504b45",
+          trim: "#b3a697",
+          window: "#c7bba8",
+          door: "#4d443b",
+        },
+        camp: {
+          wall: "#b08a62",
+          wallDark: "#7a5e42",
+          roof: "#9b6a44",
+          roofDark: "#744f32",
+          trim: "#d8ba8f",
+          window: "#f4db9a",
+          door: "#5d422e",
+        },
+      };
+      const p = stylePalette[landmark.style];
+
+      const roofPeak = by + 6;
+      const roofBase = by + Math.max(18, Math.round(bh * 0.28));
+      const bodyTop = roofBase + 6;
+      const bodyBottom = by + bh - 6;
+      const bodyHeight = Math.max(16, bodyBottom - bodyTop);
+
+      ctx.fillStyle = "rgba(0, 0, 0, 0.24)";
+      ctx.fillRect(bx + 8, by + bh - 8, Math.max(12, bw - 16), 7);
+
+      if (landmark.style === "tower") {
+        const tx = bx + bw * 0.22;
+        const tw = bw * 0.56;
+        ctx.fillStyle = p.wallDark;
+        ctx.fillRect(tx + tw * 0.62, bodyTop + 6, tw * 0.38, bodyHeight - 2);
+        ctx.fillStyle = p.wall;
+        ctx.fillRect(tx, bodyTop, tw * 0.72, bodyHeight);
+
+        ctx.fillStyle = p.roofDark;
+        ctx.fillRect(tx + tw * 0.16, roofPeak - 3, tw * 0.74, 10);
+        ctx.fillStyle = p.roof;
+        ctx.fillRect(tx + tw * 0.04, roofPeak + 1, tw * 0.74, 8);
+
+        ctx.fillStyle = p.trim;
+        for (let c = 0; c < 4; c++) {
+          ctx.fillRect(tx + 4 + c * ((tw - 12) / 4), roofPeak - 6, 4, 6);
+        }
+        ctx.fillStyle = p.window;
+        ctx.fillRect(tx + tw * 0.24, bodyTop + 12, 6, 8);
+        ctx.fillRect(tx + tw * 0.24, bodyTop + 26, 6, 8);
+        ctx.fillStyle = p.door;
+        ctx.fillRect(tx + tw * 0.28, bodyBottom - 13, 10, 13);
+      } else if (landmark.style === "camp") {
+        const tentTop = by + bh * 0.38;
+        ctx.fillStyle = p.roofDark;
+        ctx.beginPath();
+        ctx.moveTo(bx + 8, bodyBottom);
+        ctx.lineTo(bx + bw * 0.46, tentTop);
+        ctx.lineTo(bx + bw - 8, bodyBottom);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = p.roof;
+        ctx.beginPath();
+        ctx.moveTo(bx + 12, bodyBottom);
+        ctx.lineTo(bx + bw * 0.46, tentTop + 4);
+        ctx.lineTo(bx + bw - 12, bodyBottom);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = p.trim;
+        ctx.fillRect(bx + bw * 0.46 - 2, tentTop + 6, 4, bodyBottom - tentTop - 6);
+        ctx.fillStyle = p.window;
+        ctx.fillRect(bx + bw * 0.46 - 3, bodyBottom - 16, 6, 6);
+      } else if (landmark.style === "ruin") {
+        ctx.fillStyle = p.wallDark;
+        ctx.fillRect(bx + 8, bodyTop + 6, bw - 16, bodyHeight - 4);
+        ctx.fillStyle = p.wall;
+        ctx.fillRect(bx + 4, bodyTop, bw * 0.38, bodyHeight);
+        ctx.fillRect(bx + bw * 0.52, bodyTop + 10, bw * 0.34, bodyHeight - 10);
+        ctx.fillStyle = p.trim;
+        ctx.fillRect(bx + 14, bodyTop + 8, 8, 10);
+        ctx.fillRect(bx + bw * 0.6, bodyTop + 14, 7, 8);
+      } else {
+        ctx.fillStyle = p.wallDark;
+        ctx.fillRect(bx + bw * 0.7, bodyTop + 5, bw * 0.3, bodyHeight - 1);
+        ctx.fillStyle = p.wall;
+        ctx.fillRect(bx, bodyTop, bw * 0.74, bodyHeight);
+
+        ctx.fillStyle = p.roofDark;
+        ctx.beginPath();
+        ctx.moveTo(bx - 4, roofBase + 9);
+        ctx.lineTo(bx + bw * 0.44, roofPeak - 5);
+        ctx.lineTo(bx + bw + 5, roofBase + 9);
+        ctx.lineTo(bx + bw - 3, roofBase + 14);
+        ctx.lineTo(bx + 3, roofBase + 14);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = p.roof;
+        ctx.beginPath();
+        ctx.moveTo(bx - 2, roofBase + 7);
+        ctx.lineTo(bx + bw * 0.44, roofPeak);
+        ctx.lineTo(bx + bw + 3, roofBase + 7);
+        ctx.lineTo(bx + bw - 2, roofBase + 11);
+        ctx.lineTo(bx + 2, roofBase + 11);
+        ctx.closePath();
+        ctx.fill();
+
+        if (landmark.style === "guild") {
+          ctx.fillStyle = "#bc3930";
+          ctx.fillRect(bx + bw * 0.46, roofBase + 2, 6, 20);
+          ctx.fillStyle = p.trim;
+          ctx.fillRect(bx + bw * 0.46, roofBase + 20, 6, 5);
+        }
+        if (landmark.style === "shrine") {
+          ctx.fillStyle = p.trim;
+          ctx.fillRect(bx + bw * 0.36, roofPeak - 12, 8, 22);
+        }
+
+        const winY = bodyTop + 10;
+        ctx.fillStyle = p.window;
+        ctx.fillRect(bx + 10, winY, 8, 8);
+        ctx.fillRect(bx + bw * 0.52, winY + 1, 8, 8);
+        ctx.fillStyle = p.door;
+        ctx.fillRect(bx + bw * 0.3, bodyBottom - 15, 12, 15);
+      }
+
+      ctx.strokeStyle = "rgba(0,0,0,0.45)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bx + 0.5, bodyTop + 0.5, bw - 1, Math.max(8, bodyHeight - 1));
+    };
+
+    const { x: camX, y: camY } = getGrid(playerPos.x, playerPos.y);
+    const worldLeft = camX - width / 2 - tileSize;
+    const worldRight = camX + width / 2 + tileSize;
+    const worldTop = camY - height / 2 - tileSize;
+    const worldBottom = camY + height / 2 + tileSize;
+
+    const startX = Math.max(0, Math.floor(worldLeft / tileSize));
+    const endX = Math.min(mapData.width - 1, Math.ceil(worldRight / tileSize));
+    const startY = Math.max(0, Math.floor(worldTop / tileSize));
+    const endY = Math.min(mapData.height - 1, Math.ceil(worldBottom / tileSize));
 
     ctx.save();
-    ctx.translate(width / 2, height / 2);
+    ctx.translate(width / 2 - camX, height / 2 - camY);
 
-    const { x: camX, y: camY } = getIso(playerPos.x, playerPos.y);
-    ctx.translate(-camX, -camY);
+    for (let y = startY; y <= endY; y++) {
+      for (let x = startX; x <= endX; x++) {
+        const tile = mapData.tiles[y]?.[x] ?? "grass";
+        const style = palette[tile] ?? palette.grass;
+        const tx = x * tileSize;
+        const ty = y * tileSize;
 
-    const cullBuf = Math.max(width, height) * 0.8;
+        ctx.fillStyle = style.base;
+        ctx.fillRect(tx, ty, tileSize, tileSize);
 
-    const isTile = (x: number, y: number, type: QuestMapData["tiles"][0][0]) => mapData.tiles[y]?.[x] === type;
+        ctx.fillStyle = style.shade;
+        ctx.fillRect(tx, ty + tileSize - 6, tileSize, 6);
+        ctx.fillRect(tx + tileSize - 6, ty, 6, tileSize);
 
-    const hubTownBuildings = [
-      { id: "elder-hall", x: 12, y: 1, w: 6, h: 3, style: "manor" as const },
-      { id: "market", x: 8, y: 6, w: 4, h: 3, style: "market" as const },
-      { id: "temple", x: 2, y: 7, w: 5, h: 3, style: "temple" as const },
-      { id: "guild", x: 18, y: 6, w: 5, h: 3, style: "guild" as const },
-      { id: "barracks", x: 22, y: 7, w: 5, h: 3, style: "barracks" as const },
-      { id: "tower", x: 13, y: 12, w: 4, h: 3, style: "tower" as const },
-    ];
-
-    const drawSettlementStreet = (ctx: CanvasRenderingContext2D, ix: number, iy: number, x: number, y: number) => {
-      ctx.strokeStyle = "rgba(241, 245, 249, 0.18)";
-      ctx.lineWidth = 1;
-      for (let offset = -12; offset <= 12; offset += 8) {
-        ctx.beginPath();
-        ctx.moveTo(ix - 10 + offset / 3, iy - 5 + Math.abs(offset) / 9);
-        ctx.lineTo(ix - 4 + offset / 3, iy - 1 + Math.abs(offset) / 11);
-        ctx.stroke();
-      }
-
-      if ((x + y) % 2 === 0) {
-        ctx.fillStyle = "rgba(255,255,255,0.08)";
-        ctx.fillRect(ix - 8, iy - 2, 4, 2);
-        ctx.fillRect(ix + 2, iy + 1, 4, 2);
-      }
-    };
-
-    const isLargeTownBuildingAnchor = (x: number, y: number) =>
-      isTile(x, y, "town") &&
-      x % 2 === 0 &&
-      y % 2 === 0 &&
-      isTile(x + 1, y, "town") &&
-      isTile(x, y + 1, "town") &&
-      isTile(x + 1, y + 1, "town");
-
-    const drawTownBuilding = (ctx: CanvasRenderingContext2D, ix: number, iy: number, x: number, y: number) => {
-      const variant = Math.abs((x * 17 + y * 31) % 3);
-      const centerX = ix;
-      const centerY = iy + tileSize / 4;
-      const width = 42 + variant * 6;
-      const height = 28 + variant * 3;
-      const roofLift = 16 + variant * 2;
-      const wallColors = ["#D6C6A5", "#CBB694", "#BFA27A"];
-      const roofColors = ["#9A3412", "#7C2D12", "#92400E"];
-      const wallColor = wallColors[variant];
-      const roofColor = roofColors[variant];
-      const hasStreetFront = isTile(x + 1, y, "path") || isTile(x - 1, y, "path") || isTile(x, y + 1, "path") || isTile(x, y - 1, "path");
-
-      ctx.fillStyle = "rgba(0,0,0,0.18)";
-      ctx.fillRect(centerX - width / 2, centerY - 5, width, 5);
-
-      ctx.fillStyle = wallColor;
-      ctx.fillRect(centerX - width / 2, centerY - height, width, height);
-      ctx.strokeStyle = "#5B4636";
-      ctx.lineWidth = 0.8;
-      ctx.strokeRect(centerX - width / 2, centerY - height, width, height);
-
-      ctx.fillStyle = roofColor;
-      ctx.beginPath();
-      ctx.moveTo(centerX - width / 2 - 5, centerY - height + 4);
-      ctx.lineTo(centerX, centerY - height - roofLift);
-      ctx.lineTo(centerX + width / 2 + 5, centerY - height + 4);
-      ctx.lineTo(centerX + width / 2 - 2, centerY - height + 13);
-      ctx.lineTo(centerX - width / 2 + 2, centerY - height + 13);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "#451A03";
-      ctx.stroke();
-
-      ctx.fillStyle = "#FDE68A";
-      ctx.fillRect(centerX - width / 2 + 7, centerY - height + 8, 5, 5);
-      ctx.fillRect(centerX + width / 2 - 12, centerY - height + 8, 5, 5);
-
-      if (hasStreetFront) {
-        ctx.fillStyle = "#78350F";
-        ctx.fillRect(centerX - 3, centerY - 10, 6, 10);
-        ctx.fillStyle = "#B45309";
-        ctx.fillRect(centerX - 10, centerY - 4, 20, 3);
-      }
-
-      if (variant === 2) {
-        ctx.fillStyle = "#6B7280";
-        ctx.fillRect(centerX + width / 2 - 8, centerY - height - roofLift + 8, 5, 12);
-      }
-    };
-
-    const drawHubTownBuilding = (
-      ctx: CanvasRenderingContext2D,
-      building: typeof hubTownBuildings[number]
-    ) => {
-      const center = getIso(building.x + building.w / 2 - 0.5, building.y + building.h / 2 - 0.2);
-      const centerX = center.x;
-      const centerY = center.y + tileSize / 4;
-      const width = (building.w + building.h) * (tileSize * 0.34);
-      const height =
-        building.style === "tower"
-          ? 112
-          : building.style === "manor"
-            ? 82
-            : 68;
-      const roofLift =
-        building.style === "tower"
-          ? 54
-          : building.style === "temple"
-            ? 34
-            : 28;
-
-      const styleMap = {
-        manor: { wall: "#CBB694", roof: "#7C2D12", trim: "#FBBF24", banner: "#7C3AED" },
-        market: { wall: "#BFA27A", roof: "#92400E", trim: "#FDE68A", banner: "#10B981" },
-        temple: { wall: "#E7E5E4", roof: "#D97706", trim: "#FBBF24", banner: "#F8FAFC" },
-        guild: { wall: "#9CA3AF", roof: "#78350F", trim: "#F59E0B", banner: "#B45309" },
-        barracks: { wall: "#94A3B8", roof: "#475569", trim: "#E2E8F0", banner: "#DC2626" },
-        tower: { wall: "#C4B5FD", roof: "#5B21B6", trim: "#DDD6FE", banner: "#8B5CF6" },
-      } as const;
-
-      const palette = styleMap[building.style];
-
-      ctx.fillStyle = "rgba(0,0,0,0.22)";
-      ctx.fillRect(centerX - width / 2, centerY - 6, width, 6);
-
-      if (building.style === "tower") {
-        const towerWidth = width * 0.5;
-        ctx.fillStyle = palette.wall;
-        ctx.fillRect(centerX - towerWidth / 2, centerY - height, towerWidth, height);
-        ctx.strokeStyle = "#4C1D95";
+        ctx.strokeStyle = "rgba(0,0,0,0.22)";
         ctx.lineWidth = 1;
-        ctx.strokeRect(centerX - towerWidth / 2, centerY - height, towerWidth, height);
+        ctx.strokeRect(tx + 0.5, ty + 0.5, tileSize - 1, tileSize - 1);
 
-        ctx.fillStyle = palette.roof;
-        ctx.beginPath();
-        ctx.moveTo(centerX - towerWidth / 2 - 4, centerY - height + 10);
-        ctx.lineTo(centerX, centerY - height - roofLift);
-        ctx.lineTo(centerX + towerWidth / 2 + 4, centerY - height + 10);
-        ctx.closePath();
-        ctx.fill();
-
-        ctx.fillStyle = palette.trim;
-        ctx.fillRect(centerX - 4, centerY - height + 18, 8, 16);
-        ctx.fillRect(centerX - 8, centerY - height + 46, 5, 5);
-        ctx.fillRect(centerX + 3, centerY - height + 46, 5, 5);
-        return;
-      }
-
-      ctx.fillStyle = palette.wall;
-      ctx.fillRect(centerX - width / 2, centerY - height, width, height);
-      ctx.strokeStyle = "#4B5563";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(centerX - width / 2, centerY - height, width, height);
-
-      ctx.fillStyle = palette.roof;
-      ctx.beginPath();
-      ctx.moveTo(centerX - width / 2 - 8, centerY - height + 8);
-      ctx.lineTo(centerX, centerY - height - roofLift);
-      ctx.lineTo(centerX + width / 2 + 8, centerY - height + 8);
-      ctx.lineTo(centerX + width / 2 - 4, centerY - height + 20);
-      ctx.lineTo(centerX - width / 2 + 4, centerY - height + 20);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "#451A03";
-      ctx.stroke();
-
-      ctx.fillStyle = palette.trim;
-      ctx.fillRect(centerX - width / 2 + 12, centerY - height + 16, 8, 8);
-      ctx.fillRect(centerX + width / 2 - 20, centerY - height + 16, 8, 8);
-
-      if (building.style === "market") {
-        ctx.fillStyle = "#DC2626";
-        ctx.fillRect(centerX - width / 2 + 10, centerY - height + 34, width - 20, 7);
-        ctx.fillStyle = "#FDE68A";
-        for (let stripe = -2; stripe <= 2; stripe++) {
-          ctx.fillRect(centerX + stripe * 12 - 4, centerY - height + 34, 8, 7);
+        if ((x + y) % 2 === 0) {
+          ctx.fillStyle = style.detail;
+          ctx.fillRect(tx + 8, ty + 8, 4, 4);
+          ctx.fillRect(tx + tileSize - 14, ty + tileSize - 14, 4, 4);
         }
-      }
 
-      if (building.style === "guild" || building.style === "barracks" || building.style === "manor") {
-        ctx.fillStyle = palette.banner;
-        ctx.fillRect(centerX - 4, centerY - height + 24, 8, 26);
-        ctx.fillStyle = palette.trim;
-        ctx.fillRect(centerX - 4, centerY - height + 48, 8, 6);
-      }
-
-      if (building.style === "temple") {
-        ctx.fillStyle = palette.trim;
-        ctx.fillRect(centerX - 3, centerY - height - 6, 6, 20);
-        ctx.fillRect(centerX - 10, centerY - height + 2, 20, 5);
-      }
-
-      ctx.fillStyle = "#78350F";
-      ctx.fillRect(centerX - 6, centerY - 16, 12, 16);
-      ctx.fillStyle = "#B45309";
-      ctx.fillRect(centerX - 14, centerY - 8, 28, 5);
-    };
-
-    for (let y = 0; y < mapData.height; y++) {
-      for (let x = 0; x < mapData.width; x++) {
-        const { x: ix, y: iy } = getIso(x, y);
-
-        // Viewport culling
-        const sx = ix - camX + width / 2;
-        const sy = iy - camY + height / 2;
-        if (sx < -cullBuf || sx > width + cullBuf || sy < -cullBuf || sy > height + cullBuf) continue;
-
-        ctx.save();
-
-        // Side face (Depth)
-        ctx.fillStyle = "rgba(0,0,0,0.35)";
-        ctx.beginPath();
-        ctx.moveTo(ix - tileSize / 2, iy);
-        ctx.lineTo(ix, iy + tileSize / 4);
-        ctx.lineTo(ix, iy + tileSize / 4 + 6);
-        ctx.lineTo(ix - tileSize / 2, iy + 6);
-        ctx.fill();
-
-        ctx.fillStyle = "rgba(0,0,0,0.2)";
-        ctx.beginPath();
-        ctx.moveTo(ix + tileSize / 2, iy);
-        ctx.lineTo(ix, iy + tileSize / 4);
-        ctx.lineTo(ix, iy + tileSize / 4 + 6);
-        ctx.lineTo(ix + tileSize / 2, iy + 6);
-        ctx.fill();
-
-        // Top face
-        ctx.beginPath();
-        ctx.moveTo(ix, iy - tileSize / 4);
-        ctx.lineTo(ix + tileSize / 2, iy);
-        ctx.lineTo(ix, iy + tileSize / 4);
-        ctx.lineTo(ix - tileSize / 2, iy);
-        ctx.closePath();
-
-        const tile = mapData.tiles[y]?.[x] || "grass";
-        const grad = ctx.createLinearGradient(ix, iy - tileSize / 4, ix, iy + tileSize / 4);
-        const palette: Record<string, [string, string]> = {
-          grass:    ["#1a7a3a", "#145c2a"],
-          water:    ["#1a56e8", "#1530a0"],
-          lava:     ["#cc1a10", "#8c1208"],
-          mountain: ["#5c5652", "#2c2a28"],
-          forest:   ["#0c6040", "#053828"],
-          town:     ["#92400E", "#78350F"],
-          path:     ["#8a6040", "#604028"],
-          cave:     ["#2a3340", "#141c24"],
-        };
-        const [c0, c1] =
-          tile === "town" && isSettlementMap
-            ? ["#7C6F64", "#5B5148"]
-            : tile === "path" && isSettlementMap
-              ? ["#8B7355", "#6E5A46"]
-              : palette[tile] ?? palette.grass;
-        grad.addColorStop(0, c0);
-        grad.addColorStop(1, c1);
-        ctx.fillStyle = grad;
-        ctx.fill();
-        ctx.strokeStyle = "rgba(255,255,255,0.05)";
-        ctx.lineWidth = 0.5;
-        ctx.stroke();
-
-        // Decorations
-        if (tile === "forest") {
-          // Rich layered tree — dark trunk + canopy
-          const variant = (x * 13 + y * 7) % 3;
-          ctx.fillStyle = variant === 0 ? "#065e28" : variant === 1 ? "#044a20" : "#0a6a30";
-          ctx.beginPath();
-          ctx.moveTo(ix, iy - 20); ctx.lineTo(ix + 12, iy + 4); ctx.lineTo(ix - 12, iy + 4);
-          ctx.fill();
-          ctx.fillStyle = variant === 0 ? "#086830" : "#0a5428";
-          ctx.beginPath();
-          ctx.moveTo(ix, iy - 28); ctx.lineTo(ix + 8, iy - 10); ctx.lineTo(ix - 8, iy - 10);
-          ctx.fill();
-          // Trunk
-          ctx.fillStyle = "#5c3a10";
-          ctx.fillRect(ix - 2, iy + 2, 4, 6);
+        if (tile === "grass") {
+          ctx.fillStyle = "#3f8a3f";
+          ctx.fillRect(tx + 20, ty + 28, 2, 10);
+          ctx.fillRect(tx + 24, ty + 26, 2, 12);
+          ctx.fillRect(tx + 28, ty + 30, 2, 8);
+        } else if (tile === "forest") {
+          ctx.fillStyle = "#2a6c3e";
+          ctx.fillRect(tx + 12, ty + 10, tileSize - 24, tileSize - 24);
+          ctx.fillStyle = "#174028";
+          ctx.fillRect(tx + 18, ty + 14, tileSize - 36, tileSize - 36);
+          ctx.fillStyle = "#5a3b20";
+          ctx.fillRect(tx + tileSize / 2 - 3, ty + tileSize - 20, 6, 12);
         } else if (tile === "mountain") {
-          const variant = (x * 11 + y * 19) % 3;
-          // Shadow face
-          ctx.fillStyle = "#1c1a18";
-          ctx.beginPath();
-          ctx.moveTo(ix + 6, iy - 22); ctx.lineTo(ix + 20, iy + 4); ctx.lineTo(ix + 6, iy + 4);
-          ctx.fill();
-          // Main face
-          ctx.fillStyle = variant === 0 ? "#5c5250" : variant === 1 ? "#504c48" : "#605a58";
-          ctx.beginPath();
-          ctx.moveTo(ix, iy - 26); ctx.lineTo(ix + 20, iy + 4); ctx.lineTo(ix - 20, iy + 4);
-          ctx.fill();
-          // Snow cap
-          ctx.fillStyle = "rgba(255,255,255,0.85)";
-          ctx.beginPath();
-          ctx.moveTo(ix, iy - 26); ctx.lineTo(ix + 6, iy - 14); ctx.lineTo(ix - 6, iy - 14);
-          ctx.fill();
-        } else if (tile === "grass") {
-          // Field/dungeon grass detail — scattered blades
-          if ((x + y) % 3 === 0) {
-            ctx.strokeStyle = "rgba(60,200,80,0.25)";
-            ctx.lineWidth = 0.8;
-            for (let b = -6; b <= 6; b += 4) {
-              ctx.beginPath();
-              ctx.moveTo(ix + b, iy + 2);
-              ctx.lineTo(ix + b - 1, iy - 5);
-              ctx.stroke();
-            }
-          }
-        } else if (tile === "lava") {
-          // Lava glow pulse spots
-          if ((x + y) % 2 === 0) {
-            const grd = ctx.createRadialGradient(ix, iy - 2, 0, ix, iy - 2, 12);
-            grd.addColorStop(0, "rgba(255,120,0,0.55)");
-            grd.addColorStop(1, "rgba(180,20,0,0)");
-            ctx.fillStyle = grd;
-            ctx.beginPath(); ctx.arc(ix, iy - 2, 12, 0, Math.PI * 2); ctx.fill();
-          }
-        } else if (tile === "cave") {
-          // Cave stalactite
-          ctx.fillStyle = "#0a1220";
-          ctx.beginPath();
-          ctx.arc(ix, iy - 10, 10, 0, Math.PI * 2);
-          ctx.fill();
-          if ((x + y) % 2 === 0) {
-            ctx.fillStyle = "rgba(80,160,220,0.18)";
-            ctx.fillRect(ix - 2, iy - 14, 3, 8);
-          }
+          ctx.fillStyle = "#8e8782";
+          ctx.fillRect(tx + 12, ty + 14, tileSize - 24, tileSize - 20);
+          ctx.fillStyle = "#595652";
+          ctx.fillRect(tx + 24, ty + 20, tileSize - 34, tileSize - 18);
+          ctx.fillStyle = "#c9c4be";
+          ctx.fillRect(tx + 24, ty + 10, tileSize - 42, 8);
         } else if (tile === "water") {
-          // Water shimmer
-          if ((x * 3 + y) % 4 === 0) {
-            ctx.strokeStyle = "rgba(120,200,255,0.35)";
-            ctx.lineWidth = 0.7;
-            ctx.beginPath();
-            ctx.moveTo(ix - 8, iy - 1); ctx.lineTo(ix + 8, iy - 1);
-            ctx.stroke();
-          }
-        } else if (tile === "town") {
-          if (isSettlementMap) {
-            if (isHubTown) {
-              ctx.fillStyle = "rgba(255,255,255,0.04)";
-              ctx.fillRect(ix - 10, iy - 3, 20, 4);
-            } else if (isLargeTownBuildingAnchor(x, y)) {
-              drawTownBuilding(ctx, ix, iy, x, y);
-            } else {
-              ctx.fillStyle = "rgba(255,255,255,0.05)";
-              ctx.beginPath();
-              ctx.arc(ix, iy, 4, 0, Math.PI * 2);
-              ctx.fill();
-            }
-          }
-        }
-        
-        // Final Shadow Pass for groundedness
-        if (tile === "forest" || tile === "mountain") {
-          ctx.fillStyle = "rgba(0,0,0,0.2)";
-          ctx.beginPath();
-          ctx.ellipse(ix, iy + 8, 14, 6, 0, 0, Math.PI * 2);
-          ctx.fill();
-        }
+          ctx.fillStyle = "#6fc3f0";
+          ctx.fillRect(tx + 12, ty + 16, tileSize - 24, 2);
+          ctx.fillRect(tx + 20, ty + 28, tileSize - 36, 2);
+          ctx.fillRect(tx + 8, ty + 40, tileSize - 16, 2);
+        } else if (tile === "lava") {
+          ctx.fillStyle = "#ffb04a";
+          ctx.fillRect(tx + 10, ty + 12, 8, 8);
+          ctx.fillRect(tx + 30, ty + 26, 10, 10);
+          ctx.fillStyle = "#ffd089";
+          ctx.fillRect(tx + 13, ty + 15, 2, 2);
+          ctx.fillRect(tx + 34, ty + 30, 2, 2);
+        } else if (tile === "cave") {
+          ctx.fillStyle = "#728395";
+          ctx.fillRect(tx + 18, ty + 16, tileSize - 36, tileSize - 26);
+          ctx.fillStyle = "#252b32";
+          ctx.fillRect(tx + 24, ty + 20, tileSize - 48, tileSize - 34);
+        } else if (tile === "path") {
+          ctx.fillStyle = "rgba(255, 241, 214, 0.22)";
+          ctx.fillRect(tx + 6, ty + 30, tileSize - 12, 2);
+          ctx.fillRect(tx + 30, ty + 6, 2, tileSize - 12);
+        } else if (tile === "town" && isSettlementMap) {
+          const hasAdjacentPath =
+            mapData.tiles[y - 1]?.[x] === "path" ||
+            mapData.tiles[y + 1]?.[x] === "path" ||
+            mapData.tiles[y]?.[x - 1] === "path" ||
+            mapData.tiles[y]?.[x + 1] === "path";
 
-        ctx.restore();
+          if (!hasAdjacentPath && x % 2 === 0 && y % 2 === 0) {
+            ctx.fillStyle = "#4f3828";
+            ctx.fillRect(tx + 8, ty + 16, tileSize - 16, tileSize - 22);
+            ctx.fillStyle = "#8f4f2b";
+            ctx.fillRect(tx + 6, ty + 8, tileSize - 12, 12);
+            ctx.fillStyle = "#f0c78a";
+            ctx.fillRect(tx + 22, ty + 24, 8, 8);
+          }
+        }
       }
     }
 
-    if (isHubTown) {
-      hubTownBuildings
-        .slice()
-        .sort((a, b) => (a.y + a.h) - (b.y + b.h))
-        .forEach(building => drawHubTownBuilding(ctx, building));
+    const mapLandmarks = MAP_LANDMARKS[mapData.name] ?? [];
+    for (const landmark of mapLandmarks) {
+      const landmarkRight = (landmark.x + landmark.w) * tileSize;
+      const landmarkBottom = (landmark.y + landmark.h) * tileSize;
+      const landmarkTop = landmark.y * tileSize - tileSize * 0.7;
+      if (
+        landmarkRight < worldLeft ||
+        landmark.x * tileSize > worldRight ||
+        landmarkBottom < worldTop ||
+        landmarkTop > worldBottom
+      ) {
+        continue;
+      }
+      drawLandmark(landmark);
     }
 
-    // Atmospheric Overlay
-    ctx.restore(); // Back to screen space
-    const grd = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.7);
-    grd.addColorStop(0, "rgba(0,0,0,0)");
-    grd.addColorStop(1, mapData.mapType === "dungeon" ? "rgba(0,0,0,0.7)" : "rgba(10,23,16,0.5)");
-    ctx.fillStyle = grd;
-    ctx.fillRect(0, 0, width, height);
+    ctx.restore();
 
-    ctx.restore(); // Final balance
+    // Fog and vignette removed
   }
 
   return (
     <canvas
       ref={canvasRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
+      className="absolute inset-0 h-full w-full pointer-events-none"
       style={{ imageRendering: "pixelated" }}
     />
   );
@@ -574,7 +554,7 @@ const MapCanvas = memo(({
 
 // ─── Helper ──────────────────────────────────────────────────────────────────
 function getIsoPos(x: number, y: number) {
-  return { x: (x - y) * (TILE_SIZE / 2), y: (x + y) * (TILE_SIZE / 4) };
+  return { x: x * TILE_SIZE + TILE_SIZE / 2, y: y * TILE_SIZE + TILE_SIZE / 2 };
 }
 
 // ─── Main WorldMap component ─────────────────────────────────────────────────
@@ -615,6 +595,7 @@ export function WorldMap({
   const playerPosRef     = useRef(playerPos);
   const walkPathRef      = useRef(walkPath);
   const chasingMobRef    = useRef(chasingMobId);
+  const heldKeysRef      = useRef<string[]>([]);
 
   useEffect(() => { mobsRef.current         = mobs;           }, [mobs]);
   useEffect(() => { characterRef.current    = character;      }, [character]);
@@ -695,9 +676,89 @@ export function WorldMap({
       walkPathRef.current = rest;
       setWalkPath(rest);
       if (rest.length === 0) setDestination(null);
-    }, 160);
+    }, WALK_STEP_MS);
     return () => clearInterval(id);
   }, []);
+
+  const isWalkableTile = useCallback((x: number, y: number) => {
+    if (x < 0 || x >= mapData.width || y < 0 || y >= mapData.height) return false;
+    const tile = mapData.tiles[y]?.[x];
+    if (!tile || tile === "water" || tile === "mountain" || tile === "lava") return false;
+    if (mapData.npcs.some(npc => npc.position.x === x && npc.position.y === y)) return false;
+    if (mobsRef.current.some(mob => mob.position.x === x && mob.position.y === y)) return false;
+    return true;
+  }, [mapData]);
+
+  // ── Keyboard movement (WASD + arrows) ─────────────────────────────────────
+  useEffect(() => {
+    const keyToDir: Record<string, { x: number; y: number }> = {
+      w: { x: 0, y: -1 },
+      arrowup: { x: 0, y: -1 },
+      s: { x: 0, y: 1 },
+      arrowdown: { x: 0, y: 1 },
+      a: { x: -1, y: 0 },
+      arrowleft: { x: -1, y: 0 },
+      d: { x: 1, y: 0 },
+      arrowright: { x: 1, y: 0 },
+    };
+    const movePriority = ["arrowup", "w", "arrowdown", "s", "arrowleft", "a", "arrowright", "d"];
+    let lastStep = 0;
+
+    const tryStep = () => {
+      if (selectedNPC || activeCombatRef.current) return;
+      const now = performance.now();
+      if (now - lastStep < WALK_STEP_MS - 10) return;
+      const activeKey = movePriority.find(key => heldKeysRef.current.includes(key));
+      if (!activeKey) return;
+
+      const dir = keyToDir[activeKey];
+      const current = playerPosRef.current;
+      const nx = current.x + dir.x;
+      const ny = current.y + dir.y;
+      if (!isWalkableTile(nx, ny)) return;
+
+      if (walkPathRef.current.length > 0) {
+        setWalkPath([]);
+        walkPathRef.current = [];
+        setDestination(null);
+      }
+
+      if (chasingMobRef.current) {
+        setChasingMobId(null);
+        chasingMobRef.current = null;
+      }
+
+      const next = { x: nx, y: ny };
+      setPlayerPos(next);
+      playerPosRef.current = next;
+      lastStep = now;
+    };
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (!keyToDir[key]) return;
+      e.preventDefault();
+      if (!heldKeysRef.current.includes(key)) {
+        heldKeysRef.current = [...heldKeysRef.current, key];
+      }
+      tryStep();
+    };
+
+    const onKeyUp = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      if (!keyToDir[key]) return;
+      heldKeysRef.current = heldKeysRef.current.filter(k => k !== key);
+    };
+
+    const mover = setInterval(tryStep, 40);
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      clearInterval(mover);
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [isWalkableTile, selectedNPC]);
 
   // ── Time of day ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -849,47 +910,6 @@ export function WorldMap({
     return () => clearInterval(interval);
   }, [activeCombatId, onUpdateCharacter, onMobKilled]);
 
-  // ── Click handler (move + mob target) ──────────────────────────────────────
-  const handleOverlayClick = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const { x: camX, y: camY } = getIsoPos(playerPos.x, playerPos.y);
-
-    const mx = (e.clientX - rect.left - rect.width  / 2);
-    const my = (e.clientY - rect.top  - rect.height / 2);
-    const wx = mx + camX;
-    const wy = my + camY;
-
-    const xPlusY  = wy / (TILE_SIZE / 4);
-    const xMinusY = wx / (TILE_SIZE / 2);
-    const tx = Math.round((xPlusY + xMinusY) / 2);
-    const ty = Math.round((xPlusY - xMinusY) / 2);
-
-    if (tx < 0 || tx >= mapData.width || ty < 0 || ty >= mapData.height) return;
-
-    const npc = mapData.npcs.find(n => n.position.x === tx && n.position.y === ty);
-    if (npc) { setSelectedNPC(npc); setDialogIndex(0); return; }
-
-    // Cancel combat when clicking a tile
-    if (activeCombatId) setActiveCombatId(null);
-
-    const tile = mapData.tiles[ty]?.[tx];
-    if (!tile || tile === "water" || tile === "mountain" || tile === "lava") return;
-
-    // A* path to destination
-    const path = findPath(
-      playerPos,
-      { x: tx, y: ty },
-      mapData.tiles,
-      mapData.width,
-      mapData.height,
-    );
-    if (path.length > 0) {
-      setWalkPath(path);
-      walkPathRef.current = path;
-      setDestination({ x: tx, y: ty });
-    }
-  }, [playerPos, mapData, activeCombatId]);
-
   // ── NPC dialog helpers ──────────────────────────────────────────────────────
   const getDialogsForNPC = useCallback((npc: NPC | null) => {
     if (!npc) return [];
@@ -949,41 +969,43 @@ export function WorldMap({
   // Direction from player toward targeted mob (for lunge)
   const targetMob = mobs.find(m => m.id === activeCombatId);
   const lungeX = targetMob ? Math.sign(targetMob.position.x - playerPos.x) * 14 : 0;
-  const lungeY = targetMob ? Math.sign(targetMob.position.y - playerPos.y) * 7  : 0;
+  const lungeY = targetMob ? Math.sign(targetMob.position.y - playerPos.y) * 12 : 0;
 
   return (
     <div
-      className="relative w-full overflow-hidden bg-slate-950 rounded-2xl border-4 border-slate-900 shadow-2xl"
+      className="relative h-full w-full overflow-hidden border border-slate-800 bg-slate-950 shadow-2xl"
       style={{ height: "100%" }}
     >
-      {/* Tile canvas */}
-      <div className="w-full h-full" style={{ filter: getTimeFilters(), transition: "filter 3s ease" }}>
-        <MapCanvas
-          mapData={mapData}
-          tileSize={TILE_SIZE}
-          playerPos={playerPos}
-        />
-      </div>
-
-      {/* Vignette */}
-      <div className="absolute inset-0 bg-gradient-to-br from-slate-950/20 via-transparent to-slate-950/30 pointer-events-none" />
-      {timeOfDay === "night"  && <div className="absolute inset-0 bg-blue-900/20  pointer-events-none" />}
-      {timeOfDay === "dusk"   && <div className="absolute inset-0 bg-orange-500/10 pointer-events-none" />}
-
-      {/* Click overlay */}
-      <div className="absolute inset-0 cursor-pointer" onClick={handleOverlayClick} />
-
-      {/* ── Sprite layer — CSS translate (no spring, GPU-composited) ────────── */}
       <div
-        className="absolute pointer-events-none"
+        className="absolute inset-0 overflow-visible"
         style={{
-          left: "50%",
-          top: "50%",
-          transform: `translate(${-isoPlayerX}px, ${-isoPlayerY}px)`,
-          transition: "transform 0.1s ease-out",
+          transform: SCENE_TILT,
+          transformOrigin: "50% 60%",
           willChange: "transform",
         }}
       >
+        {/* Tile canvas */}
+        <div className="w-full h-full">
+          <MapCanvas
+            mapData={mapData}
+            tileSize={TILE_SIZE}
+            playerPos={playerPos}
+          />
+        </div>
+
+        {/* Vignette removed */}
+
+        {/* ── Sprite layer — CSS translate (no spring, GPU-composited) ────────── */}
+        <div
+          className="absolute pointer-events-none overflow-visible"
+          style={{
+            left: "50%",
+            top: "50%",
+            transform: `translate(${-isoPlayerX}px, ${-isoPlayerY}px)`,
+            transition: "transform 0.16s linear",
+            willChange: "transform",
+          }}
+        >
         {/* NPCs */}
         {mapData.npcs.map(npc => {
           const { x: ix, y: iy } = getIsoPos(npc.position.x, npc.position.y);
@@ -991,7 +1013,13 @@ export function WorldMap({
             <div
               key={npc.id}
               className="absolute cursor-pointer pointer-events-auto"
-              style={{ left: ix, top: iy, width: TILE_SIZE, height: TILE_SIZE / 2, zIndex: npc.position.x + npc.position.y + 1 }}
+              style={{
+                left: ix - TILE_SIZE / 2,
+                top: iy - TILE_SIZE * 0.78,
+                width: TILE_SIZE,
+                height: TILE_SIZE * 1.35,
+                zIndex: npc.position.y * mapData.width + npc.position.x + 1000,
+              }}
               onClick={e => {
                 e.stopPropagation();
                 if (npc.service) {
@@ -1003,19 +1031,19 @@ export function WorldMap({
                 }
               }}
             >
-              <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
-                <div className="translate-y-[-24px] drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">
-                  <NPCSprite type={npc.sprite} className="w-12 h-12" />
+              <div className="relative h-full w-full pointer-events-none">
+                <div className="pixel-sprite absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-[62%] drop-shadow-[0_4px_6px_rgba(0,0,0,0.5)]">
+                  <NPCSprite type={npc.sprite} className="h-[96px] w-[96px] pixel-sprite" />
                 </div>
                 {/* Guild balloon — single floating pip above the NPC */}
                 {npc.service === "guild" && (
                   <motion.div
                     animate={{ y: [-4, 0, -4] }}
                     transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
-                    className="absolute -top-14 left-1/2 -translate-x-1/2 pointer-events-none"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none"
                   >
                     <div className="flex flex-col items-center gap-0.5">
-                      <div className="bg-amber-500/90 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-wide">
+                      <div className="bg-amber-500/90 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-sm shadow-lg uppercase tracking-wide">
                         Guild
                       </div>
                       <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-amber-500/90" />
@@ -1027,10 +1055,10 @@ export function WorldMap({
                   <motion.div
                     animate={{ y: [-4, 0, -4] }}
                     transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-                    className="absolute -top-14 left-1/2 -translate-x-1/2 pointer-events-none"
+                    className="absolute -top-8 left-1/2 -translate-x-1/2 pointer-events-none"
                   >
                     <div className="flex flex-col items-center gap-0.5">
-                      <div className="bg-emerald-500/90 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg uppercase tracking-wide">
+                      <div className="bg-emerald-500/90 text-slate-950 text-[9px] font-black px-2 py-0.5 rounded-sm shadow-lg uppercase tracking-wide">
                         Shop
                       </div>
                       <div className="w-0 h-0 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500/90" />
@@ -1041,7 +1069,7 @@ export function WorldMap({
                   <motion.div
                     animate={{ y: [-8, 0, -8] }}
                     transition={{ repeat: Infinity, duration: 1.5 }}
-                    className={`absolute -top-20 left-1/2 -translate-x-1/2 ${completedQuests.includes(npc.questId) ? "text-emerald-400" : activeQuestId === npc.questId ? "text-cyan-400" : "text-amber-400"}`}
+                    className={`absolute -top-10 left-1/2 -translate-x-1/2 ${completedQuests.includes(npc.questId) ? "text-emerald-400" : activeQuestId === npc.questId ? "text-cyan-400" : "text-amber-400"}`}
                   >
                     {completedQuests.includes(npc.questId)
                       ? <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
@@ -1066,11 +1094,13 @@ export function WorldMap({
               key={mob.id}
               className="absolute pointer-events-auto cursor-crosshair"
               style={{
-                left: ix, top: iy,
-                width: TILE_SIZE, height: TILE_SIZE / 2,
-                zIndex: mob.position.x + mob.position.y + 1,
+                left: ix - TILE_SIZE / 2,
+                top: iy - TILE_SIZE * 0.72,
+                width: TILE_SIZE,
+                height: TILE_SIZE * 1.2,
+                zIndex: mob.position.y * mapData.width + mob.position.x + 1100,
                 // CSS transition for smooth roaming (no spring overhead)
-                transition: isTargeted ? "left 0.15s ease-out, top 0.15s ease-out" : "left 0.45s ease-out, top 0.45s ease-out",
+                transition: isTargeted ? "left 0.2s linear, top 0.2s linear" : "left 0.34s linear, top 0.34s linear",
               }}
               onClick={e => {
                 e.stopPropagation();
@@ -1110,9 +1140,9 @@ export function WorldMap({
               <div className="relative w-full h-full flex items-center justify-center pointer-events-none">
                 {/* HP bar */}
                 <div className="absolute -top-8 left-1/2 -translate-x-1/2 w-14 z-10">
-                  <div className="h-1.5 bg-slate-800/80 rounded-full overflow-hidden border border-slate-600/40">
+                  <div className="h-1.5 bg-slate-800/80 rounded-sm overflow-hidden border border-slate-600/40">
                     <div
-                      className={`h-full rounded-full transition-all duration-200 ${hpPct > 0.5 ? "bg-green-500" : hpPct > 0.25 ? "bg-yellow-500" : "bg-red-500"}`}
+                      className={`h-full rounded-sm transition-all duration-200 ${hpPct > 0.5 ? "bg-green-500" : hpPct > 0.25 ? "bg-yellow-500" : "bg-red-500"}`}
                       style={{ width: `${hpPct * 100}%` }}
                     />
                   </div>
@@ -1120,7 +1150,7 @@ export function WorldMap({
 
                 {/* Mob sprite with hit/roar/idle animations */}
                 <motion.div
-                  className="translate-y-[-20px] origin-bottom"
+                  className="pixel-sprite translate-y-[-8px] origin-bottom"
                   animate={
                     isHit ? {
                       x: [-10, 10, -7, 7, 0],
@@ -1137,7 +1167,7 @@ export function WorldMap({
                     : { repeat: Infinity, duration: isTargeted ? 0.7 : 2.8, ease: "easeInOut" }
                   }
                 >
-                  <svg width="60" height="60" viewBox="-30 -30 60 60">
+                  <svg width="100" height="100" viewBox="-50 -50 100 100" className="pixel-sprite overflow-visible">
                     <EnemySpriteBody sprite={enemyData?.sprite || "slime"} />
                   </svg>
                 </motion.div>
@@ -1145,13 +1175,13 @@ export function WorldMap({
                 {/* Combat target ring */}
                 {isTargeted && !isHit && (
                   <motion.div
-                    className="absolute inset-0 rounded-full border-2 border-red-500/60 pointer-events-none"
+                    className="absolute inset-[8px] border-2 border-red-500/60 pointer-events-none"
                     animate={{ scale: [1, 1.15, 1], opacity: [0.8, 0.3, 0.8] }}
                     transition={{ repeat: Infinity, duration: 0.7 }}
                   />
                 )}
 
-                <div className="absolute bottom-1 w-8 h-2.5 bg-red-500/20 rounded-full blur-[5px]" />
+                <div className="absolute bottom-2 left-1/2 h-2 w-9 -translate-x-1/2 bg-red-500/20 blur-[3px]" />
               </div>
             </div>
           );
@@ -1164,14 +1194,14 @@ export function WorldMap({
             <motion.div
               key={`${destination.x}-${destination.y}`}
               className="absolute pointer-events-none"
-              style={{ left: dx - TILE_SIZE / 2, top: dy - 4, width: TILE_SIZE, zIndex: 1 }}
+              style={{ left: dx - TILE_SIZE / 2, top: dy - TILE_SIZE / 2, width: TILE_SIZE, height: TILE_SIZE, zIndex: 1 }}
               initial={{ opacity: 0, scale: 0.5 }}
               animate={{ opacity: [0.9, 0.4, 0.9], scale: [0.9, 1.05, 0.9] }}
               exit={{ opacity: 0 }}
               transition={{ repeat: Infinity, duration: 0.9 }}
             >
-              <svg viewBox="0 0 80 20" className="w-full">
-                <ellipse cx="40" cy="10" rx="22" ry="7" fill="rgba(251,191,36,0.25)" stroke="rgba(251,191,36,0.7)" strokeWidth="1.5" strokeDasharray="4 3" />
+              <svg viewBox="0 0 64 64" className="h-full w-full pixel-sprite">
+                <rect x="6" y="6" width="52" height="52" fill="rgba(251,191,36,0.18)" stroke="rgba(251,191,36,0.85)" strokeWidth="2" strokeDasharray="6 4" />
               </svg>
             </motion.div>
           );
@@ -1181,14 +1211,16 @@ export function WorldMap({
         <div
           className="absolute pointer-events-none"
           style={{
-            left: isoPlayerX, top: isoPlayerY,
-            width: TILE_SIZE, height: TILE_SIZE / 2,
-            zIndex: playerPos.x + playerPos.y + 2,
+            left: isoPlayerX - TILE_SIZE / 2,
+            top: isoPlayerY - TILE_SIZE * 0.72,
+            width: TILE_SIZE,
+            height: TILE_SIZE * 1.2,
+            zIndex: playerPos.y * mapData.width + playerPos.x + 1200,
           }}
         >
           <div className="relative w-full h-full flex items-center justify-center">
             <motion.div
-              className="relative z-10 scale-90 translate-y-[-28px] origin-bottom"
+              className="pixel-sprite relative z-10 scale-95 translate-y-[-10px] origin-bottom"
               animate={
                 playerIsHit ? {
                   x:      [-6, 6, -4, 4, 0],
@@ -1217,14 +1249,15 @@ export function WorldMap({
             {/* Player pulse when in combat */}
             {activeCombatId && (
               <motion.div
-                className="absolute inset-0 rounded-full border-2 border-amber-400/50"
+                className="absolute inset-[6px] border-2 border-amber-400/50"
                 animate={{ scale: [1, 1.2, 1], opacity: [0.6, 0, 0.6] }}
                 transition={{ repeat: Infinity, duration: 0.85 }}
               />
             )}
 
-            <div className="absolute bottom-1.5 w-10 h-3 bg-amber-500/20 rounded-full blur-[5px]" />
+            <div className="absolute bottom-2 h-2 w-10 bg-amber-500/20 blur-[3px]" />
           </div>
+        </div>
         </div>
       </div>
 
@@ -1247,10 +1280,10 @@ export function WorldMap({
       {/* Hint bar */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 pointer-events-none">
         <div className="px-6 py-2.5 bg-slate-900/60 backdrop-blur-md rounded-full border border-white/10 flex gap-6 text-[10px] font-bold text-slate-300 uppercase tracking-widest shadow-2xl">
-          <span className="flex items-center gap-2">🖱️ Click to Move</span>
+          <span className="flex items-center gap-2">⌨️ WASD / Arrows Move</span>
           <span className="w-px h-4 bg-white/10" />
           {isSafeSettlement ? (
-            <span className="flex items-center gap-2 text-emerald-300">🏛️ Safe City • Visit NPCs</span>
+            <span className="flex items-center gap-2 text-emerald-300">🏛️ Safe City • Click NPCs</span>
           ) : (
             <span className={`flex items-center gap-2 ${activeCombatId ? "text-red-400 animate-pulse font-black" : ""}`}>
               ⚔️ {activeCombatId ? "Fighting! (click mob to flee)" : "Click Monster to Fight"}
@@ -1277,7 +1310,7 @@ export function WorldMap({
               <div className="rounded-xl p-5 bg-slate-900 border border-amber-500/20 shadow-2xl">
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-12 h-12 rounded-full flex items-center justify-center bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-                    <NPCSprite type={selectedNPC.sprite} className="w-10 h-10" />
+                    <NPCSprite type={selectedNPC.sprite} className="w-[60px] h-[60px]" />
                   </div>
                   <div>
                     <h3 className="font-bold text-amber-200" style={{ fontFamily: "'Cinzel', serif" }}>{selectedNPC.name}</h3>

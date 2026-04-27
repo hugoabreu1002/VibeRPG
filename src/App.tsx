@@ -636,10 +636,10 @@ function AppContent() {
   };
 
   return (
-    <div className="h-full flex flex-col overflow-y-auto bg-background text-foreground ambient-particles custom-scrollbar">
+    <div className="h-full w-full flex flex-col overflow-hidden bg-background text-foreground ambient-particles custom-scrollbar">
       {/* Fantasy Header */}
       <header className="fantasy-header px-4 py-1 relative shrink-0">
-        <div className="mx-auto max-w-7xl flex items-center justify-between">
+        <div className="w-full flex items-center justify-between">
           <div className="flex items-center gap-2">
             <motion.div
               initial={{ opacity: 0, x: -20 }}
@@ -977,7 +977,7 @@ function AppContent() {
         )}
       </AnimatePresence>
 
-      <div className="flex-1 min-h-0 overflow-hidden px-3 py-2">
+      <div className="flex-1 min-h-0 overflow-hidden px-1 py-1 md:px-2 md:py-2">
         {isLoading ? (
           <div className="mx-auto max-w-3xl fantasy-card rounded-xl p-6">
             <div className="flex items-center gap-3">
@@ -1101,7 +1101,7 @@ function AppContent() {
         ) : (
           <div className="w-full min-h-full grid gap-2 md:grid-cols-12">
             {/* Sidebar */}
-            <aside className="md:col-span-3 flex flex-col gap-2 overflow-y-auto min-h-0 max-h-[calc(100vh-120px)] custom-scrollbar">
+            <aside className="md:col-span-3 h-full flex flex-col gap-2 overflow-y-auto min-h-0 custom-scrollbar">
               {cityServiceContext && (
                 <div className="fantasy-card rounded-xl p-3 border border-amber-500/20">
                   <div className="text-[10px] font-bold uppercase tracking-[0.25em] text-amber-500/60 mb-1">
@@ -1225,10 +1225,10 @@ function AppContent() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.3 }}
-                    className="grid gap-2 h-full md:grid-cols-12 relative"
+                    className="grid gap-0.5 h-full md:grid-cols-12 relative"
                   >
                     {/* Map Section */}
-                    <div className="md:col-span-12 flex-1 md:h-full min-h-[50vh] md:min-h-0 overflow-hidden relative border border-amber-500/10 rounded-2xl">
+                    <div className="md:col-span-12 flex-1 md:h-full min-h-[56vh] md:min-h-0 overflow-hidden relative">
                       {/* Active Bounty Progress Bar */}
                       {activeQuest?.bounty && character && (
                         <motion.div
@@ -1415,67 +1415,10 @@ function AppContent() {
   );
 }
 
-const MIN_WIDTH = 800;
-const MIN_HEIGHT = 450;
-
-/**
- * IframeScaleWrapper
- * - On viewports >= 800×450: renders children at full viewport size (responsive).
- * - On smaller viewports: scales down so the minimum 800×450 layout fits.
- */
 function IframeScaleWrapper({ children }: { children: React.ReactNode }) {
-  const [{ scale, innerW, innerH, vw, vh }, setState] = useState({
-    scale: 1,
-    innerW: typeof window !== "undefined" ? window.innerWidth : MIN_WIDTH,
-    innerH: typeof window !== "undefined" ? window.innerHeight : MIN_HEIGHT,
-    vw: typeof window !== "undefined" ? window.innerWidth : MIN_WIDTH,
-    vh: typeof window !== "undefined" ? window.innerHeight : MIN_HEIGHT,
-  });
-
-  useEffect(() => {
-    function update() {
-      const v_w = window.innerWidth;
-      const v_h = window.innerHeight;
-      // Only scale DOWN when the viewport is smaller than the minimum target.
-      const s = parseFloat(Math.min(1, v_w / MIN_WIDTH, v_h / MIN_HEIGHT).toFixed(4));
-
-      // We want to avoid extreme aspect ratios (like 1800x450).
-      // If the viewport is very wide/short, we'll cap the logical size and center it.
-      const logicalW = Math.min(1200, Math.round(v_w / s));
-      const logicalH = Math.min(900, Math.round(v_h / s));
-
-      setState({
-        scale: s,
-        innerW: logicalW,
-        innerH: logicalH,
-        vw: v_w,
-        vh: v_h
-      });
-    }
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  // Align top for portrait/landscape consistency
-  const left = scale < 1 ? (vw - innerW * scale) / 2 : (vw - innerW) / 2;
-  const top = 0; // Always start from top as requested
-
   return (
-    <div style={{ width: "100vw", height: "100vh", overflow: "hidden", position: "relative", backgroundColor: "#020617" }}>
-      <div
-        style={{
-          width: innerW,
-          height: innerH,
-          position: "absolute",
-          left,
-          top,
-          transform: scale < 1 ? `scale(${scale})` : undefined,
-          transformOrigin: "top left",
-        }}
-      >
-        {children}
-      </div>
+    <div style={{ width: "100vw", height: "100vh", overflow: "hidden", backgroundColor: "#020617" }}>
+      {children}
     </div>
   );
 }
